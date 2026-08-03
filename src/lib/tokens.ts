@@ -22,6 +22,16 @@ export interface Token {
   complete?: boolean; // graduated / migrated
   realSol?: number;   // SOL raised on the curve
   priceSol?: number;  // SOL per token
+  riskFlag?: string;  // The Oracle's one-line verdict (persisted)
+  likedByMe?: boolean; // set when fetched with ?wallet=
+}
+
+export interface ReferralStats {
+  code: string;
+  invites: number;
+  xpEarned: number;
+  xpPerInvite: number;
+  referred: { name: string; ts: number }[];
 }
 
 export const MIGRATION_TARGET = 69420;

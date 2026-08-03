@@ -3,6 +3,7 @@ import type { Token } from '@/lib/tokens';
 import Sparkline from './Sparkline';
 
 const sentimentColor = { bullish: 'text-green-400', neutral: 'text-yellow-400', bearish: 'text-red-400' } as const;
+const riskColor = (s: number) => (s < 40 ? 'text-green-400' : s < 65 ? 'text-yellow-400' : 'text-red-400');
 
 export default function TokenCard({ token, onSelect }: { token: Token; onSelect: (t: Token) => void }) {
   const up = token.change24h >= 0;
@@ -58,7 +59,7 @@ export default function TokenCard({ token, onSelect }: { token: Token; onSelect:
       </div>
 
       <div className="mt-2 flex items-center justify-between text-[11px] text-white/40">
-        <span>💬 {token.replies}{token.likes ? ` · ❤️ ${token.likes}` : ''} · AI risk {token.riskScore}/100</span>
+        <span>💬 {token.replies}{token.likes ? ` · ❤️ ${token.likes}` : ''} · AI risk <span className={riskColor(token.riskScore)}>{token.riskScore}/100</span></span>
         <span className="opacity-0 group-hover:opacity-100 transition-opacity text-green-400">Trade →</span>
       </div>
     </button>

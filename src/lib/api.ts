@@ -1,5 +1,5 @@
 // Hermes API client v2 — talks to the live curve-engine worker.
-import type { Token, Quest, Trader, Profile, Trade, CommentItem } from './tokens';
+import type { Token, Quest, Trader, Profile, Trade, CommentItem, ReferralStats } from './tokens';
 import { TOKENS, QUESTS, LEADERBOARD } from './tokens';
 
 const API_BASE = 'https://hermes-api.tahamtandariush.workers.dev';
@@ -30,6 +30,22 @@ export async function fetchTokens(): Promise<{ data: Token[]; live: boolean }> {
     return { data: await req<Token[]>('/api/tokens'), live: true };
   } catch {
     return { data: TOKENS, live: false };
+  }
+}
+
+export async function fetchToken(tokenId: string, wallet?: string): Promise<Token | null> {
+  try {
+    return await req<Token>(`/api/tokens/${tokenId}${wallet ? `?wallet=${encodeURIComponent(wallet)}` : ''}`);
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchReferrals(wallet: string): Promise<ReferralStats | null> {
+  try {
+    return await req<ReferralStats>(`/api/profile/${encodeURIComponent(wallet)}/referrals`);
+  } catch {
+    return null;
   }
 }
 
