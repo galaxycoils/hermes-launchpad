@@ -17,6 +17,7 @@ export default function TokenCard({ token, onSelect }: { token: Token; onSelect:
           <div className="flex items-center gap-2">
             <span className="font-bold text-white truncate">{token.name}</span>
             <span className="text-xs px-1.5 py-0.5 rounded bg-white/10 text-white/70">{token.chain}</span>
+            {token.complete && <span className="text-[10px] px-1.5 py-0.5 rounded bg-yellow-400/15 text-yellow-300 border border-yellow-400/30 font-bold">🎓 GRADUATED</span>}
             <span className={`text-xs ${sentimentColor[token.sentiment]}`}>{token.sentiment}</span>
           </div>
           <div className="text-xs text-white/50 mt-0.5">
@@ -57,7 +58,7 @@ export default function TokenCard({ token, onSelect }: { token: Token; onSelect:
       </div>
 
       <div className="mt-2 flex items-center justify-between text-[11px] text-white/40">
-        <span>💬 {token.replies} · AI risk {token.riskScore}/100</span>
+        <span>💬 {token.replies}{token.likes ? ` · ❤️ ${token.likes}` : ''} · AI risk {token.riskScore}/100</span>
         <span className="opacity-0 group-hover:opacity-100 transition-opacity text-green-400">Trade →</span>
       </div>
     </button>
