@@ -53,6 +53,7 @@ function mapToken(t) {
     volume24h: Math.round(t.volume_24h), holders: t.holders,
     curveProgress: Math.round(curveProgress(t) * 10) / 10,
     replies: t.replies, likes: t.likes, riskScore: t.risk_score,
+    riskFlag: t.risk_flag || undefined,
     sentiment: t.sentiment, spark,
     createdMinsAgo: Math.max(0, Math.floor((now() - t.created_at) / 60)),
     onchainMint: t.onchain_mint || undefined,
@@ -187,7 +188,14 @@ export default {
 
       if (tokenMatch && !tokenMatch[2] && request.method === "GET") {
         const t = await getToken(db, tokenMatch[1]);
-        return t ? json(mapToken(t)) : err("not found", 404);
+        if (!t) return err("not found", 404);
+        const w = url.searchParams.get("wallet");
+        let likedByMe = false;
+        if (w && validWallet(w)) {
+          const l = await db.prepare("SELECT 1 x FROM likes WHERE token_id = ? AND wallet = ?").bind(t.id, w).first();
+          likedByMe = Boolean(l);
+        }
+        return json({ ...mapToken(t), likedByMe });
       }
 
       // ---------- comments ----------
@@ -254,7 +262,7 @@ export default {
             if (parsed.flag) flag = String(parsed.flag).slice(0, 80);
           } catch { /* keep defaults */ }
         }
-        await db.prepare("UPDATE tokens SET risk_score = ? WHERE id = ?").bind(score, t.id).run();
+        await db.prepare("UPDATE tokens SET risk_score = ?, risk_flag = ? WHERE id = ?").bind(score, flag, t.id).run();
         return json({ score, flag, agent: "The Oracle" });
       }
 
@@ -347,7 +355,7 @@ export default {
       }
 
       // ---------- profiles / quests / check-in ----------
-      const profMatch = path.match(/^\/api\/profile\/([a-zA-Z0-9-]+)(\/checkin)?$/);
+      const profMatch = path.match(/^\/api\/profile\/([a-zA-Z0-9-]+)(\/(checkin|referrals))?$/);
       if (profMatch && !profMatch[2] && request.method === "GET") {
         const wallet = profMatch[1];
         if (!validWallet(wallet)) return err("bad wallet");
@@ -368,6 +376,25 @@ export default {
           .bind(streak, d, wallet).run();
         const xp = await awardXp(db, wallet, XP.daily * bonus, null);
         return json({ ok: true, streak, multiplier: bonus, ...xp });
+      }
+
+      if (profMatch && profMatch[3] === "referrals" && request.method === "GET") {
+        const wallet = profMatch[1];
+        if (!validWallet(wallet)) return err("bad wallet");
+        const { profile: p } = await ensureProfile(db, wallet);
+        const { results } = await db.prepare(
+          "SELECT wallet, created_at FROM profiles WHERE referred_by = ? OR referred_by = ? ORDER BY created_at DESC LIMIT 50"
+        ).bind(wallet, p.ref_code).all();
+        return json({
+          code: p.ref_code,
+          invites: results.length,
+          xpEarned: results.length * XP.refer,
+          xpPerInvite: XP.refer,
+          referred: results.map((r) => ({
+            name: r.wallet.slice(0, 4) + "…" + r.wallet.slice(-4),
+            ts: r.created_at,
+          })),
+        });
       }
 
       if (path === "/api/quests" && request.method === "GET") {
