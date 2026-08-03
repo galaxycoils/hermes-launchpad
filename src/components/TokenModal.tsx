@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { fmtUsd, MIGRATION_TARGET } from '@/lib/tokens';
 import type { Token, CommentItem, Profile } from '@/lib/tokens';
 import {
-  postTrade, fetchComments, postComment, likeToken, genLore, genRisk,
+  postTrade, fetchComments, postComment, likeToken, genLore, genRisk, fetchToken,
 } from '@/lib/api';
 import { shareLink } from '@/lib/identity';
 import Sparkline from './Sparkline';
@@ -35,6 +35,13 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
 
   useEffect(() => {
     fetchComments(token.id).then(setComments).catch(() => {});
+    // Fresh server state: persisted like status + The Oracle's verdict.
+    fetchToken(token.id, identity).then((fresh) => {
+      if (!fresh) return;
+      setLiked(Boolean(fresh.likedByMe));
+      setToken((prev) => ({ ...prev, riskScore: fresh.riskScore, riskFlag: fresh.riskFlag, likes: fresh.likes, replies: fresh.replies, lore: fresh.lore }));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token.id]);
 
   const update = (t: Token) => { setToken(t); onTokenUpdate(t); };
@@ -83,14 +90,14 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
   };
 
   const like = async () => {
+    if (liked) return;
+    setLiked(true); // optimistic — server dedupes anyway
+    setToken({ ...token, likes: (token.likes ?? 0) + 1 });
+    confetti({ particleCount: 22, spread: 55, startVelocity: 22, origin: { y: 0.8 }, colors: ['#f87171', '#fb7185', '#fca5a5'] });
     try {
       const r = await likeToken(token.id, identity);
-      if (r.liked) {
-        setLiked(true);
-        setToken({ ...token, likes: (token.likes ?? 0) + 1 });
-        xpToast(r.xpGained, r.questCompleted);
-      }
-    } catch { /* noop */ }
+      if (r.liked) xpToast(r.xpGained, r.questCompleted);
+    } catch { /* keep optimistic state */ }
   };
 
   const callBard = async () => {
@@ -107,7 +114,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
     setAiBusy('risk');
     try {
       const r = await genRisk(token.id);
-      setToken({ ...token, riskScore: r.score });
+      setToken({ ...token, riskScore: r.score, riskFlag: r.flag });
       toast.success(`🔮 The Oracle: ${r.score}/100 — ${r.flag}`);
     } catch { toast.error('The Oracle is meditating — try again'); }
     setAiBusy(null);
@@ -156,20 +163,59 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
             <div><div className="text-[10px] text-white/40">VOL 24H</div><div className="font-semibold text-white">{fmtUsd(token.volume24h)}</div></div>
             <div><div className="text-[10px] text-white/40">HOLDERS</div><div className="font-semibold text-white">{token.holders.toLocaleString()}</div></div>
             <div>
-              <div className="text-[10px] text-white/40">AI RISK <button onClick={callOracle} className="text-purple-300 hover:underline">{aiBusy === 'risk' ? '…' : '↻'}</button></div>
+              <div className="text-[10px] text-white/40">AI RISK</div>
               <div className={`font-semibold ${token.riskScore < 40 ? 'text-green-400' : token.riskScore < 65 ? 'text-yellow-400' : 'text-red-400'}`}>{token.riskScore}/100</div>
             </div>
           </div>
         </div>
 
-        <div className="mt-4 rounded-xl bg-purple-500/10 border border-purple-400/20 p-4">
-          <div className="flex items-center justify-between mb-1">
-            <div className="text-xs font-semibold text-purple-300">📜 The Bard — AI lore</div>
-            <button onClick={callBard} disabled={aiBusy !== null} className="text-[11px] px-2 py-1 rounded bg-purple-500/20 text-purple-200 hover:bg-purple-500/30 disabled:opacity-50">
-              {aiBusy === 'lore' ? 'Writing…' : '✍️ New lore'}
+        {/* AI Agents — the pump.fun-killer: no competitor has these */}
+        <div className="mt-4 rounded-xl border border-purple-400/25 bg-gradient-to-b from-purple-500/10 to-transparent p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-xs font-black tracking-wide text-purple-200">🤖 AI AGENTS ON DUTY</div>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-400/10 text-green-300 border border-green-400/20">● live on Workers AI</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={callBard}
+              disabled={aiBusy !== null}
+              className="rounded-lg border border-purple-400/30 bg-purple-500/15 hover:bg-purple-500/25 disabled:opacity-60 p-3 text-left transition-colors"
+            >
+              <div className={`text-lg ${aiBusy === 'lore' ? 'animate-scan' : ''}`}>📜</div>
+              <div className="text-sm font-bold text-purple-100">Ask The Bard</div>
+              <div className="text-[10px] text-purple-300/70">{aiBusy === 'lore' ? 'Writing lore…' : 'Fresh narrative + share text'}</div>
+            </button>
+            <button
+              onClick={callOracle}
+              disabled={aiBusy !== null}
+              className="rounded-lg border border-cyan-400/30 bg-cyan-500/10 hover:bg-cyan-500/20 disabled:opacity-60 p-3 text-left transition-colors"
+            >
+              <div className={`text-lg ${aiBusy === 'risk' ? 'animate-scan' : ''}`}>🔮</div>
+              <div className="text-sm font-bold text-cyan-100">Consult The Oracle</div>
+              <div className="text-[10px] text-cyan-300/70">{aiBusy === 'risk' ? 'Scanning risk…' : 'Risk score + red flags'}</div>
             </button>
           </div>
-          <p className="text-sm text-white/80 italic">"{token.lore}"</p>
+
+          <div className="mt-3 rounded-lg bg-black/30 border border-purple-400/15 p-3">
+            <div className="text-[10px] font-semibold text-purple-300 mb-1">📜 THE BARD'S LORE</div>
+            <p className="text-sm text-white/85 italic">"{token.lore}"</p>
+          </div>
+
+          <div className="mt-2 rounded-lg bg-black/30 border border-cyan-400/15 p-3">
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="text-[10px] font-semibold text-cyan-300">🔮 THE ORACLE'S VERDICT</div>
+              <div className={`text-xs font-black ${token.riskScore < 40 ? 'text-green-400' : token.riskScore < 65 ? 'text-yellow-400' : 'text-red-400'}`}>
+                {token.riskScore}/100 {token.riskScore < 40 ? '· SAFU-ish' : token.riskScore < 65 ? '· SPICY' : '· DANGER'}
+              </div>
+            </div>
+            <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-700 ${token.riskScore < 40 ? 'bg-green-400' : token.riskScore < 65 ? 'bg-yellow-400' : 'bg-red-500'}`}
+                style={{ width: `${Math.max(4, token.riskScore)}%` }}
+              />
+            </div>
+            <p className="text-[11px] text-white/50 mt-1.5">{token.riskFlag ? `⚑ ${token.riskFlag}` : 'No scan on record — consult The Oracle.'}</p>
+          </div>
         </div>
 
         <div className="mt-4">
@@ -228,7 +274,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
 
         <div className="mt-4 flex gap-2">
           <button onClick={like} className={`flex-1 py-2 rounded-lg text-sm font-semibold ${liked ? 'bg-red-500/20 text-red-300 border border-red-400/30' : 'bg-white/10 text-white/70 hover:bg-white/15'}`}>
-            {liked ? '❤️' : '🤍'} {(token.likes ?? 0).toLocaleString()}
+            <span key={String(liked)} className={liked ? 'animate-heart-pop' : ''}>{liked ? '❤️' : '🤍'}</span> {(token.likes ?? 0).toLocaleString()}
           </button>
           <button onClick={share} className="flex-1 py-2 rounded-lg bg-white/10 text-white/70 hover:bg-white/15 text-sm font-semibold">
             📣 Share on X
@@ -242,26 +288,35 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
         </div>
 
         <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
-          <div className="text-xs font-semibold text-white/60 mb-2">💬 {token.replies.toLocaleString()} replies</div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs font-semibold text-white/60">💬 {token.replies.toLocaleString()} replies</div>
+            <div className="text-[10px] text-yellow-300/80">+25 XP per reply · quest progress</div>
+          </div>
           <div className="max-h-44 overflow-y-auto space-y-2">
-            {comments.map((c, i) => (
-              <div key={i} className="text-sm">
-                <span className="text-purple-300 font-mono text-xs">{short(c.wallet)}</span>
-                <span className="text-white/40 text-xs ml-2">{ago(c.ts)}</span>
-                <div className="text-white/80">{c.text}</div>
-              </div>
-            ))}
+            {comments.map((c, i) => {
+              const mine = c.wallet === identity;
+              return (
+                <div key={i} className={`text-sm rounded-lg px-2 py-1.5 ${mine ? 'bg-purple-500/10 border border-purple-400/25' : ''}`}>
+                  <span className={`font-mono text-xs ${mine ? 'text-purple-200 font-bold' : 'text-purple-300'}`}>{mine ? 'you' : short(c.wallet)}</span>
+                  <span className="text-white/40 text-xs ml-2">{ago(c.ts)}</span>
+                  <div className="text-white/80">{c.text}</div>
+                </div>
+              );
+            })}
             {comments.length === 0 && <p className="text-white/30 text-xs">No replies yet — be the first degen.</p>}
           </div>
           <div className="flex gap-2 mt-3">
-            <input
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && sendComment()}
-              maxLength={280}
-              placeholder="Drop alpha (or cope)…"
-              className="flex-1 rounded-lg bg-black/40 border border-white/10 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-purple-400/50"
-            />
+            <div className="flex-1 relative">
+              <input
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && sendComment()}
+                maxLength={280}
+                placeholder="Drop alpha (or cope)…"
+                className="w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-purple-400/50"
+              />
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-white/25">{commentText.length}/280</span>
+            </div>
             <button onClick={sendComment} className="px-4 rounded-lg bg-purple-600 hover:bg-purple-500 text-sm font-bold">Send</button>
           </div>
         </div>
