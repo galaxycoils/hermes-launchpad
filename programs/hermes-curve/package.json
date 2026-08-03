@@ -1,0 +1,20 @@
+{
+  "name": "hermes-curve",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "anchor build",
+    "test": "anchor test",
+    "deploy:devnet": "anchor deploy --provider.cluster devnet"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.31.1"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.3.16",
+    "@types/mocha": "^9.0.0",
+    "chai": "^4.3.4",
+    "ts-mocha": "^10.0.0",
+    "typescript": "^5.5.0"
+  }
+}

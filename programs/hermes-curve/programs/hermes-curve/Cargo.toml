@@ -1,0 +1,20 @@
+[package]
+name = "hermes-curve"
+version = "0.1.0"
+description = "Hermes Launchpad bonding curve — fair-launch memecoin curve with fee split and migration threshold"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "hermes_curve"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = { version = "0.31.1", features = ["init-if-needed"] }
+anchor-spl = "0.31.1"
