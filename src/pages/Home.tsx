@@ -1,12 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Toaster, toast } from 'sonner';
 import { TOKENS, QUESTS, LEADERBOARD, fmtUsd } from '@/lib/tokens';
-import { fetchTokens, fetchQuests, fetchLeaderboard } from '@/lib/api';
-import type { Token, Quest, Trader } from '@/lib/tokens';
+import { fetchTokens, fetchQuests, fetchLeaderboard, fetchProfile, checkin } from '@/lib/api';
+import { getAnonId, captureRef, shareLink } from '@/lib/identity';
+import type { Token, Quest, Trader, Profile } from '@/lib/tokens';
 import TokenCard from '@/components/TokenCard';
 import TokenModal from '@/components/TokenModal';
 import WalletButton from '@/components/WalletButton';
 import CreateTokenModal from '@/components/CreateTokenModal';
-import type { PublicKey } from '@solana/web3.js';
+import Ticker from '@/components/Ticker';
+import KingOfHill from '@/components/KingOfHill';
 
 type Filter = 'all' | 'trending' | 'new' | 'migrating';
 
@@ -26,14 +29,65 @@ export default function Home() {
   const [quests, setQuests] = useState<Quest[]>(QUESTS);
   const [ranks, setRanks] = useState<Trader[]>(LEADERBOARD);
   const [live, setLive] = useState(false);
-  const [wallet, setWallet] = useState<PublicKey | null>(null);
+  const [wallet, setWallet] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [profile, setProfile] = useState<Profile | null>(null);
 
+  const anonId = useRef(getAnonId()).current;
+  const identity = wallet ?? anonId;
+
+  const refreshProfile = useCallback(() => {
+    fetchProfile(identity).then((p) => p && setProfile(p));
+    fetchQuests(identity).then(({ data }) => setQuests(data));
+  }, [identity]);
+
+  // Boot: capture referral, load tokens/quests/ranks, profile + daily check-in.
   useEffect(() => {
-    fetchTokens().then(({ data, live }) => { setAllTokens(data); setLive(live); });
-    fetchQuests().then(({ data }) => setQuests(data));
+    const ref = captureRef();
+    fetchTokens().then(({ data, live: isLive }) => {
+      setAllTokens(data);
+      setLive(isLive);
+      // deep link ?token=<id>
+      const tid = new URLSearchParams(window.location.search).get('token');
+      if (tid) {
+        const t = data.find((x) => x.id === tid);
+        if (t) setSelected(t);
+      }
+    });
     fetchLeaderboard().then(({ data }) => setRanks(data));
+    fetchProfile(identity, ref).then((p) => {
+      if (p) setProfile(p);
+      if (ref) toast.success(`🏴‍☠️ Boarded via referral — your referrer just got +750 XP`);
+    });
+    checkin(identity).then((c) => {
+      if (!c) return;
+      if (c.already) return;
+      const mult = c.multiplier && c.multiplier > 1 ? ` · ${c.multiplier}x XP multiplier active` : '';
+      toast(`🔥 Day ${c.streak} streak! +${c.xpGained ?? 50} XP${mult}`, { duration: 5000 });
+    });
+    fetchQuests(identity).then(({ data }) => setQuests(data));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [identity]);
+
+  // Keep the board fresh — FOMO needs live numbers.
+  useEffect(() => {
+    const iv = setInterval(() => {
+      fetchTokens().then(({ data, live: isLive }) => { setAllTokens(data); setLive(isLive); });
+    }, 30000);
+    return () => clearInterval(iv);
   }, []);
+
+  const onTokenUpdate = useCallback((t: Token) => {
+    setAllTokens((prev) => prev.map((x) => (x.id === t.id ? t : x)));
+    refreshProfile();
+  }, [refreshProfile]);
+
+  const onCreated = useCallback((t: Token) => {
+    setAllTokens((prev) => [t, ...prev]);
+    setShowCreate(false);
+    setSelected(t);
+    refreshProfile();
+  }, [refreshProfile]);
 
   const tokens = useMemo(() => {
     let list = allTokens.filter((t) =>
@@ -43,12 +97,37 @@ export default function Home() {
     if (filter === 'new') list = [...list].sort((a, b) => a.createdMinsAgo - b.createdMinsAgo);
     if (filter === 'migrating') list = [...list].sort((a, b) => b.curveProgress - a.curveProgress);
     return list;
-  }, [filter, search]);
+  }, [filter, search, allTokens]);
+
+  const king = useMemo(() => {
+    const contenders = allTokens.filter((t) => !t.complete && t.curveProgress > 0);
+    return contenders.sort((a, b) => b.curveProgress - a.curveProgress)[0] ?? null;
+  }, [allTokens]);
+
+  const tokenNames = useMemo(
+    () => Object.fromEntries(allTokens.map((t) => [t.id, `${t.emoji} $${t.ticker}`])),
+    [allTokens]
+  );
+
+  const openById = useCallback((id: string) => {
+    const t = allTokens.find((x) => x.id === id);
+    if (t) setSelected(t);
+  }, [allTokens]);
 
   const totalVol = allTokens.reduce((s, t) => s + t.volume24h, 0);
 
+  const copyRefLink = () => {
+    const code = profile?.ref_code ?? identity;
+    navigator.clipboard.writeText(shareLink(code)).then(
+      () => toast.success('🔗 Ref link copied — +750 XP for every degen who joins'),
+      () => toast.error('Copy failed')
+    );
+  };
+
   return (
     <div className="min-h-screen bg-[#0a0a10] text-white">
+      <Toaster richColors position="top-center" />
+
       {/* Nav */}
       <nav className="sticky top-0 z-40 border-b border-white/10 bg-[#0a0a10]/90 backdrop-blur">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
@@ -57,12 +136,24 @@ export default function Home() {
             <span className="font-black tracking-tight">HERMES<span className="text-green-400">LAUNCHPAD</span></span>
           </div>
           <div className="flex items-center gap-3">
-            <span className={`hidden sm:inline text-xs px-2 py-1 rounded-full border ${live ? 'bg-green-400/10 text-green-300 border-green-400/20' : 'bg-white/5 text-white/40 border-white/10'}`}>
-              {live ? '● LIVE API' : '○ demo data'} · 24h vol {fmtUsd(totalVol)}
+            {profile && (
+              <button
+                onClick={copyRefLink}
+                title="Copy your referral link"
+                className="hidden sm:flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border border-purple-400/30 bg-purple-500/10 hover:bg-purple-500/20"
+              >
+                <span className="font-black text-purple-300">LVL {profile.level}</span>
+                <span className="text-white/60">{profile.xp.toLocaleString()} XP</span>
+                {profile.streak_days > 0 && <span className="text-orange-400">🔥{profile.streak_days}</span>}
+              </button>
+            )}
+            <span className={`hidden md:inline text-xs px-2 py-1 rounded-full border ${live ? 'bg-green-400/10 text-green-300 border-green-400/20' : 'bg-white/5 text-white/40 border-white/10'}`}>
+              {live ? '● LIVE' : '○ demo'} · 24h {fmtUsd(totalVol)}
             </span>
             <WalletButton wallet={wallet} setWallet={setWallet} />
           </div>
         </div>
+        <Ticker tokenNames={tokenNames} onSelect={openById} />
       </nav>
 
       {/* Hero */}
@@ -79,12 +170,19 @@ export default function Home() {
           <p className="mt-4 text-white/60 max-w-xl mx-auto">
             Fair-launch bonding curves with AI agents writing the lore, scoring the risk, and guarding the vibes. Migrate to Raydium at {fmtUsd(69420)} — LP burned forever.
           </p>
-          <div className="mt-6 flex items-center justify-center gap-3">
-            <button onClick={() => setShowCreate(true)} className="px-6 py-3 rounded-xl bg-green-500 hover:bg-green-400 text-black font-bold">+ Create Token ($0.50)</button>
-            <a href="#explore" className="px-6 py-3 rounded-xl border border-white/20 hover:bg-white/5 font-semibold">Explore Tokens ↓</a>
+          <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
+            <button onClick={() => setShowCreate(true)} className="px-6 py-3 rounded-xl bg-green-500 hover:bg-green-400 text-black font-bold">+ Create Token · earn 1,000 XP</button>
+            <button onClick={copyRefLink} className="px-6 py-3 rounded-xl border border-purple-400/40 bg-purple-500/10 hover:bg-purple-500/20 font-semibold text-purple-200">🔗 Invite · +750 XP</button>
           </div>
         </div>
       </header>
+
+      {/* King of the Hill */}
+      {king && (
+        <section className="max-w-6xl mx-auto px-4 pb-6">
+          <KingOfHill token={king} onSelect={setSelected} />
+        </section>
+      )}
 
       {/* AI Agents strip */}
       <section className="max-w-6xl mx-auto px-4 pb-8">
@@ -145,19 +243,20 @@ export default function Home() {
         {tab === 'quests' && (
           <div className="grid sm:grid-cols-2 gap-3">
             {quests.map((q) => (
-              <div key={q.id} className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <div key={q.id} className={`rounded-xl border p-4 ${q.done ? 'border-green-400/40 bg-green-500/10' : 'border-white/10 bg-white/5'}`}>
                 <div className="flex justify-between items-center">
-                  <span className="font-semibold">{q.title}</span>
+                  <span className="font-semibold">{q.done ? '✅ ' : ''}{q.title}</span>
                   <span className="text-xs px-2 py-1 rounded bg-yellow-400/10 text-yellow-300 border border-yellow-400/20">+{q.xp} XP</span>
                 </div>
                 <div className="mt-3 h-2 rounded-full bg-white/10 overflow-hidden">
-                  <div className="h-full bg-yellow-400 rounded-full" style={{ width: `${(q.progress / q.total) * 100}%` }} />
+                  <div className={`h-full rounded-full ${q.done ? 'bg-green-400' : 'bg-yellow-400'}`} style={{ width: `${Math.min(100, (q.progress / q.total) * 100)}%` }} />
                 </div>
-                <div className="text-xs text-white/40 mt-1">{q.progress}/{q.total} complete</div>
+                <div className="text-xs text-white/40 mt-1">{q.progress}/{q.total} complete{q.done ? ' — paid out' : ''}</div>
               </div>
             ))}
             <div className="rounded-xl border border-purple-400/20 bg-purple-500/10 p-4 sm:col-span-2 text-sm text-purple-200">
-              🔥 <b>Streak bonus:</b> trade 7 days in a row → 2x XP tomorrow. Level 50 unlocks "Legend" badge + revenue share.
+              🔥 <b>Streak bonus:</b> check in daily — day 7 activates a <b>2x XP multiplier</b>.
+              {profile ? ` You're on a ${profile.streak_days}-day streak.` : ''} Level 50 unlocks the "Legend" badge + revenue share.
             </div>
           </div>
         )}
@@ -167,8 +266,11 @@ export default function Home() {
             {ranks.map((t) => (
               <div key={t.rank} className="flex items-center gap-4 px-4 py-3 border-b border-white/5 bg-white/[0.03] hover:bg-white/[0.06]">
                 <span className="w-8 text-center font-black text-lg">{t.rank <= 3 ? ['🥇', '🥈', '🥉'][t.rank - 1] : t.rank}</span>
-                <span className="flex-1 font-semibold">{t.name}</span>
-                <span className="hidden sm:block text-xs text-white/40">{t.trades} trades · {t.winRate}% win</span>
+                <span className="flex-1 font-semibold">
+                  {t.name}
+                  {t.level ? <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-400/20">LVL {t.level}</span> : null}
+                </span>
+                <span className="hidden sm:block text-xs text-white/40">{t.trades} trades · {t.winRate}% win{t.streak ? ` · 🔥${t.streak}` : ''}</span>
                 <span className="text-green-400 font-bold">{fmtUsd(t.pnl)}</span>
                 <span className="hidden sm:block text-xs text-purple-300">{t.xp.toLocaleString()} XP</span>
               </div>
@@ -178,12 +280,26 @@ export default function Home() {
       </main>
 
       <footer className="border-t border-white/10 py-8 text-center text-xs text-white/40 px-4">
-        <p>🛸 Hermes Launchpad — demo launchpad. {live ? 'Data served live from the Hermes API (Cloudflare Worker + D1).' : 'Showing built-in demo data.'} Devnet only — no real funds involved.</p>
+        <p>🛸 Hermes Launchpad — {live ? 'live curve engine: every trade moves the real shared price (Cloudflare Worker + D1).' : 'showing built-in demo data.'} Devnet-grade demo — no real funds involved.</p>
         <p className="mt-1">Nothing here is financial advice. DYOR. Fees: 0.25% platform · 0.25% creator · 0.1% referral · 0.1% burn.</p>
       </footer>
 
-      {selected && <TokenModal token={selected} wallet={wallet} onClose={() => setSelected(null)} />}
-      {showCreate && <CreateTokenModal wallet={wallet} onClose={() => setShowCreate(false)} />}
+      {selected && (
+        <TokenModal
+          token={selected}
+          identity={identity}
+          profile={profile}
+          onClose={() => { setSelected(null); refreshProfile(); }}
+          onTokenUpdate={onTokenUpdate}
+        />
+      )}
+      {showCreate && (
+        <CreateTokenModal
+          identity={identity}
+          onClose={() => setShowCreate(false)}
+          onCreated={onCreated}
+        />
+      )}
     </div>
   );
 }
