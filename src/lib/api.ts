@@ -1,22 +1,109 @@
+// Hermes API client v2 — talks to the live curve-engine worker.
+import type { Token, Quest, Trader, Profile, Trade, CommentItem } from './tokens';
 import { TOKENS, QUESTS, LEADERBOARD } from './tokens';
-import type { Token, Quest, Trader } from './tokens';
 
 const API_BASE = 'https://hermes-api.tahamtandariush.workers.dev';
-const TIMEOUT_MS = 4000;
 
-async function get<T>(path: string, fallback: T): Promise<{ data: T; live: boolean }> {
+async function req<T>(path: string, method: 'GET' | 'POST' = 'GET', body?: unknown, timeoutMs = 8000): Promise<T> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
-    const res = await fetch(`${API_BASE}${path}`, { signal: ctrl.signal });
+    const res = await fetch(`${API_BASE}${path}`, {
+      method,
+      signal: ctrl.signal,
+      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error((e as { error?: string }).error || `HTTP ${res.status}`);
+    }
+    return (await res.json()) as T;
+  } finally {
     clearTimeout(t);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return { data: (await res.json()) as T, live: true };
-  } catch {
-    return { data: fallback, live: false };
   }
 }
 
-export const fetchTokens = () => get<Token[]>('/api/tokens', TOKENS);
-export const fetchQuests = () => get<Quest[]>('/api/quests', QUESTS);
-export const fetchLeaderboard = () => get<Trader[]>('/api/leaderboard', LEADERBOARD);
+// ---- tokens ----
+export async function fetchTokens(): Promise<{ data: Token[]; live: boolean }> {
+  try {
+    return { data: await req<Token[]>('/api/tokens'), live: true };
+  } catch {
+    return { data: TOKENS, live: false };
+  }
+}
+
+export interface XpResult { xpGained?: number; questCompleted?: { title: string; xp: number } | null }
+
+export interface CreatedToken { token: Token }
+export async function createTokenServer(input: { name: string; ticker: string; emoji?: string; wallet: string }): Promise<Token & XpResult> {
+  return req<Token & XpResult>('/api/tokens', 'POST', input);
+}
+
+// ---- trades ----
+export interface TradeResult extends XpResult {
+  ok: boolean;
+  side: 'buy' | 'sell';
+  solAmount: number;
+  tokenAmount: number;
+  price: number;
+  pnl: number;
+  graduated: boolean;
+  token: Token;
+}
+export async function postTrade(input: { token_id: string; wallet: string; side: 'buy' | 'sell'; amount: number }): Promise<TradeResult> {
+  return req<TradeResult>('/api/trades', 'POST', input);
+}
+export async function fetchTrades(tokenId?: string, limit = 25): Promise<Trade[]> {
+  return req<Trade[]>(`/api/trades?limit=${limit}${tokenId ? `&token_id=${tokenId}` : ''}`);
+}
+
+// ---- social ----
+export async function fetchComments(tokenId: string): Promise<CommentItem[]> {
+  return req<CommentItem[]>(`/api/tokens/${tokenId}/comments`);
+}
+export async function postComment(tokenId: string, wallet: string, text: string): Promise<XpResult> {
+  return req<XpResult>(`/api/tokens/${tokenId}/comments`, 'POST', { wallet, text });
+}
+export async function likeToken(tokenId: string, wallet: string): Promise<{ liked: boolean } & XpResult> {
+  return req<{ liked: boolean } & XpResult>(`/api/tokens/${tokenId}/like`, 'POST', { wallet });
+}
+
+// ---- AI agents ----
+export async function genLore(tokenId: string): Promise<{ lore: string }> {
+  return req<{ lore: string }>(`/api/tokens/${tokenId}/lore`, 'POST', {}, 30000);
+}
+export async function genRisk(tokenId: string): Promise<{ score: number; flag: string }> {
+  return req<{ score: number; flag: string }>(`/api/tokens/${tokenId}/risk`, 'POST', {}, 30000);
+}
+
+// ---- profiles / quests / leaderboard ----
+export async function fetchProfile(wallet: string, ref?: string | null): Promise<Profile | null> {
+  try {
+    return await req<Profile>(`/api/profile/${wallet}${ref ? `?ref=${encodeURIComponent(ref)}` : ''}`);
+  } catch {
+    return null;
+  }
+}
+export interface CheckinResult { already?: boolean; streak: number; multiplier?: number; xpGained?: number }
+export async function checkin(wallet: string): Promise<CheckinResult | null> {
+  try {
+    return await req<CheckinResult>(`/api/profile/${wallet}/checkin`, 'POST');
+  } catch {
+    return null;
+  }
+}
+export async function fetchQuests(wallet?: string): Promise<{ data: Quest[]; live: boolean }> {
+  try {
+    return { data: await req<Quest[]>(`/api/quests${wallet ? `?wallet=${wallet}` : ''}`), live: true };
+  } catch {
+    return { data: QUESTS, live: false };
+  }
+}
+export async function fetchLeaderboard(): Promise<{ data: Trader[]; live: boolean }> {
+  try {
+    return { data: await req<Trader[]>('/api/leaderboard'), live: true };
+  } catch {
+    return { data: LEADERBOARD, live: false };
+  }
+}

@@ -6,3 +6,6 @@ compatibility_date = "2025-01-01"
 binding = "DB"
 database_name = "hermes-launchpad-db"
 database_id = "afa984c4-30e5-4f47-afce-a401ee2df098"
+
+[ai]
+binding = "AI"
