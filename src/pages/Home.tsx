@@ -178,7 +178,7 @@ export default function Home() {
       </main>
 
       <footer className="border-t border-white/10 py-8 text-center text-xs text-white/40 px-4">
-        <p>🛸 Hermes Launchpad — demo frontend. Tokens, prices & agents are mock data; no real funds involved.</p>
+        <p>🛸 Hermes Launchpad — demo launchpad. {live ? 'Data served live from the Hermes API (Cloudflare Worker + D1).' : 'Showing built-in demo data.'} Devnet only — no real funds involved.</p>
         <p className="mt-1">Nothing here is financial advice. DYOR. Fees: 0.25% platform · 0.25% creator · 0.1% referral · 0.1% burn.</p>
       </footer>
 

@@ -22,7 +22,6 @@ export interface Token {
 
 export const MIGRATION_TARGET = 69420;
 
-// Fallback demo data — mirrors the live Hermes API (D1 seed) exactly.
 export const TOKENS: Token[] = [
   {
     id: 'antigrav', name: 'Antigravity Pump', ticker: 'AGPUMP', emoji: '🛸',
@@ -57,28 +56,28 @@ export const TOKENS: Token[] = [
     lore: 'It does nothing. It says nothing. It just stands there gaining value.',
     creator: 'grayman', marketCap: 21800, price: 0.00022, change24h: 8.1,
     volume24h: 22800, holders: 980, curveProgress: 31, replies: 233, riskScore: 40,
-    sentiment: 'neutral', chain: 'BASE', spark: [61, 57, 62, 58, 63, 59, 64, 60, 65, 61, 66, 62, 67, 63, 68, 64, 69, 65, 70, 66, 71, 67, 72, 68], createdMinsAgo: 505,
+    sentiment: 'neutral', chain: 'BASE', spark: [59, 55, 60, 56, 61, 55, 60, 56, 61, 57, 60, 56, 61, 57, 62, 56, 61, 57, 62, 58, 61, 57, 62, 58], createdMinsAgo: 505,
   },
   {
     id: 'shrimp', name: 'Shrimp Fried Rice', ticker: 'SFR', emoji: '🍤',
     lore: 'Wok-hei infused liquidity. Certified 100% msg-free and rug-free* (*not certified).',
     creator: 'unclewok', marketCap: 15400, price: 0.00015, change24h: 44.4,
     volume24h: 18900, holders: 742, curveProgress: 22, replies: 198, riskScore: 35,
-    sentiment: 'bullish', chain: 'SOL', spark: [62, 66, 61, 67, 62, 68, 63, 69, 64, 70, 65, 71, 66, 72, 67, 73, 68, 74, 69, 75, 70, 76, 71, 77], createdMinsAgo: 640,
+    sentiment: 'bullish', chain: 'SOL', spark: [57, 53, 58, 54, 59, 55, 60, 56, 61, 57, 62, 58, 63, 59, 64, 60, 65, 61, 66, 62, 67, 63, 68, 64], createdMinsAgo: 640,
   },
   {
     id: 'goblin', name: 'Goblin Mode', ticker: 'GOBLIN', emoji: '👺',
     lore: 'No roadmap. No utility. Only goblin. You were warned in the name itself.',
     creator: 'cavedweller', marketCap: 9800, price: 0.000098, change24h: -32.0,
     volume24h: 9700, holders: 411, curveProgress: 14, replies: 97, riskScore: 74,
-    sentiment: 'bearish', chain: 'SOL', spark: [59, 55, 60, 54, 59, 53, 58, 52, 57, 51, 56, 50, 55, 49, 54, 48, 53, 47, 52, 46, 51, 45, 50, 44], createdMinsAgo: 880,
+    sentiment: 'bearish', chain: 'SOL', spark: [71, 67, 72, 66, 70, 64, 68, 62, 66, 60, 64, 58, 62, 56, 60, 54, 58, 52, 56, 50, 54, 48, 52, 46], createdMinsAgo: 880,
   },
   {
     id: 'doomer', name: 'Doomer Juice', ticker: 'DOOM', emoji: '🥤',
     lore: 'Tastes like red candles and 3am chart-watching. Surprisingly refreshing.',
     creator: 'nightowl', marketCap: 6200, price: 0.000062, change24h: 12.7,
     volume24h: 5400, holders: 268, curveProgress: 9, replies: 64, riskScore: 49,
-    sentiment: 'neutral', chain: 'BASE', spark: [70, 74, 69, 75, 70, 76, 71, 77, 72, 78, 73, 79, 74, 80, 75, 81, 76, 82, 77, 83, 78, 84, 79, 85], createdMinsAgo: 1120,
+    sentiment: 'neutral', chain: 'BASE', spark: [53, 49, 54, 50, 55, 51, 54, 50, 55, 51, 56, 50, 55, 51, 56, 52, 55, 51, 56, 52, 57, 51, 56, 52], createdMinsAgo: 1120,
   },
 ];
 
