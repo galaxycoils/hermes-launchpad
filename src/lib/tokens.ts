@@ -18,6 +18,10 @@ export interface Token {
   spark: number[]; // sparkline points
   createdMinsAgo: number;
   onchainMint?: string; // set when created on devnet for real
+  likes?: number;
+  complete?: boolean; // graduated / migrated
+  realSol?: number;   // SOL raised on the curve
+  priceSol?: number;  // SOL per token
 }
 
 export const MIGRATION_TARGET = 69420;
@@ -87,6 +91,7 @@ export interface Quest {
   xp: number;
   progress: number;
   total: number;
+  done?: boolean;
 }
 
 export const QUESTS: Quest[] = [
@@ -103,6 +108,35 @@ export interface Trader {
   trades: number;
   winRate: number;
   xp: number;
+  level?: number;
+  streak?: number;
+}
+
+export interface Profile {
+  wallet: string;
+  xp: number;
+  level: number;
+  streak_days: number;
+  ref_code: string;
+  trades: number;
+  pnl: number;
+}
+
+export interface Trade {
+  id: number;
+  token_id: string;
+  wallet: string;
+  side: 'buy' | 'sell';
+  sol_amount: number;
+  token_amount: number;
+  price: number;
+  ts: number;
+}
+
+export interface CommentItem {
+  wallet: string;
+  text: string;
+  ts: number;
 }
 
 export const LEADERBOARD: Trader[] = [

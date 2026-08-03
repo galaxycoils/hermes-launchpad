@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { getProvider } from '@/lib/solana';
-import type { PublicKey } from '@solana/web3.js';
+import { getProvider } from '@/lib/wallet';
 
-export default function WalletButton({ wallet, setWallet }: { wallet: PublicKey | null; setWallet: (k: PublicKey | null) => void }) {
+export default function WalletButton({ wallet, setWallet }: { wallet: string | null; setWallet: (k: string | null) => void }) {
   const [busy, setBusy] = useState(false);
 
   const connect = async () => {
@@ -14,7 +13,7 @@ export default function WalletButton({ wallet, setWallet }: { wallet: PublicKey 
     setBusy(true);
     try {
       const res = await provider.connect();
-      setWallet(res.publicKey);
+      setWallet(res.publicKey.toBase58());
     } catch { /* user rejected */ }
     setBusy(false);
   };
@@ -26,7 +25,7 @@ export default function WalletButton({ wallet, setWallet }: { wallet: PublicKey 
   };
 
   if (wallet) {
-    const short = `${wallet.toBase58().slice(0, 4)}…${wallet.toBase58().slice(-4)}`;
+    const short = `${wallet.slice(0, 4)}…${wallet.slice(-4)}`;
     return (
       <button onClick={disconnect} className="px-4 py-1.5 rounded-lg bg-green-500/20 border border-green-400/40 text-green-300 text-sm font-semibold hover:bg-green-500/30">
         {short} ✕
