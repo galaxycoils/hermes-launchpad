@@ -20,7 +20,7 @@ const MIGRATION_SOL = 85;      // graduate at 85 SOL raised
 const FEE = 0.007;             // 0.7% total (0.25 platform + 0.25 creator + 0.1 ref + 0.1 burn)
 const SOL_USD = 150;           // display peg (demo)
 const MAX_TRADE_FRAC = 0.10;   // anti-whale: max 10% of virtual reserves per trade
-const AI_MODEL = "@cf/meta/llama-3.1-8b-instruct";
+const AI_MODEL = "@cf/meta/llama-3.1-8b-fast-v2";
 
 const QUESTS = [
   { id: "q1", title: "Make 3 trades today", xp: 500, total: 3 },
@@ -142,7 +142,9 @@ async function callAi(env, system, user) {
     ],
     max_tokens: 220,
   });
-  return (res && res.response) ? res.response.trim() : "";
+  const r = res && res.response;
+  if (!r) return "";
+  return typeof r === "string" ? r.trim() : JSON.stringify(r);
 }
 
 export default {
