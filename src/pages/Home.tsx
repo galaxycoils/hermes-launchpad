@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Toaster, toast } from 'sonner';
-import { TOKENS, QUESTS, LEADERBOARD, fmtUsd } from '@/lib/tokens';
-import { fetchTokens, fetchQuests, fetchLeaderboard, fetchProfile, checkin } from '@/lib/api';
+import { TOKENS, QUESTS, LEADERBOARD, fmtUsd, fmtAgo } from '@/lib/tokens';
+import { fetchTokens, fetchQuests, fetchLeaderboard, fetchProfile, checkin, fetchReferrals } from '@/lib/api';
 import { getAnonId, captureRef, shareLink } from '@/lib/identity';
-import type { Token, Quest, Trader, Profile } from '@/lib/tokens';
+import type { Token, Quest, Trader, Profile, ReferralStats } from '@/lib/tokens';
 import TokenCard from '@/components/TokenCard';
 import TokenModal from '@/components/TokenModal';
 import WalletButton from '@/components/WalletButton';
@@ -24,7 +24,7 @@ export default function Home() {
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Token | null>(null);
-  const [tab, setTab] = useState<'tokens' | 'quests' | 'ranks'>('tokens');
+  const [tab, setTab] = useState<'tokens' | 'quests' | 'ranks' | 'refs'>('tokens');
   const [allTokens, setAllTokens] = useState<Token[]>(TOKENS);
   const [quests, setQuests] = useState<Quest[]>(QUESTS);
   const [ranks, setRanks] = useState<Trader[]>(LEADERBOARD);
@@ -32,6 +32,7 @@ export default function Home() {
   const [wallet, setWallet] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [refStats, setRefStats] = useState<ReferralStats | null>(null);
 
   const anonId = useRef(getAnonId()).current;
   const identity = wallet ?? anonId;
@@ -116,12 +117,23 @@ export default function Home() {
 
   const totalVol = allTokens.reduce((s, t) => s + t.volume24h, 0);
 
+  // Referral stats load lazily when the tab opens.
+  useEffect(() => {
+    if (tab === 'refs') fetchReferrals(identity).then((s) => s && setRefStats(s));
+  }, [tab, identity]);
+
   const copyRefLink = () => {
-    const code = profile?.ref_code ?? identity;
+    const code = refStats?.code ?? profile?.ref_code ?? identity;
     navigator.clipboard.writeText(shareLink(code)).then(
       () => toast.success('🔗 Ref link copied — +750 XP for every degen who joins'),
       () => toast.error('Copy failed')
     );
+  };
+
+  const shareRefOnX = () => {
+    const code = refStats?.code ?? profile?.ref_code ?? identity;
+    const text = `🛸 Board Hermes Launchpad with my link — AI agents write the lore, the bonding curve never sleeps, and early degens stack XP.\n\n${shareLink(code)}`;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   return (
@@ -201,7 +213,7 @@ export default function Home() {
       {/* Main tabs */}
       <main id="explore" className="max-w-6xl mx-auto px-4 pb-16">
         <div className="flex items-center gap-2 mb-4">
-          {([['tokens', '🪙 Tokens'], ['quests', '⚡ Quests'], ['ranks', '🏆 Leaderboard']] as const).map(([k, label]) => (
+          {([['tokens', '🪙 Tokens'], ['quests', '⚡ Quests'], ['ranks', '🏆 Leaderboard'], ['refs', '🔗 Referrals']] as const).map(([k, label]) => (
             <button
               key={k}
               onClick={() => setTab(k)}
@@ -275,6 +287,68 @@ export default function Home() {
                 <span className="hidden sm:block text-xs text-purple-300">{t.xp.toLocaleString()} XP</span>
               </div>
             ))}
+          </div>
+        )}
+        {tab === 'refs' && (
+          <div className="max-w-2xl mx-auto space-y-4">
+            <div className="rounded-xl border border-purple-400/30 bg-gradient-to-b from-purple-500/15 to-transparent p-6 text-center">
+              <div className="text-4xl">🏴‍☠️</div>
+              <h3 className="text-2xl font-black mt-2">Recruit degens. Stack XP.</h3>
+              <p className="text-sm text-white/60 mt-2 max-w-md mx-auto">
+                Every degen who boards through your link pays you <b className="text-yellow-300">+{refStats?.xpPerInvite ?? 750} XP</b> instantly. No cap, no vesting — just number go up.
+              </p>
+              <div className="mt-5 flex gap-2">
+                <input
+                  readOnly
+                  value={shareLink(refStats?.code ?? profile?.ref_code ?? identity)}
+                  onFocus={(e) => e.target.select()}
+                  className="flex-1 rounded-lg bg-black/50 border border-white/10 px-3 py-2.5 text-xs text-purple-200 font-mono outline-none"
+                />
+                <button onClick={copyRefLink} className="px-5 rounded-lg bg-purple-600 hover:bg-purple-500 text-sm font-bold">Copy</button>
+              </div>
+              <button onClick={shareRefOnX} className="mt-2 w-full py-2.5 rounded-lg bg-white/10 hover:bg-white/15 text-sm font-semibold">
+                📣 Post your link on X
+              </button>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <div className="text-2xl font-black text-white">{refStats?.invites ?? 0}</div>
+                <div className="text-[10px] uppercase tracking-wide text-white/40 mt-1">Recruits</div>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <div className="text-2xl font-black text-yellow-300">{(refStats?.xpEarned ?? 0).toLocaleString()}</div>
+                <div className="text-[10px] uppercase tracking-wide text-white/40 mt-1">XP earned</div>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <div className="text-2xl font-black text-purple-300">+{refStats?.xpPerInvite ?? 750}</div>
+                <div className="text-[10px] uppercase tracking-wide text-white/40 mt-1">XP per recruit</div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <div className="text-xs font-semibold text-white/60 mb-2">🧑‍🚀 Your recruits</div>
+              {refStats && refStats.referred.length > 0 ? (
+                <div className="space-y-1.5">
+                  {refStats.referred.map((r, i) => (
+                    <div key={i} className="flex items-center justify-between text-sm border-b border-white/5 pb-1.5">
+                      <span className="font-mono text-purple-300">{r.name}</span>
+                      <span className="text-xs text-white/40">{fmtAgo(Math.max(1, Math.floor((Date.now() / 1000 - r.ts) / 60)))}</span>
+                      <span className="text-xs text-yellow-300 font-semibold">+{refStats.xpPerInvite} XP</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-white/35">No recruits yet — your link is loaded. Degens who land on it and check in count instantly.</p>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-xs text-white/45 space-y-1">
+              <div><b className="text-white/70">How it works:</b></div>
+              <div>1. Copy your link — it carries your personal ref code.</div>
+              <div>2. Drop it in group chats, X, anywhere degens congregate.</div>
+              <div>3. They land, a profile is created, <b className="text-yellow-300">+750 XP</b> hits your account immediately.</div>
+            </div>
           </div>
         )}
       </main>
