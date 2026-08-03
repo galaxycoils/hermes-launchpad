@@ -1,40 +1,45 @@
 # 🛸 Hermes Launchpad
 
 **Codename: ANTIGRAVITY PUMP** — an AI-native, multi-chain memecoin launchpad.
-Zero-cost stack: Vite + React + TypeScript + Tailwind, hosted free on GitHub + Cloudflare Pages.
+Zero-cost stack: GitHub + Cloudflare Pages + Workers + D1 (all free tier).
 
-> ⚠️ This repo currently contains the **frontend demo** with mock data. No real funds, no real contracts yet.
+> ⚠️ Demo phase: token data is seeded demo data, trades are UI-only. The Solana
+> program is compile-verified and ready to deploy to devnet (see below).
 
-## What's built (V0.1 — demo frontend)
+## Repo map
 
-- **Token discovery** — grid of bonding-curve tokens with sparklines, filters (trending / new / migrating), search
-- **Token detail modal** — price chart, AI narrative lore, migration progress bar ($69,420 target), buy/sell widget with fee breakdown (0.7% total)
-- **AI Agents strip** — The Bard (narrative), The Oracle (risk analyst), The Warden (moderator), The Weaver (sentiment)
-- **Quests & XP** — daily quests, streak bonuses, leveling hooks
-- **Leaderboard** — top traders with PnL, win rate, XP
-- Responsive, dark neon theme, mobile-friendly
+| Path | What |
+|---|---|
+| `src/` | Frontend (Vite + React + TS + Tailwind) — discovery, trade modal, quests, leaderboard |
+| `workers/` | `hermes-api` Cloudflare Worker (REST API, D1-backed) + schema/seed |
+| `programs/hermes-curve/` | Anchor bonding-curve program (compile-verified) + tests + deploy guide |
+| `ci-cd/` | GitHub Actions workflows (activate per `ci-cd/README.md`) |
 
-## Roadmap (from blueprint)
+## Live
 
-1. ✅ V0.1 — frontend demo on free hosting (this)
-2. Solana bonding-curve program (Anchor/Rust) on devnet
-3. Backend: event indexer, WebSocket price feeds, user service
-4. AI agent orchestration (narrative / analyst / moderator / sentiment)
-5. Gamification live + multi-chain (Base)
-6. Audits, then mainnet
+- **Site:** https://hermes-launchpad.pages.dev
+- **API:** https://hermes-api.tahamtandariush.workers.dev (`/api/tokens`, `/api/quests`, `/api/leaderboard`, `/api/stats`)
+- **Program ID (devnet):** `E99nGQh6iCAC43azp4zvpefCRmfY9bZHV7J6LL2yu93U`
+
+The frontend calls the live API and shows a `● LIVE API` badge when connected,
+falling back to built-in demo data if the API is unreachable.
 
 ## Dev
 
 ```bash
 npm install
-npm run dev     # localhost dev server
+npm run dev     # frontend on :3000
 npm run build   # outputs dist/
+
+cd workers && npx wrangler dev        # local API
+cd programs/hermes-curve && anchor test   # program tests (local validator)
 ```
 
-## Deploy (free)
+## Deploy
 
-- **Cloudflare Pages**: connect this repo → build command `npm run build` → output dir `dist`
-- Or `npx wrangler pages deploy dist` with a free Cloudflare account
+- **Site + API:** push to main (after activating `ci-cd/` workflows) or
+  `npx wrangler pages deploy dist` / `cd workers && npx wrangler deploy`
+- **Program:** see `programs/hermes-curve/DEPLOY.md`
 
 ## Legal
 
