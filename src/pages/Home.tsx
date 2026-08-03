@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { TOKENS, QUESTS, LEADERBOARD, fmtUsd } from '@/lib/tokens';
-import type { Token } from '@/lib/tokens';
+import { fetchTokens, fetchQuests, fetchLeaderboard } from '@/lib/api';
+import type { Token, Quest, Trader } from '@/lib/tokens';
 import TokenCard from '@/components/TokenCard';
 import TokenModal from '@/components/TokenModal';
 
@@ -18,9 +19,19 @@ export default function Home() {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Token | null>(null);
   const [tab, setTab] = useState<'tokens' | 'quests' | 'ranks'>('tokens');
+  const [allTokens, setAllTokens] = useState<Token[]>(TOKENS);
+  const [quests, setQuests] = useState<Quest[]>(QUESTS);
+  const [ranks, setRanks] = useState<Trader[]>(LEADERBOARD);
+  const [live, setLive] = useState(false);
+
+  useEffect(() => {
+    fetchTokens().then(({ data, live }) => { setAllTokens(data); setLive(live); });
+    fetchQuests().then(({ data }) => setQuests(data));
+    fetchLeaderboard().then(({ data }) => setRanks(data));
+  }, []);
 
   const tokens = useMemo(() => {
-    let list = TOKENS.filter((t) =>
+    let list = allTokens.filter((t) =>
       (t.name + t.ticker).toLowerCase().includes(search.toLowerCase())
     );
     if (filter === 'trending') list = [...list].sort((a, b) => b.volume24h - a.volume24h);
@@ -29,7 +40,7 @@ export default function Home() {
     return list;
   }, [filter, search]);
 
-  const totalVol = TOKENS.reduce((s, t) => s + t.volume24h, 0);
+  const totalVol = allTokens.reduce((s, t) => s + t.volume24h, 0);
 
   return (
     <div className="min-h-screen bg-[#0a0a10] text-white">
@@ -41,7 +52,9 @@ export default function Home() {
             <span className="font-black tracking-tight">HERMES<span className="text-green-400">LAUNCHPAD</span></span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="hidden sm:inline text-xs px-2 py-1 rounded-full bg-green-400/10 text-green-300 border border-green-400/20">24h vol {fmtUsd(totalVol)}</span>
+            <span className={`hidden sm:inline text-xs px-2 py-1 rounded-full border ${live ? 'bg-green-400/10 text-green-300 border-green-400/20' : 'bg-white/5 text-white/40 border-white/10'}`}>
+              {live ? '● LIVE API' : '○ demo data'} · 24h vol {fmtUsd(totalVol)}
+            </span>
             <button className="px-4 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-sm font-semibold">Connect Wallet</button>
           </div>
         </div>
@@ -126,7 +139,7 @@ export default function Home() {
 
         {tab === 'quests' && (
           <div className="grid sm:grid-cols-2 gap-3">
-            {QUESTS.map((q) => (
+            {quests.map((q) => (
               <div key={q.id} className="rounded-xl border border-white/10 bg-white/5 p-4">
                 <div className="flex justify-between items-center">
                   <span className="font-semibold">{q.title}</span>
@@ -146,7 +159,7 @@ export default function Home() {
 
         {tab === 'ranks' && (
           <div className="rounded-xl border border-white/10 overflow-hidden">
-            {LEADERBOARD.map((t) => (
+            {ranks.map((t) => (
               <div key={t.rank} className="flex items-center gap-4 px-4 py-3 border-b border-white/5 bg-white/[0.03] hover:bg-white/[0.06]">
                 <span className="w-8 text-center font-black text-lg">{t.rank <= 3 ? ['🥇', '🥈', '🥉'][t.rank - 1] : t.rank}</span>
                 <span className="flex-1 font-semibold">{t.name}</span>

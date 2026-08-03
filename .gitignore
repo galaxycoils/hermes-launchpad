@@ -1,9 +1,19 @@
+# Logs
 logs
 *.log
+
 node_modules
 dist
 dist-ssr
 *.local
+
+# Rust / Solana
+target/
+**/deploy/*-keypair.json
+.anchor/
+test-ledger/
+
+# Editor
 .vscode/*
 .idea
 .DS_Store
