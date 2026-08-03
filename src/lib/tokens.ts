@@ -22,73 +22,63 @@ export interface Token {
 
 export const MIGRATION_TARGET = 69420;
 
-const spark = (seed: number, n = 24): number[] => {
-  const out: number[] = [];
-  let v = 50 + (seed % 20);
-  for (let i = 0; i < n; i++) {
-    v += Math.sin(seed * 7 + i * 1.7) * 8 + ((seed * (i + 3)) % 11) - 5;
-    v = Math.max(5, Math.min(95, v));
-    out.push(v);
-  }
-  return out;
-};
-
+// Fallback demo data — mirrors the live Hermes API (D1 seed) exactly.
 export const TOKENS: Token[] = [
   {
     id: 'antigrav', name: 'Antigravity Pump', ticker: 'AGPUMP', emoji: '🛸',
     lore: 'The coin that forgot gravity exists. Born when a dev sneezed on the launch button.',
     creator: '0xHermes', marketCap: 58230, price: 0.00058, change24h: 312.4,
     volume24h: 182000, holders: 4211, curveProgress: 84, replies: 1204, riskScore: 22,
-    sentiment: 'bullish', chain: 'SOL', spark: spark(3), createdMinsAgo: 47,
+    sentiment: 'bullish', chain: 'SOL', spark: [52, 55, 49, 58, 54, 61, 57, 64, 60, 67, 63, 70, 66, 72, 69, 75, 71, 78, 74, 80, 76, 82, 79, 84], createdMinsAgo: 47,
   },
   {
     id: 'mooncat', name: 'Moon Cat', ticker: 'MCAT', emoji: '🐱',
     lore: 'A cat. On the moon. It has a tiny helmet. That is the entire thesis.',
     creator: 'lunarpaw', marketCap: 44100, price: 0.00044, change24h: 128.9,
     volume24h: 96400, holders: 2877, curveProgress: 64, replies: 863, riskScore: 31,
-    sentiment: 'bullish', chain: 'SOL', spark: spark(11), createdMinsAgo: 122,
+    sentiment: 'bullish', chain: 'SOL', spark: [55, 52, 57, 53, 59, 56, 61, 58, 63, 60, 65, 62, 67, 64, 69, 66, 71, 68, 73, 70, 75, 72, 77, 74], createdMinsAgo: 122,
   },
   {
     id: 'bogdanoff', name: 'Bog Coin', ticker: 'BOG', emoji: '🧙',
     lore: 'He bought? Dump eet. He sold? Pump eet. The council decides your candles.',
     creator: 'igorb', marketCap: 38800, price: 0.00039, change24h: -14.2,
     volume24h: 55300, holders: 1930, curveProgress: 56, replies: 420, riskScore: 58,
-    sentiment: 'bearish', chain: 'BASE', spark: spark(17), createdMinsAgo: 240,
+    sentiment: 'bearish', chain: 'BASE', spark: [67, 63, 68, 62, 66, 60, 64, 58, 62, 56, 60, 54, 58, 52, 56, 50, 54, 48, 52, 46, 50, 44, 48, 42], createdMinsAgo: 240,
   },
   {
     id: 'toaster', name: 'Brave Little Toaster', ticker: 'TOAST', emoji: '🍞',
     lore: 'Every buy makes the toast browner. At migration we achieve golden brown.',
     creator: 'kitchensink', marketCap: 29500, price: 0.0003, change24h: 66.6,
     volume24h: 41200, holders: 1455, curveProgress: 43, replies: 512, riskScore: 27,
-    sentiment: 'bullish', chain: 'SOL', spark: spark(23), createdMinsAgo: 310,
+    sentiment: 'bullish', chain: 'SOL', spark: [53, 57, 52, 58, 54, 59, 55, 60, 56, 61, 57, 62, 58, 63, 59, 64, 60, 65, 61, 66, 62, 67, 63, 68], createdMinsAgo: 310,
   },
   {
     id: 'npc', name: 'NPC Token', ticker: 'NPC', emoji: '🧍',
     lore: 'It does nothing. It says nothing. It just stands there gaining value.',
     creator: 'grayman', marketCap: 21800, price: 0.00022, change24h: 8.1,
     volume24h: 22800, holders: 980, curveProgress: 31, replies: 233, riskScore: 40,
-    sentiment: 'neutral', chain: 'BASE', spark: spark(29), createdMinsAgo: 505,
+    sentiment: 'neutral', chain: 'BASE', spark: [61, 57, 62, 58, 63, 59, 64, 60, 65, 61, 66, 62, 67, 63, 68, 64, 69, 65, 70, 66, 71, 67, 72, 68], createdMinsAgo: 505,
   },
   {
     id: 'shrimp', name: 'Shrimp Fried Rice', ticker: 'SFR', emoji: '🍤',
     lore: 'Wok-hei infused liquidity. Certified 100% msg-free and rug-free* (*not certified).',
     creator: 'unclewok', marketCap: 15400, price: 0.00015, change24h: 44.4,
     volume24h: 18900, holders: 742, curveProgress: 22, replies: 198, riskScore: 35,
-    sentiment: 'bullish', chain: 'SOL', spark: spark(37), createdMinsAgo: 640,
+    sentiment: 'bullish', chain: 'SOL', spark: [62, 66, 61, 67, 62, 68, 63, 69, 64, 70, 65, 71, 66, 72, 67, 73, 68, 74, 69, 75, 70, 76, 71, 77], createdMinsAgo: 640,
   },
   {
     id: 'goblin', name: 'Goblin Mode', ticker: 'GOBLIN', emoji: '👺',
     lore: 'No roadmap. No utility. Only goblin. You were warned in the name itself.',
     creator: 'cavedweller', marketCap: 9800, price: 0.000098, change24h: -32.0,
     volume24h: 9700, holders: 411, curveProgress: 14, replies: 97, riskScore: 74,
-    sentiment: 'bearish', chain: 'SOL', spark: spark(41), createdMinsAgo: 880,
+    sentiment: 'bearish', chain: 'SOL', spark: [59, 55, 60, 54, 59, 53, 58, 52, 57, 51, 56, 50, 55, 49, 54, 48, 53, 47, 52, 46, 51, 45, 50, 44], createdMinsAgo: 880,
   },
   {
     id: 'doomer', name: 'Doomer Juice', ticker: 'DOOM', emoji: '🥤',
     lore: 'Tastes like red candles and 3am chart-watching. Surprisingly refreshing.',
     creator: 'nightowl', marketCap: 6200, price: 0.000062, change24h: 12.7,
     volume24h: 5400, holders: 268, curveProgress: 9, replies: 64, riskScore: 49,
-    sentiment: 'neutral', chain: 'BASE', spark: spark(53), createdMinsAgo: 1120,
+    sentiment: 'neutral', chain: 'BASE', spark: [70, 74, 69, 75, 70, 76, 71, 77, 72, 78, 73, 79, 74, 80, 75, 81, 76, 82, 77, 83, 78, 84, 79, 85], createdMinsAgo: 1120,
   },
 ];
 
