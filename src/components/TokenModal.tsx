@@ -1,12 +1,34 @@
 import { useState } from 'react';
+import { Transaction, PublicKey } from '@solana/web3.js';
 import { fmtUsd, MIGRATION_TARGET } from '@/lib/tokens';
 import type { Token } from '@/lib/tokens';
+import { buildTradeIx, getProvider, sendTx, solToLamports } from '@/lib/solana';
 import Sparkline from './Sparkline';
 
-export default function TokenModal({ token, onClose }: { token: Token; onClose: () => void }) {
+export default function TokenModal({ token, wallet, onClose }: { token: Token; wallet: PublicKey | null; onClose: () => void }) {
   const [amount, setAmount] = useState('');
   const [tab, setTab] = useState<'buy' | 'sell'>('buy');
+  const [txState, setTxState] = useState<'idle' | 'working' | 'done' | 'error'>('idle');
+  const [txMsg, setTxMsg] = useState('');
   const est = amount ? (parseFloat(amount) / token.price).toLocaleString(undefined, { maximumFractionDigits: 0 }) : '—';
+  const onchain = Boolean(token.onchainMint) && Boolean(wallet);
+
+  const trade = async () => {
+    const provider = getProvider();
+    if (!provider || !wallet || !token.onchainMint || !amount) return;
+    setTxState('working');
+    try {
+      const mint = new PublicKey(token.onchainMint);
+      const lamports = solToLamports(parseFloat(amount));
+      const ix = buildTradeIx(tab, wallet, mint, lamports, 1n, wallet, wallet);
+      const sig = await sendTx(provider, new Transaction().add(ix));
+      setTxState('done');
+      setTxMsg(sig);
+    } catch (e) {
+      setTxState('error');
+      setTxMsg(e instanceof Error ? e.message.slice(0, 160) : String(e));
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4" onClick={onClose}>
@@ -85,10 +107,32 @@ export default function TokenModal({ token, onClose }: { token: Token; onClose: 
             <span>You receive ≈ {est} {token.ticker}</span>
             <span>Fees: 0.7% · Max slippage 5%</span>
           </div>
-          <button className={`mt-3 w-full py-3 rounded-xl font-bold text-lg ${tab === 'buy' ? 'bg-green-500 hover:bg-green-400 text-black' : 'bg-red-500 hover:bg-red-400 text-white'}`}>
-            {tab === 'buy' ? `Buy ${token.ticker}` : `Sell ${token.ticker}`} (demo)
-          </button>
-          <p className="text-center text-[10px] text-white/30 mt-2">Demo UI — connect wallet & contracts come with the real backend.</p>
+          {onchain ? (
+            <>
+              <button
+                onClick={trade}
+                disabled={txState === 'working' || !amount}
+                className={`mt-3 w-full py-3 rounded-xl font-bold text-lg disabled:opacity-40 ${tab === 'buy' ? 'bg-green-500 hover:bg-green-400 text-black' : 'bg-red-500 hover:bg-red-400 text-white'}`}
+              >
+                {txState === 'working' ? 'Sending to devnet…' : tab === 'buy' ? `Buy ${token.ticker} (devnet)` : `Sell ${token.ticker} (devnet)`}
+              </button>
+              {txState === 'done' && (
+                <a href={`https://explorer.solana.com/tx/${txMsg}?cluster=devnet`} target="_blank" rel="noreferrer" className="block text-center text-xs text-green-400 underline mt-2 break-all">
+                  ✓ Confirmed — view on Explorer
+                </a>
+              )}
+              {txState === 'error' && <p className="text-center text-xs text-red-400 mt-2 break-all">{txMsg}</p>}
+            </>
+          ) : (
+            <>
+              <button className={`mt-3 w-full py-3 rounded-xl font-bold text-lg ${tab === 'buy' ? 'bg-green-500 hover:bg-green-400 text-black' : 'bg-red-500 hover:bg-red-400 text-white'}`}>
+                {tab === 'buy' ? `Buy ${token.ticker}` : `Sell ${token.ticker}`} (demo)
+              </button>
+              <p className="text-center text-[10px] text-white/30 mt-2">
+                {token.onchainMint ? 'Connect a wallet to trade this on devnet.' : 'Demo token — launch your own with "+ Create Token" to trade on devnet.'}
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>

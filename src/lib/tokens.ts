@@ -17,6 +17,7 @@ export interface Token {
   chain: 'SOL' | 'BASE';
   spark: number[]; // sparkline points
   createdMinsAgo: number;
+  onchainMint?: string; // set when created on devnet for real
 }
 
 export const MIGRATION_TARGET = 69420;

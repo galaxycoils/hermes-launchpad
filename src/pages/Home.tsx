@@ -4,6 +4,9 @@ import { fetchTokens, fetchQuests, fetchLeaderboard } from '@/lib/api';
 import type { Token, Quest, Trader } from '@/lib/tokens';
 import TokenCard from '@/components/TokenCard';
 import TokenModal from '@/components/TokenModal';
+import WalletButton from '@/components/WalletButton';
+import CreateTokenModal from '@/components/CreateTokenModal';
+import type { PublicKey } from '@solana/web3.js';
 
 type Filter = 'all' | 'trending' | 'new' | 'migrating';
 
@@ -23,6 +26,8 @@ export default function Home() {
   const [quests, setQuests] = useState<Quest[]>(QUESTS);
   const [ranks, setRanks] = useState<Trader[]>(LEADERBOARD);
   const [live, setLive] = useState(false);
+  const [wallet, setWallet] = useState<PublicKey | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
 
   useEffect(() => {
     fetchTokens().then(({ data, live }) => { setAllTokens(data); setLive(live); });
@@ -55,7 +60,7 @@ export default function Home() {
             <span className={`hidden sm:inline text-xs px-2 py-1 rounded-full border ${live ? 'bg-green-400/10 text-green-300 border-green-400/20' : 'bg-white/5 text-white/40 border-white/10'}`}>
               {live ? '● LIVE API' : '○ demo data'} · 24h vol {fmtUsd(totalVol)}
             </span>
-            <button className="px-4 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-sm font-semibold">Connect Wallet</button>
+            <WalletButton wallet={wallet} setWallet={setWallet} />
           </div>
         </div>
       </nav>
@@ -75,7 +80,7 @@ export default function Home() {
             Fair-launch bonding curves with AI agents writing the lore, scoring the risk, and guarding the vibes. Migrate to Raydium at {fmtUsd(69420)} — LP burned forever.
           </p>
           <div className="mt-6 flex items-center justify-center gap-3">
-            <button className="px-6 py-3 rounded-xl bg-green-500 hover:bg-green-400 text-black font-bold">+ Create Token ($0.50)</button>
+            <button onClick={() => setShowCreate(true)} className="px-6 py-3 rounded-xl bg-green-500 hover:bg-green-400 text-black font-bold">+ Create Token ($0.50)</button>
             <a href="#explore" className="px-6 py-3 rounded-xl border border-white/20 hover:bg-white/5 font-semibold">Explore Tokens ↓</a>
           </div>
         </div>
@@ -177,7 +182,8 @@ export default function Home() {
         <p className="mt-1">Nothing here is financial advice. DYOR. Fees: 0.25% platform · 0.25% creator · 0.1% referral · 0.1% burn.</p>
       </footer>
 
-      {selected && <TokenModal token={selected} onClose={() => setSelected(null)} />}
+      {selected && <TokenModal token={selected} wallet={wallet} onClose={() => setSelected(null)} />}
+      {showCreate && <CreateTokenModal wallet={wallet} onClose={() => setShowCreate(false)} />}
     </div>
   );
 }
