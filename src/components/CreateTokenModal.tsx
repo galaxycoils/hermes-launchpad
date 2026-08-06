@@ -5,103 +5,18 @@ import { createTokenServer } from '@/lib/api';
 import type { Token } from '@/lib/tokens';
 
 const EMOJIS = ['🚀', '🐸', '🦍', '🌙', '⚡', '🔥', '🛸', '💎', '🐕', '🤖', '👑', '🍀'];
-
-interface Props {
-  identity: string;
-  onClose: () => void;
-  onCreated: (t: Token) => void;
-}
+type Props = { identity: string; onClose: () => void; onCreated: (token: Token) => void };
 
 export default function CreateTokenModal({ identity, onClose, onCreated }: Props) {
-  const [name, setName] = useState('');
-  const [ticker, setTicker] = useState('');
-  const [emoji, setEmoji] = useState('🚀');
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState('');
-
+  const [name, setName] = useState(''); const [ticker, setTicker] = useState(''); const [emoji, setEmoji] = useState('🚀');
+  const [step, setStep] = useState(1); const [busy, setBusy] = useState(false); const [error, setError] = useState('');
   const valid = name.trim().length >= 2 && ticker.trim().length >= 2;
-
-  const launch = async () => {
-    if (!valid || busy) return;
-    setBusy(true);
-    setErr('');
-    try {
-      const res = await createTokenServer({
-        name: name.trim(),
-        ticker: ticker.trim().toUpperCase().replace(/^\$/, ''),
-        emoji,
-        wallet: identity,
-      });
-      const { xpGained, questCompleted, ...token } = res;
-      confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 }, colors: ['#22c55e', '#a855f7', '#eab308'] });
-      toast.success(`🚀 $${token.ticker} is LIVE on the curve!`, { description: `+${xpGained ?? 1000} XP for launching` });
-      if (questCompleted) toast(`⚡ Quest complete: ${questCompleted.title} (+${questCompleted.xp} XP)`);
-      onCreated(token as Token);
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Launch failed');
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#12121c] p-6" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-xl font-black">Launch a token <span className="text-green-400">· free</span></h2>
-          <button onClick={onClose} className="text-white/40 hover:text-white text-xl">✕</button>
-        </div>
-
-        <label className="text-xs text-white/50">Name</label>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value.slice(0, 32))}
-          placeholder="e.g. Galactic Gecko"
-          className="mt-1 mb-3 w-full rounded-lg bg-white/5 border border-white/10 px-4 py-2.5 outline-none focus:border-green-400/50 placeholder:text-white/25"
-        />
-
-        <label className="text-xs text-white/50">Ticker</label>
-        <div className="mt-1 mb-3 flex items-center rounded-lg bg-white/5 border border-white/10 focus-within:border-green-400/50">
-          <span className="pl-4 text-white/40">$</span>
-          <input
-            value={ticker}
-            onChange={(e) => setTicker(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10))}
-            placeholder="GECKO"
-            className="flex-1 bg-transparent px-2 py-2.5 outline-none placeholder:text-white/25"
-          />
-        </div>
-
-        <label className="text-xs text-white/50">Mascot</label>
-        <div className="mt-1 mb-4 grid grid-cols-6 gap-2">
-          {EMOJIS.map((e) => (
-            <button
-              key={e}
-              onClick={() => setEmoji(e)}
-              className={`text-2xl py-1.5 rounded-lg border ${emoji === e ? 'border-green-400/60 bg-green-500/15' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}
-            >
-              {e}
-            </button>
-          ))}
-        </div>
-
-        <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3 text-xs text-white/50 mb-4">
-          <div className="flex justify-between"><span>Curve</span><span className="text-white/80">30 SOL virtual · graduates at 85 SOL raised</span></div>
-          <div className="flex justify-between mt-1"><span>Fee</span><span className="text-white/80">0.7% per trade (0.25% goes to you, the creator)</span></div>
-          <div className="flex justify-between mt-1"><span>Reward</span><span className="text-yellow-300">+1,000 XP instantly</span></div>
-        </div>
-
-        {err && <p className="text-xs text-red-400 mb-3">⚠ {err}</p>}
-
-        <button
-          onClick={launch}
-          disabled={!valid || busy}
-          className="w-full py-3 rounded-xl bg-green-500 hover:bg-green-400 disabled:bg-white/10 disabled:text-white/30 text-black font-black text-lg"
-        >
-          {busy ? 'Launching…' : `Launch ${emoji} $${ticker || 'TOKEN'}`}
-        </button>
-        <p className="text-[11px] text-white/30 text-center mt-3">
-          Deployed to the shared devnet curve engine — tradable by everyone instantly.
-        </p>
-      </div>
-    </div>
-  );
+  const launch = async () => { if (!valid || busy) return; setBusy(true); setError(''); try { const result = await createTokenServer({ name: name.trim(), ticker: ticker.trim().toUpperCase().replace(/^\$/, ''), emoji, wallet: identity }); const { xpGained, questCompleted, ...token } = result; confetti({ particleCount: 180, spread: 90, origin: { y: .65 }, colors: ['#00ff66', '#a855f7', '#ffd60a'] }); toast.success(`$${token.ticker} is live`, { description: `+${xpGained ?? 1000} XP` }); if (questCompleted) toast(`Quest complete: ${questCompleted.title} (+${questCompleted.xp} XP)`); onCreated(token as Token); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Launch failed. Try again.'); setBusy(false); } };
+  return <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={onClose} role="presentation"><div role="dialog" aria-modal="true" aria-labelledby="launch-title" className="w-full max-w-md overscroll-contain rounded-t-xl border border-[#2a2a2a] bg-[#111] p-5 sm:rounded-xl" onClick={(event) => event.stopPropagation()}>
+    <div className="mb-5 flex items-center justify-between"><div><p className="font-mono text-[10px] uppercase tracking-[.18em] text-pump">Step {step} / 3</p><h2 id="launch-title" className="text-xl font-black">Launch Token</h2></div><button onClick={onClose} aria-label="Close launch token dialog" className="text-xl text-white/60 hover:text-white">×</button></div>
+    <div className="mb-5 h-1 overflow-hidden rounded bg-white/10"><div className="h-full bg-pump transition-[width]" style={{ width: `${step / 3 * 100}%` }} /></div>
+    {step === 1 && <div className="space-y-4"><div><label htmlFor="token-name" className="text-xs font-bold text-white/65">Token name</label><input id="token-name" name="token-name" autoComplete="off" value={name} onChange={(event) => setName(event.target.value.slice(0, 32))} placeholder="Galactic Gecko…" className="mt-1 w-full rounded-md border border-[#2a2a2a] bg-black px-3 py-2.5 placeholder:text-white/25" /></div><div><label htmlFor="token-ticker" className="text-xs font-bold text-white/65">Ticker</label><div className="mt-1 flex rounded-md border border-[#2a2a2a] bg-black focus-within:border-pump"><span className="px-3 py-2.5 text-white/45">$</span><input id="token-ticker" name="token-ticker" autoComplete="off" spellCheck={false} value={ticker} onChange={(event) => setTicker(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10))} placeholder="GECKO" className="min-w-0 flex-1 bg-transparent py-2.5 pr-3 placeholder:text-white/25" /></div></div><button onClick={() => valid && setStep(2)} disabled={!valid} className="w-full rounded-md bg-pump py-3 font-black text-black disabled:opacity-30">Choose Mascot</button></div>}
+    {step === 2 && <div><p className="mb-3 text-sm text-white/65">Pick a mascot. Curve terms are fixed & shown before launch.</p><div className="grid grid-cols-6 gap-2">{EMOJIS.map((item) => <button key={item} onClick={() => setEmoji(item)} aria-label={`Choose ${item}`} className={`rounded-md border py-2 text-2xl ${emoji === item ? 'border-pump bg-pump/10' : 'border-[#2a2a2a] bg-black hover:border-white/50'}`}>{item}</button>)}</div><div className="mt-5 flex gap-2"><button onClick={() => setStep(1)} className="flex-1 rounded-md border border-[#2a2a2a] py-3 font-bold">Back</button><button onClick={() => setStep(3)} className="flex-1 rounded-md bg-pump py-3 font-black text-black">Review</button></div></div>}
+    {step === 3 && <div className="space-y-4"><div className="rounded-lg border border-[#2a2a2a] bg-black p-4"><p className="text-4xl">{emoji}</p><p className="mt-2 text-lg font-black">{name} <span className="font-mono text-sm text-white/55">${ticker}</span></p><dl className="mt-4 space-y-2 text-xs text-white/65"><div className="flex justify-between"><dt>Curve</dt><dd>30 SOL virtual · 85 SOL graduation</dd></div><div className="flex justify-between"><dt>Fees</dt><dd>0.7% per trade</dd></div><div className="flex justify-between"><dt>Reward</dt><dd className="text-pump">+1,000 XP</dd></div></dl></div>{error && <p className="text-sm text-dump" aria-live="polite">{error}</p>}<div className="flex gap-2"><button onClick={() => setStep(2)} disabled={busy} className="flex-1 rounded-md border border-[#2a2a2a] py-3 font-bold">Back</button><button onClick={launch} disabled={busy} className="flex-1 rounded-md bg-pump py-3 font-black text-black disabled:opacity-50">{busy ? 'Launching…' : `Launch $${ticker}`}</button></div></div>}
+  </div></div>;
 }

@@ -2,53 +2,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { fetchTrades } from '@/lib/api';
 import type { Trade } from '@/lib/tokens';
 
-const short = (w: string) => (w.length > 10 ? `${w.slice(0, 4)}…${w.slice(-3)}` : w);
+const shortWallet = (wallet: string) => wallet.length > 10 ? `${wallet.slice(0, 4)}…${wallet.slice(-4)}` : wallet;
 
 export default function Ticker({ tokenNames, onSelect }: { tokenNames: Record<string, string>; onSelect?: (tokenId: string) => void }) {
   const [trades, setTrades] = useState<Trade[]>([]);
-  const [tick, setTick] = useState(0);
-
-  useEffect(() => {
-    let dead = false;
-    const load = () => fetchTrades(undefined, 20).then((t) => { if (!dead) setTrades(t); }).catch(() => {});
-    load();
-    const iv = setInterval(load, 15000);
-    return () => { dead = true; clearInterval(iv); };
-  }, []);
-
-  useEffect(() => {
-    const iv = setInterval(() => setTick((t) => t + 1), 60000);
-    return () => clearInterval(iv);
-  }, []);
-
-  const items = useMemo(() => trades.map((t) => {
-    const name = tokenNames[t.token_id] || t.token_id;
-    const ago = Math.max(1, Math.floor((tick / 1000 - t.ts) / 60));
-    return { ...t, name, ago };
-  }), [trades, tokenNames, tick]);
-
-  const strip = [...items, ...items]; // duplicate for seamless loop
-  const animationDuration = Math.max(30, strip.length * 4);
-
-  if (trades.length === 0) return null;
-
-  return (
-    <div className="relative overflow-hidden border-t border-white/10 bg-black/40 py-1.5">
-      <style>{`@keyframes hermes-ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }`}</style>
-      <div
-        className="flex gap-6 whitespace-nowrap text-xs w-max"
-        style={{ animation: `hermes-ticker ${animationDuration}s linear infinite` }}
-      >
-        {strip.map((t, i) => (
-          <button
-            key={`${t.id}-${i}`}
-            onClick={() => onSelect?.(t.token_id)}
-            className={`${t.side === 'buy' ? 'text-green-300' : 'text-red-300'} hover:underline`}
-          >
-            {short(t.wallet)} {t.side === 'buy' ? 'bought' : 'sold'} {t.sol_amount.toFixed(2)} SOL of <b>{t.name}</b> · {t.ago}m ago
-          </button>
-        ))}
-      </div>
-    </div>
-  );
+  const [now, setNow] = useState(0);
+  useEffect(() => { let dead = false; const load = () => fetchTrades(undefined, 20).then((items) => { if (!dead) setTrades(items); }).catch(() => {}); load(); const interval = setInterval(load, 15_000); return () => { dead = true; clearInterval(interval); }; }, []);
+  useEffect(() => { const interval = setInterval(() => setNow(Date.now()), 60_000); return () => clearInterval(interval); }, []);
+  const items = useMemo(() => trades.map((trade) => { const minutes = Math.max(1, Math.floor((now / 1000 - trade.ts) / 60)); return { ...trade, name: tokenNames[trade.token_id] || trade.token_id, ago: minutes < 60 ? `${minutes}m` : `${Math.floor(minutes / 60)}h` }; }), [trades, tokenNames, now]);
+  if (!items.length) return null;
+  const stream = [...items, ...items];
+  return <div className="group overflow-hidden border-t border-[#2a2a2a] bg-[#090909] py-2" aria-label="Live trades"><style>{`@keyframes hermes-ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }`}</style><div className="flex w-max gap-8 whitespace-nowrap font-mono text-xs motion-safe:animate-[hermes-ticker_55s_linear_infinite] group-hover:[animation-play-state:paused]">{stream.map((trade, index) => <button key={`${trade.id}-${index}`} onClick={() => onSelect?.(trade.token_id)} className={trade.side === 'buy' ? 'text-pump hover:underline' : 'text-dump hover:underline'}><span className="text-white/55">{shortWallet(trade.wallet)}</span> {trade.side === 'buy' ? 'BOUGHT' : 'SOLD'} {trade.sol_amount.toFixed(2)} SOL <span className="font-bold">{trade.name}</span> <span className="text-white/40">· {trade.ago}</span></button>)}</div></div>;
 }

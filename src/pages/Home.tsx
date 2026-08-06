@@ -10,21 +10,15 @@ import WalletButton from '@/components/WalletButton';
 import CreateTokenModal from '@/components/CreateTokenModal';
 import Ticker from '@/components/Ticker';
 import KingOfHill from '@/components/KingOfHill';
+import OnboardingTour from '@/components/OnboardingTour';
 
 type Filter = 'all' | 'trending' | 'new' | 'migrating';
 
-const AGENTS = [
-  { name: 'The Bard', role: 'Narrative Agent', desc: 'Generates token lore & tweet threads', icon: '📜' },
-  { name: 'The Oracle', role: 'Analyst Agent', desc: 'On-chain risk scores & red flags', icon: '🔮' },
-  { name: 'The Warden', role: 'Moderator Agent', desc: 'Scam, spam & safety filtering', icon: '🛡️' },
-  { name: 'The Weaver', role: 'Sentiment Agent', desc: 'Twitter/Telegram/on-chain mood', icon: '🕸️' },
-];
-
-export default function Home() {
+export default function Home({ initialTab = 'tokens' }: { initialTab?: 'tokens' | 'profile' }) {
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Token | null>(null);
-  const [tab, setTab] = useState<'tokens' | 'quests' | 'ranks' | 'refs'>('tokens');
+  const [tab, setTab] = useState<'tokens' | 'profile'>(initialTab);
   const [allTokens, setAllTokens] = useState<Token[]>(TOKENS);
   const [quests, setQuests] = useState<Quest[]>(QUESTS);
   const [ranks, setRanks] = useState<Trader[]>(LEADERBOARD);
@@ -124,7 +118,7 @@ export default function Home() {
 
   // Referral stats load lazily when the tab opens.
   useEffect(() => {
-    if (tab === 'refs') fetchReferrals(identity).then((s) => s && setRefStats(s));
+    if (tab === 'profile') fetchReferrals(identity).then((s) => s && setRefStats(s));
   }, [tab, identity]);
 
   const copyRefLink = () => {
@@ -142,31 +136,19 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a10] text-white">
+    <div className="min-h-screen bg-black text-white" data-vaul-drawer-wrapper="">
+      <a className="skip-link" href="#main-content">Skip to token feed</a>
       <Toaster richColors position="top-center" />
+      <OnboardingTour />
 
       {/* Nav */}
-      <nav className="sticky top-0 z-40 border-b border-white/10 bg-[#0a0a10]/90 backdrop-blur">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🛸</span>
-            <span className="font-black tracking-tight">HERMES<span className="text-green-400">LAUNCHPAD</span></span>
-          </div>
+      <nav className="sticky top-0 z-40 border-b border-[#2a2a2a] bg-black/95 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-3 sm:px-4">
+          <div className="flex items-center gap-2" translate="no"><span className="text-2xl" aria-hidden="true">🛸</span><span className="font-black tracking-tight">HERMES<span className="text-pump">.FUN</span></span></div>
           <div className="flex items-center gap-3">
-            {profile && (
-              <button
-                onClick={copyRefLink}
-                title="Copy your referral link"
-                className="hidden sm:flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border border-purple-400/30 bg-purple-500/10 hover:bg-purple-500/20"
-              >
-                <span className="font-black text-purple-300">LVL {profile.level}</span>
-                <span className="text-white/60">{profile.xp.toLocaleString()} XP</span>
-                {profile.streak_days > 0 && <span className="text-orange-400">🔥{profile.streak_days}</span>}
-              </button>
-            )}
-            <span className={`hidden md:inline text-xs px-2 py-1 rounded-full border ${live ? 'bg-green-400/10 text-green-300 border-green-400/20' : 'bg-white/5 text-white/40 border-white/10'}`}>
-              {live ? '● LIVE' : '○ demo'} · 24h {fmtUsd(totalVol)}
-            </span>
+            {profile && <button onClick={copyRefLink} title="Copy referral link" className="hidden font-mono text-xs text-purple-300 sm:block">LVL {profile.level} · {profile.xp.toLocaleString()} XP</button>}
+            <span className={`hidden font-mono text-xs md:inline ${live ? 'text-pump' : 'text-white/45'}`}>{live ? '● LIVE' : '○ DEMO'} · VOL {fmtUsd(totalVol)}</span>
+            <button onClick={() => setShowCreate(true)} className="hidden rounded-md bg-pump px-3 py-2 text-sm font-black text-black sm:block">Create</button>
             <WalletButton wallet={wallet} setWallet={setWallet} />
           </div>
         </div>
@@ -174,25 +156,7 @@ export default function Home() {
       </nav>
 
       {/* Hero */}
-      <header className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(168,85,247,0.15),_transparent_60%)]" />
-        <div className="max-w-6xl mx-auto px-4 py-14 relative text-center">
-          <div className="inline-block text-xs px-3 py-1 rounded-full border border-purple-400/30 bg-purple-500/10 text-purple-300 mb-4">
-            AI-Native · Multi-Chain · 0.7% fees — 75% cheaper than pump.fun
-          </div>
-          <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight">
-            Launch a coin.<br />
-            <span className="bg-gradient-to-r from-purple-400 via-green-400 to-emerald-300 bg-clip-text text-transparent">Defy gravity.</span>
-          </h1>
-          <p className="mt-4 text-white/60 max-w-xl mx-auto">
-            Fair-launch bonding curves with AI agents writing the lore, scoring the risk, and guarding the vibes. Migrate to Raydium at {fmtUsd(69420)} — LP burned forever.
-          </p>
-          <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
-            <button onClick={() => setShowCreate(true)} className="px-6 py-3 rounded-xl bg-green-500 hover:bg-green-400 text-black font-bold">+ Create Token · earn 1,000 XP</button>
-            <button onClick={copyRefLink} className="px-6 py-3 rounded-xl border border-purple-400/40 bg-purple-500/10 hover:bg-purple-500/20 font-semibold text-purple-200">🔗 Invite · +750 XP</button>
-          </div>
-        </div>
-      </header>
+      <header className="relative overflow-hidden border-b border-[#2a2a2a]"><div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(168,85,247,.22),transparent_58%)]" /><div className="relative mx-auto max-w-6xl px-4 py-12 sm:py-16"><span className="font-mono text-xs uppercase tracking-[.2em] text-pump">Fair Launches · Live Curves</span><h1 className="mt-3 max-w-3xl text-balance text-5xl font-black tracking-[-.06em] sm:text-7xl">Launch fast.<br /><span className="text-pump">Trade louder.</span></h1><p className="mt-4 max-w-xl text-pretty text-sm leading-6 text-white/65 sm:text-base">Bonding curves, live social proof & optional AI research. Graduate at {fmtUsd(69420)} market cap.</p><div className="mt-7 flex flex-wrap gap-2"><button onClick={() => setShowCreate(true)} className="rounded-md bg-pump px-5 py-3 font-black text-black transition-transform active:scale-[.98]">Launch Token</button><button onClick={copyRefLink} className="rounded-md border border-[#a855f7]/60 bg-[#a855f7]/10 px-5 py-3 font-bold text-purple-200">Copy Referral Link</button></div></div></header>
 
       {/* King of the Hill */}
       {king && (
@@ -201,31 +165,12 @@ export default function Home() {
         </section>
       )}
 
-      {/* AI Agents strip */}
-      <section className="max-w-6xl mx-auto px-4 pb-8">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {AGENTS.map((a) => (
-            <div key={a.name} className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="text-2xl">{a.icon}</div>
-              <div className="font-bold mt-1">{a.name}</div>
-              <div className="text-[11px] text-purple-300">{a.role}</div>
-              <div className="text-xs text-white/50 mt-1">{a.desc}</div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <aside className="mx-auto max-w-6xl px-4 py-5 text-xs text-white/55"><span className="mr-2 rounded bg-hermes/20 px-2 py-1 font-mono text-purple-200">AI RESEARCH</span> Open any token for Bard lore & Oracle risk signals.</aside>
 
-      {/* Main tabs */}
-      <main id="explore" className="max-w-6xl mx-auto px-4 pb-16">
-        <div className="flex items-center gap-2 mb-4">
-          {([['tokens', '🪙 Tokens'], ['quests', '⚡ Quests'], ['ranks', '🏆 Leaderboard'], ['refs', '🔗 Referrals']] as const).map(([k, label]) => (
-            <button
-              key={k}
-              onClick={() => setTab(k)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold ${tab === k ? 'bg-white text-black' : 'bg-white/10 text-white/60 hover:bg-white/15'}`}
-            >
-              {label}
-            </button>
+      <main id="main-content" className="mx-auto max-w-6xl px-3 pb-24 pt-6 sm:px-4 sm:pb-16">
+        <div className="mb-5 flex items-center gap-2 border-b border-[#2a2a2a]">
+          {([['tokens', 'Trade'], ['profile', 'Profile']] as const).map(([k, label]) => (
+            <button key={k} onClick={() => setTab(k)} className={`border-b-2 px-3 py-3 text-sm font-black ${tab === k ? 'border-pump text-pump' : 'border-transparent text-white/50 hover:text-white'}`}>{label}</button>
           ))}
         </div>
 
@@ -235,15 +180,16 @@ export default function Home() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search tokens..."
-                className="flex-1 rounded-lg bg-white/5 border border-white/10 px-4 py-2.5 text-white placeholder:text-white/30 outline-none focus:border-green-400/50"
+                placeholder="Search tokens…"
+                aria-label="Search tokens"
+                className="flex-1 rounded-md border border-[#2a2a2a] bg-[#111] px-4 py-2.5 text-white placeholder:text-white/30 focus:border-pump"
               />
               <div className="flex gap-2">
                 {(['all', 'trending', 'new', 'migrating'] as Filter[]).map((f) => (
                   <button
                     key={f}
                     onClick={() => setFilter(f)}
-                    className={`px-3 py-2 rounded-lg text-sm capitalize ${filter === f ? 'bg-green-500/20 text-green-300 border border-green-400/40' : 'bg-white/5 text-white/50 border border-white/10'}`}
+                    className={`rounded-md border px-3 py-2 text-sm capitalize ${filter === f ? 'border-pump bg-pump/10 text-pump' : 'border-[#2a2a2a] bg-[#111] text-white/60 hover:text-white'}`}
                   >
                     {f === 'migrating' ? '🚀 migrating' : f}
                   </button>
@@ -257,7 +203,7 @@ export default function Home() {
           </>
         )}
 
-        {tab === 'quests' && (
+        {tab === 'profile' && (
           <div className="grid sm:grid-cols-2 gap-3">
             {quests.map((q) => (
               <div key={q.id} className={`rounded-xl border p-4 ${q.done ? 'border-green-400/40 bg-green-500/10' : 'border-white/10 bg-white/5'}`}>
@@ -278,7 +224,7 @@ export default function Home() {
           </div>
         )}
 
-        {tab === 'ranks' && (
+        {tab === 'profile' && (
           <div className="rounded-xl border border-white/10 overflow-hidden">
             {ranks.map((t) => (
               <div key={t.rank} className="flex items-center gap-4 px-4 py-3 border-b border-white/5 bg-white/[0.03] hover:bg-white/[0.06]">
@@ -294,7 +240,7 @@ export default function Home() {
             ))}
           </div>
         )}
-        {tab === 'refs' && (
+        {tab === 'profile' && (
           <div className="max-w-2xl mx-auto space-y-4">
             <div className="rounded-xl border border-purple-400/30 bg-gradient-to-b from-purple-500/15 to-transparent p-6 text-center">
               <div className="text-4xl">🏴‍☠️</div>
@@ -357,8 +303,9 @@ export default function Home() {
           </div>
         )}
       </main>
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-[#2a2a2a] bg-black/95 px-4 pb-[env(safe-area-inset-bottom)] sm:hidden" aria-label="Mobile navigation"><button onClick={() => setTab('tokens')} className={`flex-1 py-3 text-sm font-black ${tab === 'tokens' ? 'text-pump' : 'text-white/45'}`}>Trade</button><button onClick={() => setShowCreate(true)} className="-mt-4 rounded-full bg-pump px-5 py-3 text-sm font-black text-black shadow-lg">Create</button><button onClick={() => setTab('profile')} className={`flex-1 py-3 text-sm font-black ${tab === 'profile' ? 'text-pump' : 'text-white/45'}`}>Profile</button></nav>
 
-      <footer className="border-t border-white/10 py-8 text-center text-xs text-white/40 px-4">
+      <footer className="border-t border-[#2a2a2a] px-4 py-8 text-center text-xs text-white/40">
         <p>🤖Hermes Launchpad — worlds largest gaming launchpad on Solana: bonding-curve engine with AI agents writing the lore, scoring the risk, and guarding the vibes with the AI Narrative.</p>
         <p className="mt-1">Nothing in this project is financial advice or solicitation. Always do your own research. Hermes team only fees: 0.25% platform · 0.25% creator · 0.1% referral · 0.1% burn.</p>
       </footer>

@@ -32,6 +32,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
   const [commentText, setCommentText] = useState('');
   const [aiBusy, setAiBusy] = useState<'lore' | 'risk' | null>(null);
   const [liked, setLiked] = useState(false);
+  const [showResearch, setShowResearch] = useState(false);
 
   useEffect(() => {
     fetchComments(token.id).then(setComments).catch(() => {});
@@ -120,9 +121,10 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
     setAiBusy(null);
   };
 
-  const share = () => {
+  const share = async () => {
     const link = shareLink(profile?.ref_code || identity, token.id);
-    const text = `🛸 $${token.ticker} — ${token.name}\n\n"${token.lore}"\n\n${token.curveProgress}% to Raydium graduation on Hermes Launchpad. The Bard writes the lore, the curve never sleeps.\n\n${link}`;
+    const text = `$${token.ticker} — ${token.name}\n\n${token.curveProgress}% to Raydium graduation on Hermes Launchpad.\n\n${link}`;
+    if (navigator.share) { try { await navigator.share({ title: token.name, text, url: link }); return; } catch { /* Share dismissed. */ } }
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -131,11 +133,8 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
     : amount ? `${(parseFloat(amount) * (token.priceSol || 0)).toFixed(4)} SOL` : '—';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4" onClick={onClose}>
-      <div
-        className="w-full sm:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-white/10 bg-[#12121a] p-5"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 p-0 backdrop-blur-sm sm:justify-end" onClick={onClose} role="presentation">
+      <div role="dialog" aria-modal="true" aria-label={`${token.name} trading panel`} className="max-h-[94vh] w-full overscroll-contain overflow-y-auto rounded-t-xl border border-[#2a2a2a] bg-[#111] p-5 sm:h-full sm:max-h-none sm:w-[32rem] sm:rounded-none" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <span className="text-5xl">{token.emoji}</span>
@@ -147,7 +146,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
               <div className="text-xs text-white/50">{token.chain} · created by {token.creator}</div>
             </div>
           </div>
-          <button onClick={onClose} className="text-white/50 hover:text-white text-2xl leading-none">×</button>
+          <button onClick={onClose} aria-label="Close trading panel" className="text-2xl leading-none text-white/50 hover:text-white">×</button>
         </div>
 
         <div className="mt-4 rounded-xl bg-white/5 border border-white/10 p-4">
@@ -171,11 +170,8 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
 
         {/* AI Agents — the pump.fun-killer: no competitor has these */}
         <div className="mt-4 rounded-xl border border-purple-400/25 bg-gradient-to-b from-purple-500/10 to-transparent p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-xs font-black tracking-wide text-purple-200">🤖 AI AGENTS ON DUTY</div>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-400/10 text-green-300 border border-green-400/20">● live on Workers AI</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="mb-3 flex items-center justify-between"><button onClick={() => setShowResearch((value) => !value)} aria-expanded={showResearch} className="text-xs font-black tracking-wide text-purple-200">AI RESEARCH {showResearch ? '−' : '+'}</button><span className="rounded-full border border-[#00ff66]/20 bg-[#00ff66]/10 px-2 py-0.5 text-[10px] text-pump">● live</span></div>
+          <div className={showResearch ? 'grid grid-cols-2 gap-2' : 'hidden'}>
             <button
               onClick={callBard}
               disabled={aiBusy !== null}
@@ -196,12 +192,12 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
             </button>
           </div>
 
-          <div className="mt-3 rounded-lg bg-black/30 border border-purple-400/15 p-3">
+          <div className={showResearch ? 'mt-3 rounded-lg border border-purple-400/15 bg-black/30 p-3' : 'hidden'}>
             <div className="text-[10px] font-semibold text-purple-300 mb-1">📜 THE BARD'S LORE</div>
             <p className="text-sm text-white/85 italic">"{token.lore}"</p>
           </div>
 
-          <div className="mt-2 rounded-lg bg-black/30 border border-cyan-400/15 p-3">
+          <div className={showResearch ? 'mt-2 rounded-lg border border-cyan-400/15 bg-black/30 p-3' : 'hidden'}>
             <div className="flex items-center justify-between mb-1.5">
               <div className="text-[10px] font-semibold text-cyan-300">🔮 THE ORACLE'S VERDICT</div>
               <div className={`text-xs font-black ${token.riskScore < 40 ? 'text-green-400' : token.riskScore < 65 ? 'text-yellow-400' : 'text-red-400'}`}>
@@ -252,6 +248,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
             <input
               value={amount}
               onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ''))}
+              type="number" inputMode="decimal" aria-label={tab === 'buy' ? 'Amount in SOL' : 'Amount in tokens'}
               placeholder={tab === 'buy' ? 'Amount in SOL' : 'Amount in tokens'}
               className="mt-2 w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2.5 text-white placeholder:text-white/30 outline-none focus:border-green-400/50"
             />
@@ -311,8 +308,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && sendComment()}
-                maxLength={280}
-                placeholder="Drop alpha (or cope)…"
+                aria-label="Write a reply" maxLength={280} placeholder="Drop alpha (or cope)…"
                 className="w-full rounded-lg bg-black/40 border border-white/10 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-purple-400/50"
               />
               <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-white/25">{commentText.length}/280</span>

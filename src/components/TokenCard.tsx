@@ -1,67 +1,18 @@
-import { fmtUsd, fmtAgo } from '@/lib/tokens';
+import { fmtUsd } from '@/lib/tokens';
 import type { Token } from '@/lib/tokens';
 import Sparkline from './Sparkline';
 
-const sentimentColor = { bullish: 'text-green-400', neutral: 'text-yellow-400', bearish: 'text-red-400' } as const;
-const riskColor = (s: number) => (s < 40 ? 'text-green-400' : s < 65 ? 'text-yellow-400' : 'text-red-400');
-
 export default function TokenCard({ token, onSelect }: { token: Token; onSelect: (t: Token) => void }) {
   const up = token.change24h >= 0;
-  return (
-    <button
-      onClick={() => onSelect(token)}
-      className="w-full text-left rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-green-400/40 transition-all p-4 group"
-    >
-      <div className="flex items-start gap-3">
-        <div className="text-4xl">{token.emoji}</div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-white truncate">{token.name}</span>
-            <span className="text-xs px-1.5 py-0.5 rounded bg-white/10 text-white/70">{token.chain}</span>
-            {token.complete && <span className="text-[10px] px-1.5 py-0.5 rounded bg-yellow-400/15 text-yellow-300 border border-yellow-400/30 font-bold">🎓 GRADUATED</span>}
-            <span className={`text-xs ${sentimentColor[token.sentiment]}`}>{token.sentiment}</span>
-          </div>
-          <div className="text-xs text-white/50 mt-0.5">
-            ${token.ticker} · by {token.creator} · {fmtAgo(token.createdMinsAgo)}
-          </div>
-        </div>
-        <Sparkline data={token.spark} positive={up} />
-      </div>
-
-      <div className="grid grid-cols-3 gap-2 mt-3 text-center">
-        <div>
-          <div className="text-[10px] uppercase tracking-wide text-white/40">Mkt Cap</div>
-          <div className="text-sm font-semibold text-white">{fmtUsd(token.marketCap)}</div>
-        </div>
-        <div>
-          <div className="text-[10px] uppercase tracking-wide text-white/40">24h</div>
-          <div className={`text-sm font-semibold ${up ? 'text-green-400' : 'text-red-400'}`}>
-            {up ? '+' : ''}{token.change24h.toFixed(1)}%
-          </div>
-        </div>
-        <div>
-          <div className="text-[10px] uppercase tracking-wide text-white/40">Holders</div>
-          <div className="text-sm font-semibold text-white">{token.holders.toLocaleString()}</div>
-        </div>
-      </div>
-
-      <div className="mt-3">
-        <div className="flex justify-between text-[10px] text-white/50 mb-1">
-          <span>Bonding curve</span>
-          <span>{token.curveProgress}% to migration</span>
-        </div>
-        <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all ${token.curveProgress > 80 ? 'bg-gradient-to-r from-green-400 to-emerald-300' : 'bg-gradient-to-r from-purple-500 to-green-400'}`}
-            style={{ width: `${token.curveProgress}%` }}
-          />
-        </div>
-      </div>
-
-      <div className="mt-2 flex items-center justify-between text-[11px] text-white/40">
-        <span>💬 {token.replies}{token.likes ? ` · ❤️ ${token.likes}` : ''} · AI risk <span className={riskColor(token.riskScore)}>{token.riskScore}/100</span></span>
-        <span className="opacity-0 group-hover:opacity-100 transition-opacity text-green-400">Trade →</span>
-      </div>
-    </button>
-  );
+  const signal = up ? 'text-pump' : 'text-dump';
+  return <button onClick={() => onSelect(token)} className="group surface content-visibility-auto w-full rounded-lg border p-3 text-left transition-[border-color,background-color,transform] hover:-translate-y-0.5 hover:border-[#00ff66]/70 hover:bg-[#161616] active:translate-y-0">
+    <div className="flex min-w-0 items-center gap-2">
+      <span className="text-3xl" aria-hidden="true">{token.emoji}</span>
+      <div className="min-w-0 flex-1"><div className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-pump" aria-label="Active market" /><span className="truncate font-bold">{token.name}</span><span className="font-mono text-xs text-white/55">${token.ticker}</span></div><div className="truncate text-[11px] text-white/45">{token.holders.toLocaleString()} holders · {token.replies} replies</div></div>
+      <Sparkline data={token.spark} positive={up} w={78} h={30} />
+    </div>
+    <div className="mt-3 grid grid-cols-3 gap-2 font-mono text-xs tabular-nums"><div><span className="block text-[10px] uppercase tracking-wider text-white/45">Mcap</span><b>{fmtUsd(token.marketCap)}</b></div><div><span className="block text-[10px] uppercase tracking-wider text-white/45">24h</span><b className={signal}>{up ? '+' : ''}{token.change24h.toFixed(1)}%</b></div><div><span className="block text-[10px] uppercase tracking-wider text-white/45">Vol</span><b>{fmtUsd(token.volume24h)}</b></div></div>
+    <div className="mt-3"><div className="mb-1 flex justify-between text-[10px] uppercase tracking-wider text-white/50"><span>Curve</span><span>{token.curveProgress.toFixed(0)}% to Raydium</span></div><div className="h-1.5 overflow-hidden rounded-full bg-white/10"><div className={token.curveProgress > 80 ? 'h-full bg-pump' : 'h-full bg-hermes'} style={{ width: `${token.curveProgress}%` }} /></div></div>
+    <div className="mt-3 flex items-center justify-between"><span className="text-xs text-white/50">AI risk <b className={token.riskScore < 40 ? 'text-pump' : token.riskScore < 65 ? 'text-yellow-300' : 'text-dump'}>{token.riskScore}/100</b></span><span className="rounded-md bg-pump px-2 py-1 text-xs font-black text-black">Trade</span></div>
+  </button>;
 }

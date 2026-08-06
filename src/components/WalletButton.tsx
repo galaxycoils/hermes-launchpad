@@ -3,38 +3,8 @@ import { getProvider } from '@/lib/wallet';
 
 export default function WalletButton({ wallet, setWallet }: { wallet: string | null; setWallet: (k: string | null) => void }) {
   const [busy, setBusy] = useState(false);
-
-  const connect = async () => {
-    const provider = getProvider();
-    if (!provider) {
-      window.open('https://phantom.com/', '_blank');
-      return;
-    }
-    setBusy(true);
-    try {
-      const res = await provider.connect();
-      setWallet(res.publicKey.toBase58());
-    } catch { /* user rejected */ }
-    setBusy(false);
-  };
-
-  const disconnect = async () => {
-    const provider = getProvider();
-    try { await provider?.disconnect(); } catch { /* noop */ }
-    setWallet(null);
-  };
-
-  if (wallet) {
-    const short = `${wallet.slice(0, 4)}…${wallet.slice(-4)}`;
-    return (
-      <button onClick={disconnect} className="px-4 py-1.5 rounded-lg bg-green-500/20 border border-green-400/40 text-green-300 text-sm font-semibold hover:bg-green-500/30">
-        {short} ✕
-      </button>
-    );
-  }
-  return (
-    <button onClick={connect} disabled={busy} className="px-4 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-sm font-semibold disabled:opacity-50">
-      {busy ? 'Connecting…' : 'Connect Wallet'}
-    </button>
-  );
+  const connect = async () => { const provider = getProvider(); if (!provider) { window.open('https://phantom.com/', '_blank'); return; } setBusy(true); try { const res = await provider.connect(); setWallet(res.publicKey.toBase58()); } catch { /* User cancelled. */ } setBusy(false); };
+  const disconnect = async () => { try { await getProvider()?.disconnect(); } catch { /* Provider already disconnected. */ } setWallet(null); };
+  if (wallet) return <button onClick={disconnect} className="rounded-md border border-[#00ff66]/50 bg-[#00ff66]/10 px-3 py-2 font-mono text-xs text-pump">{wallet.slice(0, 4)}…{wallet.slice(-4)} ×</button>;
+  return <button onClick={connect} disabled={busy} className="rounded-md bg-hermes px-3 py-2 text-sm font-black text-white transition-[background-color,transform] hover:bg-purple-400 active:scale-[.98] disabled:opacity-50">{busy ? 'Connecting…' : 'Connect Wallet'}</button>;
 }
