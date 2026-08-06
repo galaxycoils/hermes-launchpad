@@ -1,0 +1,58 @@
+name: Deploy (Cloudflare)
+
+# Auto-deploys on every push to main:
+#   - frontend -> Cloudflare Pages (hermes-launchpad)
+#   - workers/ -> Cloudflare Workers (hermes-api)
+#
+# Required repo secrets (Settings > Secrets and variables > Actions):
+#   CF_API_TOKEN   — Cloudflare API token with "Cloudflare Pages: Edit" and "Workers Scripts: Edit"
+#   CF_ACCOUNT_ID  — a55a43856c7029505b79300ec82f1629
+#
+# Alternative (zero-secrets): Cloudflare dashboard > Pages > hermes-launchpad >
+# "Connect to Git" for native git integration (build: npm run build, output: dist).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-pages:
+    runs-on: ubuntu-22.04
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci || npm install
+      - run: npm run build
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=hermes-launchpad --branch=main
+
+  deploy-worker:
+    runs-on: ubuntu-22.04
+    environment: production
+    defaults:
+      run:
+        working-directory: workers
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy Worker API
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          command: deploy
