@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Toaster, toast } from 'sonner';
 import { TOKENS, QUESTS, LEADERBOARD, fmtUsd, fmtAgo } from '@/lib/tokens';
 import { fetchTokens, fetchQuests, fetchLeaderboard, fetchProfile, checkin, fetchReferrals } from '@/lib/api';
@@ -34,7 +34,14 @@ export default function Home() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [refStats, setRefStats] = useState<ReferralStats | null>(null);
 
-  const anonId = useRef(getAnonId()).current;
+  const [anonId] = useState(getAnonId);
+  const [tick, setTick] = useState(() => Date.now());
+
+  useEffect(() => {
+    const iv = setInterval(() => setTick(Date.now()), 60000);
+    return () => clearInterval(iv);
+  }, []);
+
   const identity = wallet ?? anonId;
 
   const refreshProfile = useCallback(() => {
@@ -48,7 +55,6 @@ export default function Home() {
     fetchTokens().then(({ data, live: isLive }) => {
       setAllTokens(data);
       setLive(isLive);
-      // deep link ?token=<id>
       const tid = new URLSearchParams(window.location.search).get('token');
       if (tid) {
         const t = data.find((x) => x.id === tid);
@@ -67,10 +73,9 @@ export default function Home() {
       toast(`🔥 Day ${c.streak} streak! +${c.xpGained ?? 50} XP${mult}`, { duration: 5000 });
     });
     fetchQuests(identity).then(({ data }) => setQuests(data));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [identity]);
 
-  // Keep the board fresh — FOMO needs live numbers.
+  // Keep the board fresh — live numbers.
   useEffect(() => {
     const iv = setInterval(() => {
       fetchTokens().then(({ data, live: isLive }) => { setAllTokens(data); setLive(isLive); });
@@ -327,13 +332,13 @@ export default function Home() {
             </div>
 
             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="text-xs font-semibold text-white/60 mb-2">🧑‍🚀 Your recruits</div>
+              <div className="text-xs font-semibold text-white/60 mb-2">🧑🚀 Your recruits</div>
               {refStats && refStats.referred.length > 0 ? (
                 <div className="space-y-1.5">
                   {refStats.referred.map((r, i) => (
                     <div key={i} className="flex items-center justify-between text-sm border-b border-white/5 pb-1.5">
                       <span className="font-mono text-purple-300">{r.name}</span>
-                      <span className="text-xs text-white/40">{fmtAgo(Math.max(1, Math.floor((Date.now() / 1000 - r.ts) / 60)))}</span>
+                      <span className="text-xs text-white/40">{fmtAgo(Math.max(1, Math.floor((tick / 1000 - r.ts) / 60)))}</span>
                       <span className="text-xs text-yellow-300 font-semibold">+{refStats.xpPerInvite} XP</span>
                     </div>
                   ))}
@@ -346,16 +351,16 @@ export default function Home() {
             <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-xs text-white/45 space-y-1">
               <div><b className="text-white/70">How it works:</b></div>
               <div>1. Copy your link — it carries your personal ref code.</div>
-              <div>2. Drop it in group chats, X, anywhere degens congregate.</div>
-              <div>3. They land, a profile is created, <b className="text-yellow-300">+750 XP</b> hits your account immediately.</div>
+              <div>2. Drop it in group chats, X, wherever degens congregate.</div>
+              <div>3. They land, a profile is created, <b className="text-yellow-300">+750 XP</b> hits your account instantly.</div>
             </div>
           </div>
         )}
       </main>
 
       <footer className="border-t border-white/10 py-8 text-center text-xs text-white/40 px-4">
-        <p>🛸 Hermes Launchpad — {live ? 'live curve engine: every trade moves the real shared price (Cloudflare Worker + D1).' : 'showing built-in demo data.'} Devnet-grade demo — no real funds involved.</p>
-        <p className="mt-1">Nothing here is financial advice. DYOR. Fees: 0.25% platform · 0.25% creator · 0.1% referral · 0.1% burn.</p>
+        <p>🤖Hermes Launchpad — worlds largest gaming launchpad on Solana: bonding-curve engine with AI agents writing the lore, scoring the risk, and guarding the vibes with the AI Narrative.</p>
+        <p className="mt-1">Nothing in this project is financial advice or solicitation. Always do your own research. Hermes team only fees: 0.25% platform · 0.25% creator · 0.1% referral · 0.1% burn.</p>
       </footer>
 
       {selected && (

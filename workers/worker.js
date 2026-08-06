@@ -14,7 +14,6 @@ const err = (msg, status = 400) => json({ error: msg }, status);
 // ---- Curve constants (mirror on-chain program) ----
 const V_SOL0 = 30;             // 30 SOL virtual
 const V_TOK0 = 1.073e9;        // 1.073B tokens virtual
-const K = V_SOL0 * V_TOK0;     // constant product
 const SUPPLY = 1e9;            // 1B tokens
 const MIGRATION_SOL = 85;      // graduate at 85 SOL raised
 const FEE = 0.007;             // 0.7% total (0.25 platform + 0.25 creator + 0.1 ref + 0.1 burn)
@@ -153,7 +152,6 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
     const db = env.DB;
-    const seg = path.split("/").filter(Boolean); // ["api", ...]
 
     try {
       // ---------- health ----------

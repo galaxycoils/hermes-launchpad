@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "cloudflare-d1": {
+      "source": "secondsky/claude-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/cloudflare-d1/skills/cloudflare-d1/SKILL.md",
+      "computedHash": "7f13919fce15edb159fe23708de9949a9ceeed16b943660bd1a2c0e1ae48434e"
+    },
+    "cloudflare-workers-security": {
+      "source": "secondsky/claude-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/cloudflare-workers/skills/cloudflare-workers-security/SKILL.md",
+      "computedHash": "80b37347948d3c4268ddf77eba62d841dfa5afbf3ce4cc2ef66310e9064da02a"
+    }
+  }
+}
