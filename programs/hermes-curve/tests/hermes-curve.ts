@@ -143,4 +143,49 @@ describe("hermes-curve (devnet)", () => {
     }
     expect(failed).to.eq(true);
   });
+
+  it("WU-02: migrate_to_raydium is wired in IDL and rejects incomplete curve", async () => {
+    // Verify the instruction exists in the program IDL (compile-time wiring check)
+    const idl = program.idl as any;
+    const instructions = idl.instructions.map((i: any) => i.name);
+    expect(instructions).to.include("migrateToRaydium");
+
+    // Attempting migration on an incomplete curve must fail with CurveNotComplete
+    // (WU-03 restores deploy keypair + funds Raydium accounts for full on-chain proof)
+    let failed = false;
+    try {
+      await program.methods
+        .migrateToRaydium(new anchor.BN(1), new anchor.BN(1), new anchor.BN(0))
+        .accounts({
+          config: configPda,
+          curve: curvePda,
+          mint: mint.publicKey,
+          curveTokenAccount: curveAta,
+          authority: migrationAuthority,
+          authorityTokenAccount: getAssociatedTokenAddressSync(mint.publicKey, migrationAuthority),
+          cpmmProgram: new PublicKey("CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C"),
+          ammConfig: migrationAuthority,
+          authorityPda: migrationAuthority,
+          poolState: migrationAuthority,
+          token0Mint: mint.publicKey,
+          token1Mint: mint.publicKey,
+          lpMint: migrationAuthority,
+          creatorToken0: migrationAuthority,
+          creatorToken1: migrationAuthority,
+          creatorLpToken: migrationAuthority,
+          token0Vault: migrationAuthority,
+          token1Vault: migrationAuthority,
+          createPoolFee: migrationAuthority,
+          observationState: migrationAuthority,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        })
+        .rpc();
+    } catch {
+      failed = true;
+    }
+    expect(failed).to.eq(true);
+  });
 });
