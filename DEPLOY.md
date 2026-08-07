@@ -23,6 +23,8 @@ All trading runs on-chain via the Anchor program. The Worker is an indexer, not 
 | API worker | `hermes-api` → https://hermes-api.tahamtandariush.workers.dev |
 | D1 database | `hermes-launchpad-db` id `afa984c4-30e5-4f47-afce-a401ee2df098` |
 | Anchor program ID | `9K5eAWBkrUJbUiUC8aM6xeuXM2ACj9XNHfbC1X6Scjgz` (devnet, keypair backed up) |
+| Config PDA | `9Sv1kApQK428EUueU7dR9mTPqKqNR7dxkBmwtZuHDTkr` |
+| Fee wallet | `GkHE2vb8j3PGyjMvCmWJMffiKb2QwVye5TfuUPG1NK5a` |
 
 ## Frontend deploy (Pages, git-connected)
 
@@ -38,7 +40,7 @@ Set Cloudflare Pages environment variables:
 - `VITE_PROGRAM_ID=9K5eAWBkrUJbUiUC8aM6xeuXM2ACj9XNHfbC1X6Scjgz`
 - `VITE_SOLANA_RPC=https://devnet.rpcpool.com`
 - `VITE_API_BASE=https://hermes-api.tahamtandariush.workers.dev`
-- `VITE_FEE_WALLET=<pubkey>`
+- `VITE_FEE_WALLET=GkHE2vb8j3PGyjMvCmWJMffiKb2QwVye5TfuUPG1NK5a`
 - `VITE_GRADUATION_SOL=85`
 - `VITE_ALLOW_OFFCHAIN_TRADES=false`
 
@@ -65,7 +67,7 @@ npx wrangler d1 execute hermes-launchpad-db --remote --file=schema_v3.sql
 ## Curve parameters (shared by Worker / Frontend / on-chain)
 
 - Virtual reserves: `V_SOL0 = 30 SOL`, `V_TOK0 = 1.073B tokens`, `K = 3.219e10`
-- Supply 1B, fee 0.5% on-chain (0.25% platform + 0.25% creator), 0.7% demo
+- Supply 1B, fee 0.5% on-chain (0.25% platform + 0.25% creator)
 - Graduation at 85 SOL raised
 - Anti-whale: max 10% of virtual reserves per trade (demo); 50% cap (on-chain)
 - Buy: `eff = solIn × 0.993; tokOut = vt × eff / (vs + eff)`

@@ -31,7 +31,7 @@ export default function CreateTokenModal({ onClose, onCreated }: Props) {
       const ix = buildCreateTokenIx(provider.publicKey, mint.publicKey, name.trim(), ticker.trim().toUpperCase().replace(/^\$/, ''), uri);
       const tx = new Transaction().add(ix);
       tx.partialSign(mint);
-      const sig = await sendTx(provider, tx, [mint]);
+      const sig = await sendTx(provider, tx, { hasExtraSigners: true });
 
       const result = await registerToken({
         mint: mint.publicKey.toBase58(),

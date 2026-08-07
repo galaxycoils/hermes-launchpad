@@ -2,6 +2,10 @@ const DEVNET_RPC = "https://api.devnet.solana.com";
 const PUBKEY_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const SIGNATURE_RE = /^[1-9A-HJ-NP-Za-km-z]{80,100}$/;
 
+// Account indices per Anchor program (lib.rs):
+// CreateToken: 0=config, 1=curve, 2=mint, 3=curve_token_account, 4=creator, 5=token_program, 6=ata_program, 7=system, 8=rent
+// Trade:       0=config, 1=curve, 2=mint, 3=curve_token_account, 4=trader_ata, 5=trader, 6=fee_wallet, 7=creator_wallet, 8=token_program, 9=ata_program, 10=system
+
 const accountKey = (key) => typeof key === "string" ? key : key.pubkey;
 const instructionAccounts = (instruction, keys) =>
   (instruction.accounts || []).map((account) =>

@@ -2,7 +2,6 @@ import { Buffer } from 'buffer';
 import {
   Connection, PublicKey, Transaction, TransactionInstruction,
   SystemProgram, LAMPORTS_PER_SOL,
-  type Signer,
 } from '@solana/web3.js';
 
 export const PROGRAM_ID = new PublicKey(import.meta.env.VITE_PROGRAM_ID ?? '9K5eAWBkrUJbUiUC8aM6xeuXM2ACj9XNHfbC1X6Scjgz');
@@ -124,13 +123,20 @@ export function getProvider(): WalletProvider | null {
   return w.solana ?? null;
 }
 
-export async function sendTx(provider: WalletProvider, tx: Transaction, extraSigners?: Signer[]): Promise<string> {
+export async function sendTx(
+  provider: WalletProvider,
+  tx: Transaction,
+  opts?: { hasExtraSigners?: boolean }
+): Promise<string> {
   tx.feePayer = provider.publicKey;
   tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-  
-  // If there are extra signers (e.g., mint keypair), use signTransaction + sendRawTransaction
-  // Many wallets (Phantom, Solflare) mishandle extra signers with signAndSendTransaction
-  if (extraSigners && extraSigners.length > 0) {
+
+  const needsRaw =
+    opts?.hasExtraSigners === true ||
+    // heuristic: already has signatures beyond empty
+    tx.signatures.some((s) => s.signature != null);
+
+  if (needsRaw && provider.signTransaction) {
     const signed = await provider.signTransaction(tx);
     const sig = await connection.sendRawTransaction(signed.serialize(), {
       skipPreflight: false,
@@ -139,8 +145,7 @@ export async function sendTx(provider: WalletProvider, tx: Transaction, extraSig
     await connection.confirmTransaction(sig, 'confirmed');
     return sig;
   }
-  
-  // Fallback: no extra signers, use signAndSendTransaction
+
   const res = await provider.signAndSendTransaction(tx);
   const sig = typeof res === 'string' ? res : res.signature;
   await connection.confirmTransaction(sig, 'confirmed');

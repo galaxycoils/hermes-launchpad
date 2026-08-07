@@ -307,7 +307,7 @@ export default function Home({ initialTab = 'tokens' }: { initialTab?: 'tokens' 
 
       <footer className="border-t border-[#2a2a2a] px-4 py-8 text-center text-xs text-white/40">
         <p>🤖 Hermes Launchpad — AI-native fair launches on Solana. Bonding curves you can verify on-chain. Lore and risk from agents — not influencers.</p>
-        <p className="mt-1">Devnet demo / experimental. Not financial advice. Always do your own research. Platform fees: 0.25% platform · 0.25% creator · 0.1% referral · 0.1% burn.</p>
+        <p className="mt-1">Devnet demo / experimental. Not financial advice. Always do your own research. Platform fees: 0.25% platform · 0.25% creator.</p>
       </footer>
 
       {selected && (
