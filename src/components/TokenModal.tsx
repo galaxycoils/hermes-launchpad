@@ -205,6 +205,12 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
                 {token.complete && <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-yellow-400/20 text-yellow-300 border border-yellow-400/30">🎓 GRADUATED</span>}
               </h2>
               <div className="text-xs text-white/50">{token.chain} · created by {token.creator}</div>
+              {token.onchainMint && (
+                <div className="mt-1 flex items-center gap-1 text-xs text-white/40">
+                  <span className="font-mono truncate max-w-[200px]">{token.onchainMint}</span>
+                  <a href={`https://explorer.solana.com/address/${token.onchainMint}?cluster=devnet`} target="_blank" rel="noopener noreferrer" className="text-pump hover:underline">Explorer</a>
+                </div>
+              )}
             </div>
           </div>
           <button onClick={onClose} aria-label="Close trading panel" className="text-2xl leading-none text-white/50 hover:text-white">×</button>
