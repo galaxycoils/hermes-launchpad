@@ -3,7 +3,10 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-hermes_curve = "E99nGQh6iCAC43azp4zvpefCRmfY9bZHV7J6LL2yu93U"
+hermes_curve = "9K5eAWBkrUJbUiUC8aM6xeuXM2ACj9XNHfbC1X6Scjgz"
+
+[programs.devnet]
+hermes_curve = "9K5eAWBkrUJbUiUC8aM6xeuXM2ACj9XNHfbC1X6Scjgz"
 
 [registry]
 url = "https://api.apr.dev"

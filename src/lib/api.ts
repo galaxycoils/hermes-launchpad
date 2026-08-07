@@ -2,7 +2,10 @@
 import type { Token, Quest, Trader, Profile, Trade, CommentItem, ReferralStats } from './tokens';
 import { TOKENS, QUESTS, LEADERBOARD } from './tokens';
 
-const API_BASE = 'https://hermes-api.tahamtandariush.workers.dev';
+// Re-export Token type for consumers
+export type { Token } from './tokens';
+
+const API_BASE = import.meta.env.VITE_API_BASE ?? 'https://hermes-api.tahamtandariush.workers.dev';
 
 async function req<T>(path: string, method: 'GET' | 'POST' = 'GET', body?: unknown, timeoutMs = 8000): Promise<T> {
   const ctrl = new AbortController();
@@ -56,6 +59,10 @@ export async function createTokenServer(input: { name: string; ticker: string; e
   return req<Token & XpResult>('/api/tokens', 'POST', input);
 }
 
+export async function registerToken(input: { mint: string; name: string; ticker: string; emoji: string; creator: string; signature: string }): Promise<Token & XpResult> {
+  return req<Token & XpResult>('/api/tokens/register', 'POST', input);
+}
+
 // ---- trades ----
 export interface TradeResult extends XpResult {
   ok: boolean;
@@ -72,6 +79,10 @@ export async function postTrade(input: { token_id: string; wallet: string; side:
 }
 export async function fetchTrades(tokenId?: string, limit = 25): Promise<Trade[]> {
   return req<Trade[]>(`/api/trades?limit=${limit}${tokenId ? `&token_id=${tokenId}` : ''}`);
+}
+
+export async function indexTrade(input: { mint: string; signature: string; side: 'buy' | 'sell' }): Promise<TradeResult> {
+  return req<TradeResult>('/api/trades/index', 'POST', input);
 }
 
 // ---- social ----

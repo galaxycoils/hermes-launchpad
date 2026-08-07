@@ -9,3 +9,9 @@ database_id = "afa984c4-30e5-4f47-afce-a401ee2df098"
 
 [ai]
 binding = "AI"
+
+[vars]
+PROGRAM_ID = "9K5eAWBkrUJbUiUC8aM6xeuXM2ACj9XNHfbC1X6Scjgz"
+CLUSTER = "devnet"
+GRADUATION_SOL = "85"
+REQUIRE_SIGNED_TRADES = "true"

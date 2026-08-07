@@ -4,7 +4,8 @@ import {
   SystemProgram, LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
 
-export const PROGRAM_ID = new PublicKey('E99nGQh6iCAC43azp4zvpefCRmfY9bZHV7J6LL2yu93U');
+export const PROGRAM_ID = new PublicKey(import.meta.env.VITE_PROGRAM_ID ?? '9K5eAWBkrUJbUiUC8aM6xeuXM2ACj9XNHfbC1X6Scjgz');
+export const API_BASE = import.meta.env.VITE_API_BASE ?? 'https://hermes-api.tahamtandariush.workers.dev';
 export const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 export const ATA_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
 export const RENT_SYSVAR = new PublicKey('SysvarRent111111111111111111111111111111111');
@@ -131,4 +132,77 @@ export async function sendTx(provider: WalletProvider, tx: Transaction): Promise
   const sig = typeof res === 'string' ? res : res.signature;
   await connection.confirmTransaction(sig, 'confirmed');
   return sig;
+}
+
+// ---- Curve math (mirrors on-chain program) ----
+export const V_SOL0 = 30_000_000_000n; // 30 SOL lamports
+export const V_TOK0 = 1_073_000_000_000_000n; // 1.073B tokens
+export const FEE_BPS = 25n; // 0.25% each (platform + creator = 0.5% total on-chain)
+export const BPS_DENOM = 10_000n;
+export const MAX_TRADE_BPS = 5_000n; // 50% of virtual base
+export const MIGRATION_THRESHOLD = 85_000_000_000n; // 85 SOL lamports
+
+export interface CurveState {
+  virtualSol: number;
+  virtualTokens: number;
+  realSol: number;
+  complete: boolean;
+}
+
+export async function fetchCurveState(mint: PublicKey): Promise<CurveState | null> {
+  try {
+    const curvePda = findCurvePda(mint);
+    const data = await connection.getAccountInfo(curvePda);
+    if (!data) return null;
+    // Parse Anchor account (discriminator 8 bytes + Curve struct)
+    // Layout: creator(32), mint(32), virtual_token_reserves(u64), virtual_sol_reserves(u64),
+    // real_token_reserves(u64), real_sol_reserves(u64), complete(bool), bump(u8), name, symbol, uri
+    const view = new DataView(data.data.buffer, data.data.byteOffset, data.data.byteLength);
+    let offset = 8; // skip discriminator
+    offset += 32; // creator
+    offset += 32; // mint
+    const virtualTokenReserves = Number(view.getBigUint64(offset, true)); offset += 8;
+    const virtualSolReserves = Number(view.getBigUint64(offset, true)); offset += 8;
+    offset += 8; // real_token_reserves
+    const realSolReserves = Number(view.getBigUint64(offset, true)); offset += 8;
+    const complete = Boolean(view.getUint8(offset));
+    return {
+      virtualSol: virtualSolReserves,
+      virtualTokens: virtualTokenReserves,
+      realSol: realSolReserves,
+      complete,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function computeBuyQuote(solIn: number, vs: number, vt: number): { tokOut: number; minOut: bigint } {
+  const solInLamports = BigInt(Math.round(solIn * 1_000_000_000));
+  const fee = (solInLamports * FEE_BPS * 2n) / BPS_DENOM; // platform + creator = 0.5%
+  const solAfterFees = solInLamports - fee;
+  const k = BigInt(vs) * BigInt(vt);
+  const newVs = BigInt(vs) + solAfterFees;
+  const newVt = k / newVs;
+  const tokOut = BigInt(vt) - newVt;
+  return { tokOut: Number(tokOut), minOut: (tokOut * 99n) / 100n }; // 1% slippage
+}
+
+export function computeSellQuote(tokIn: number, vs: number, vt: number): { solOut: number; minOut: bigint } {
+  const tokInRaw = BigInt(tokIn);
+  const k = BigInt(vs) * BigInt(vt);
+  const newVt = BigInt(vt) + tokInRaw;
+  const newVs = k / newVt;
+  const solGross = BigInt(vs) - newVs;
+  const fee = (solGross * FEE_BPS * 2n) / BPS_DENOM;
+  const solOut = solGross - fee;
+  return { solOut: Number(solOut) / 1_000_000_000, minOut: BigInt(Math.round((Number(solOut) * 0.99) * 1_000_000_000)) };
+}
+
+export async function ensureAtaIx(mint: PublicKey, owner: PublicKey): Promise<TransactionInstruction | null> {
+  const ata = findAta(mint, owner);
+  const info = await connection.getAccountInfo(ata);
+  if (info) return null;
+  const { createAssociatedTokenAccountInstruction } = await import('@solana/spl-token');
+  return createAssociatedTokenAccountInstruction(owner, ata, owner, mint);
 }

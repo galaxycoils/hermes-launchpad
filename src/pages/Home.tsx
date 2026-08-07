@@ -144,7 +144,7 @@ export default function Home({ initialTab = 'tokens' }: { initialTab?: 'tokens' 
       {/* Nav */}
       <nav className="sticky top-0 z-40 border-b border-[#2a2a2a] bg-black/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-3 sm:px-4">
-          <div className="flex items-center gap-2" translate="no"><span className="text-2xl" aria-hidden="true">🛸</span><span className="font-black tracking-tight">HERMES<span className="text-pump">.FUN</span></span></div>
+          <div className="flex items-center gap-2" translate="no"><span className="text-2xl" aria-hidden="true">🛸</span><span className="font-black tracking-tight">HERMES</span></div>
           <div className="flex items-center gap-3">
             {profile && <button onClick={copyRefLink} title="Copy referral link" className="hidden font-mono text-xs text-purple-300 sm:block">LVL {profile.level} · {profile.xp.toLocaleString()} XP</button>}
             <span className={`hidden font-mono text-xs md:inline ${live ? 'text-pump' : 'text-white/45'}`}>{live ? '● LIVE' : '○ DEMO'} · VOL {fmtUsd(totalVol)}</span>
@@ -156,7 +156,7 @@ export default function Home({ initialTab = 'tokens' }: { initialTab?: 'tokens' 
       </nav>
 
       {/* Hero */}
-      <header className="relative overflow-hidden border-b border-[#2a2a2a]"><div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(168,85,247,.22),transparent_58%)]" /><div className="relative mx-auto max-w-6xl px-4 py-12 sm:py-16"><span className="font-mono text-xs uppercase tracking-[.2em] text-pump">Fair Launches · Live Curves</span><h1 className="mt-3 max-w-3xl text-balance text-5xl font-black tracking-[-.06em] sm:text-7xl">Launch fast.<br /><span className="text-pump">Trade louder.</span></h1><p className="mt-4 max-w-xl text-pretty text-sm leading-6 text-white/65 sm:text-base">Bonding curves, live social proof & optional AI research. Graduate at {fmtUsd(69420)} market cap.</p><div className="mt-7 flex flex-wrap gap-2"><button onClick={() => setShowCreate(true)} className="rounded-md bg-pump px-5 py-3 font-black text-black transition-transform active:scale-[.98]">Launch Token</button><button onClick={copyRefLink} className="rounded-md border border-[#a855f7]/60 bg-[#a855f7]/10 px-5 py-3 font-bold text-purple-200">Copy Referral Link</button></div></div></header>
+      <header className="relative overflow-hidden border-b border-[#2a2a2a]"><div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(168,85,247,.22),transparent_58%)]" /><div className="relative mx-auto max-w-6xl px-4 py-12 sm:py-16"><span className="font-mono text-xs uppercase tracking-[.2em] text-pump">AI-Native Fair Launches on Solana</span><h1 className="mt-3 max-w-3xl text-balance text-5xl font-black tracking-[-.06em] sm:text-7xl">Bonding curves<br /><span className="text-pump">you can verify on-chain.</span></h1><p className="mt-4 max-w-xl text-pretty text-sm leading-6 text-white/65 sm:text-base">Lore and risk from agents — not influencers. Graduate at {fmtUsd(69420)} market cap.</p><div className="mt-7 flex flex-wrap gap-2"><button onClick={() => setShowCreate(true)} className="rounded-md bg-pump px-5 py-3 font-black text-black transition-transform active:scale-[.98]">Launch Token</button><button onClick={copyRefLink} className="rounded-md border border-[#a855f7]/60 bg-[#a855f7]/10 px-5 py-3 font-bold text-purple-200">Copy Referral Link</button></div></div></header>
 
       {/* King of the Hill */}
       {king && (
@@ -306,8 +306,8 @@ export default function Home({ initialTab = 'tokens' }: { initialTab?: 'tokens' 
       <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-[#2a2a2a] bg-black/95 px-4 pb-[env(safe-area-inset-bottom)] sm:hidden" aria-label="Mobile navigation"><button onClick={() => setTab('tokens')} className={`flex-1 py-3 text-sm font-black ${tab === 'tokens' ? 'text-pump' : 'text-white/45'}`}>Trade</button><button onClick={() => setShowCreate(true)} className="-mt-4 rounded-full bg-pump px-5 py-3 text-sm font-black text-black shadow-lg">Create</button><button onClick={() => setTab('profile')} className={`flex-1 py-3 text-sm font-black ${tab === 'profile' ? 'text-pump' : 'text-white/45'}`}>Profile</button></nav>
 
       <footer className="border-t border-[#2a2a2a] px-4 py-8 text-center text-xs text-white/40">
-        <p>🤖Hermes Launchpad — worlds largest gaming launchpad on Solana: bonding-curve engine with AI agents writing the lore, scoring the risk, and guarding the vibes with the AI Narrative.</p>
-        <p className="mt-1">Nothing in this project is financial advice or solicitation. Always do your own research. Hermes team only fees: 0.25% platform · 0.25% creator · 0.1% referral · 0.1% burn.</p>
+        <p>🤖 Hermes Launchpad — AI-native fair launches on Solana. Bonding curves you can verify on-chain. Lore and risk from agents — not influencers.</p>
+        <p className="mt-1">Devnet demo / experimental. Not financial advice. Always do your own research. Platform fees: 0.25% platform · 0.25% creator · 0.1% referral · 0.1% burn.</p>
       </footer>
 
       {selected && (
@@ -321,7 +321,6 @@ export default function Home({ initialTab = 'tokens' }: { initialTab?: 'tokens' 
       )}
       {showCreate && (
         <CreateTokenModal
-          identity={identity}
           onClose={() => setShowCreate(false)}
           onCreated={onCreated}
         />

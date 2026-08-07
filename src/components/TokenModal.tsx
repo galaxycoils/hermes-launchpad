@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
+import { PublicKey, Transaction } from '@solana/web3.js';
 import { fmtUsd, MIGRATION_TARGET } from '@/lib/tokens';
 import type { Token, CommentItem, Profile } from '@/lib/tokens';
 import {
-  postTrade, fetchComments, postComment, likeToken, genLore, genRisk, fetchToken,
+  fetchComments, postComment, likeToken, genLore, genRisk, fetchToken,
+  indexTrade
 } from '@/lib/api';
 import { shareLink } from '@/lib/identity';
+import { getProvider, buildTradeIx, sendTx, fetchCurveState, computeBuyQuote, computeSellQuote, ensureAtaIx, solToLamports } from '@/lib/solana';
 import Sparkline from './Sparkline';
 
 interface Props {
@@ -55,21 +58,77 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
   const trade = async () => {
     const amt = parseFloat(amount);
     if (!amt || amt <= 0 || busy) return;
+    
+    // Check if token has on-chain mint
+    if (!token.onchainMint) {
+      toast.error('This token is demo-only. On-chain trading requires a minted token.');
+      return;
+    }
+
     setBusy(true);
     try {
-      const r = await postTrade({ token_id: token.id, wallet: identity, side: tab, amount: amt });
-      update(r.token);
+      const provider = getProvider();
+      if (!provider) throw new Error('Install Phantom or Solflare');
+      await provider.connect();
+
+      const mint = new PublicKey(token.onchainMint);
+      
+      // Fetch live curve state from chain
+      const curveState = await fetchCurveState(mint);
+      if (!curveState) throw new Error('Curve state not found on-chain');
+      if (curveState.complete) throw new Error('Curve graduated — trading locked');
+
+      // Build transaction
+      const feeWallet = new PublicKey(import.meta.env.VITE_FEE_WALLET || '11111111111111111111111111111111');
+      const creatorWallet = new PublicKey(token.creator);
+
+      let tx: Transaction;
+      if (tab === 'buy') {
+        // Buy flow
+        const quote = computeBuyQuote(amt, curveState.virtualSol, curveState.virtualTokens);
+        const solLamports = solToLamports(amt);
+        
+        // Ensure ATA exists
+        const ataIx = await ensureAtaIx(mint, provider.publicKey);
+        
+        const tradeIx = buildTradeIx('buy', provider.publicKey, mint, solLamports, quote.minOut, feeWallet, creatorWallet);
+        tx = new Transaction();
+        if (ataIx) tx.add(ataIx);
+        tx.add(tradeIx);
+      } else {
+        // Sell flow - check balance first
+        const quote = computeSellQuote(amt, curveState.virtualSol, curveState.virtualTokens);
+        
+        // Ensure ATA exists
+        const ataIx = await ensureAtaIx(mint, provider.publicKey);
+        
+        const tokInRaw = BigInt(amt);
+        const tradeIx = buildTradeIx('sell', provider.publicKey, mint, tokInRaw, quote.minOut, feeWallet, creatorWallet);
+        tx = new Transaction();
+        if (ataIx) tx.add(ataIx);
+        tx.add(tradeIx);
+      }
+
+      const sig = await sendTx(provider, tx);
+      
+      // Index the trade for XP/leaderboard
+      await indexTrade({ mint: token.onchainMint, signature: sig, side: tab });
+      
+      // Refresh token from server
+      const fresh = await fetchToken(token.id, identity);
+      if (fresh) update(fresh);
       setAmount('');
-      if (r.graduated) {
+
+      if (fresh?.complete) {
         confetti({ particleCount: 300, spread: 120, origin: { y: 0.6 } });
         toast.success(`🎓 ${token.ticker} GRADUATED! Liquidity migrates to Raydium — LP burned forever.`);
       } else if (tab === 'buy') {
         confetti({ particleCount: 120, spread: 80, origin: { y: 0.7 }, colors: ['#22c55e', '#a855f7', '#facc15'] });
-        toast.success(`Bought ${r.tokenAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${token.ticker} for ${r.solAmount.toFixed(3)} SOL`);
+        toast.success(`Bought on-chain! TX: ${sig.slice(0, 8)}…`);
       } else {
-        toast.success(`Sold for ${r.solAmount.toFixed(3)} SOL · PnL ${r.pnl >= 0 ? '+' : ''}$${r.pnl.toFixed(2)}`);
+        toast.success(`Sold on-chain! TX: ${sig.slice(0, 8)}…`);
       }
-      xpToast(r.xpGained, r.questCompleted);
+      // XP will come from indexTrade response
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Trade failed');
     }
