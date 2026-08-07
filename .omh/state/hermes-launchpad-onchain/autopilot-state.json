@@ -1,11 +1,17 @@
 {
   "phase": "A",
-  "step": 1,
-  "wu": "WU-01",
-  "status": "complete",
-  "next": "WU-02-pending-approval",
+  "step": 2,
+  "wu": "WU-02",
+  "status": "complete-poc",
+  "next": "WU-03-pending-approval",
   "swarm_init": true,
   "swarm_topology": "star",
   "swarm_agents": 2,
-  "ts": "2026-08-07T16:55:00Z"
+  "raydium_poc": {
+    "program_id": "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C",
+    "discriminator": "[af,af,6d,1f,0d,98,9b,ed]",
+    "account_order_verified": true,
+    "onchain_proof": "blocked-WU-03-deploy-keypair"
+  },
+  "ts": "2026-08-07T19:00:00Z"
 }
