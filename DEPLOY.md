@@ -14,6 +14,8 @@ Browser ──► Cloudflare Pages (hermes-launchpad.pages.dev)   [static fronte
 
 All trading runs on-chain via the Anchor program. The Worker is an indexer, not a ledger.
 
+**Status (2026-08-07):** Program deployed and initialized on devnet. Config PDA initialized. Worker routes live. Ready for E2E smoke test.
+
 ## IDs
 
 | Thing | Value |

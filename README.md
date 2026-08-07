@@ -7,6 +7,8 @@ AI-native fair launches on Solana. Bonding curves you can verify on-chain. Lore 
 - **App (Devnet):** https://hermes-launchpad.pages.dev
 - **API:** https://hermes-api.tahamtandariush.workers.dev/api/health
 
+**Status:** Program deployed and initialized on devnet. Config PDA initialized. Worker routes live. Ready for E2E smoke test
+
 ## Stack
 
 | Layer | Tech |
@@ -59,7 +61,7 @@ See **DEPLOY.md** for program deploy, worker deploy, schema migration, and env v
 
 - Virtual reserves: `V_SOL0 = 30 SOL`, `V_TOK0 = 1.073B tokens`, `K ≈ 3.219e10`
 - Supply: 1B tokens (6 decimals)
-- Fees: 0.5% on-chain (0.25% platform + 0.25% creator); 0.7% demo
+- Fees: 0.5% on-chain (0.25% platform + 0.25% creator)
 - Graduation: 85 SOL raised
 - Anti-whale: max 10% of virtual reserves per trade (on-chain: 50% cap)
 - Buy: `eff = solIn × 0.993; tokOut = vt × eff / (vs + eff)`
