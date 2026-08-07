@@ -1,7 +1,8 @@
 {
   "tasks": [
     { "id": "WU-00", "status": "complete", "approved": true },
-    { "id": "WU-01", "status": "pending-approval", "approved": false }
+    { "id": "WU-01", "status": "complete", "approved": true },
+    { "id": "WU-02", "status": "pending-approval", "approved": false }
   ],
-  "ts": "2026-08-07T15:30:00Z"
+  "ts": "2026-08-07T16:45:00Z"
 }

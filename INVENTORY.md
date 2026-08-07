@@ -68,15 +68,22 @@ vitest.config.ts  playwright.config.ts  tests/setup.ts  tests/unit/smoke.test.ts
 
 ## Verified Artifacts (on-chain)
 - Program ID: `9K5eAWBkrUJbUiUC8aM6xeuXM2ACj9XNHfbC1X6Scjgz` — devnet slot 481782747, 2.24 SOL, authority `GkHE2vb8j3PGyjMvCmWJMffiKb2QwVye5TfuUPG1NK5a` (verified `solana program show`)
-- Config PDA: `9Sv1kApQK428EUueU7dR9mTPqKqNR7dxkBmwtZuHDTkr`
+- Config PDA: `9Sv1kApQK428EUueU7dR9mTPqKqNR7dxkBmwtZuHDTkr` — initialized, fee wallet + migration authority = authority key
 - Fee wallet: `GkHE2vb8j3PGyjMvCmWJMffiKb2QwVye5TfuUPG1NK5a`
-- No deploy keypair in `programs/hermes-curve/target/deploy/` (verified empty)
+- No deploy keypair in `programs/hermes-curve/target/deploy/` (verified empty) — upgrade via `target/deploy/hermes_curve-upgrade-buffer.json`
 - Worker: `hermes-api.tahamtandariush.workers.dev` ; Pages: `hermes-launchpad.pages.dev` ; D1: `hermes-launchpad-db` (`afa984c4-30e5-4f47-afce-a401ee2df098`)
+- IDL: `programs/hermes-curve/target/idl/hermes_curve.json` — built (WU-01)
+- Program tests: 5/5 passing on devnet via `npm run test:program`
 
 ## Build & Test (verified green)
 - `npm run build` → exit 0
 - `npm run lint` → exit 0
 - `npm run test:unit` → 1 passed
+- `npm run test:worker` → 6 passed (incl. quarantine-traceability)
+- `npm run test:client` → 1 passed
+- `npm run test:integration` → 1 passed
+- `npm run test:security` → 5 passed
+- `npm run test:program` → 5 passed on devnet (IDL built, config loaded, create/buy/sell/slippage)
 - Configs: `vitest.config.ts` (unit/client/integration/worker), `playwright.config.ts` (5 browsers), `tests/setup.ts`
 
 ## OMH State

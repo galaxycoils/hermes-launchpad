@@ -1,11 +1,11 @@
 {
   "C": { "1": true, "2": true, "3": false, "4": false },
-  "D": { "1": false, "2": false },
+  "D": { "1": true, "2": true },
   "E": { "1": false, "2": false, "3": false, "4": false },
   "F": { "1": false, "2": false },
-  "wu": "WU-00",
+  "wu": "WU-01",
   "status": "complete",
-  "next": "WU-01-pending-approval",
-  "note": "C.3/C.4 (fake-write removal) are WU-03/04 scope, not WU-00 - set false. Quarantine tracked in FEATURE_MATRIX.md.",
-  "ts": "2026-08-07T15:30:00Z"
+  "next": "WU-02-pending-approval",
+  "note": "D.1/D.2 = Anchor build + IDL + program tests complete. C.3/C.4 (fake-write removal) still WU-03/04 scope.",
+  "ts": "2026-08-07T16:45:00Z"
 }

@@ -9,19 +9,20 @@ import {
 import { PublicKey, SystemProgram, Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { expect } from "chai";
 
-describe("hermes-curve", () => {
+describe("hermes-curve (devnet)", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
   const program = anchor.workspace.HermesCurve as Program<HermesCurve>;
   const admin = provider.wallet;
 
-  const feeWallet = Keypair.generate().publicKey;
-  const migrationAuthority = Keypair.generate().publicKey;
-
   const [configPda] = PublicKey.findProgramAddressSync(
     [Buffer.from("config")],
     program.programId
   );
+
+  let feeWallet: PublicKey;
+  let migrationAuthority: PublicKey;
+  let config: any;
 
   const mint = Keypair.generate();
   const [curvePda] = PublicKey.findProgramAddressSync(
@@ -31,18 +32,21 @@ describe("hermes-curve", () => {
   const curveAta = getAssociatedTokenAddressSync(mint.publicKey, curvePda, true);
   const traderAta = getAssociatedTokenAddressSync(mint.publicKey, admin.publicKey);
 
-  it("initializes platform config", async () => {
-    await program.methods
-      .initialize(new anchor.BN(0))
-      .accounts({
-        config: configPda,
-        admin: admin.publicKey,
-        feeWallet,
-        migrationAuthority,
-        systemProgram: SystemProgram.programId,
-      })
-      .rpc();
-    const config = await program.account.config.fetch(configPda);
+  before(async () => {
+    // Fetch existing config from devnet
+    config = await program.account.config.fetch(configPda);
+    feeWallet = config.feeWallet;
+    migrationAuthority = config.migrationAuthority;
+    console.log("Config loaded:", {
+      admin: config.admin.toBase58(),
+      feeWallet: feeWallet.toBase58(),
+      migrationAuthority: migrationAuthority.toBase58(),
+      migrationThreshold: config.migrationThresholdLamports.toString(),
+    });
+  });
+
+  it("fetches existing platform config", async () => {
+    expect(config).to.not.be.null;
     expect(config.admin.toBase58()).to.eq(admin.publicKey.toBase58());
     expect(config.migrationThresholdLamports.toNumber()).to.be.greaterThan(0);
   });
