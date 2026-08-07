@@ -1,0 +1,29 @@
+{
+  "phase": "complete",
+  "instance_id": "hermes-launchpad-onchain",
+  "plan_file": ".omh/plans/ralplan-hermes-launchpad.md",
+  "current_task_index": 0,
+  "completed_tasks": [
+    "A.1 - Generate program keypair",
+    "A.3 - Update program IDs in code",
+    "B.1 - Create .env.example and wire Vite env",
+    "B.2 - Worker vars in wrangler.toml",
+    "C.2 - Align ix builders with program",
+    "C.3 - CreateTokenModal on-chain create + register",
+    "C.4 - TokenModal on-chain buy/sell",
+    "C.5 - Demo vs on-chain badges",
+    "C.6 - WalletButton enforcement",
+    "D.2 - Message signing client helper",
+    "D.3 - Worker signature verify + gate endpoints",
+    "D.5 - Disable anon writes for XP/trades",
+    "E.2 - schema_v3 migration",
+    "E.3 - register + trades/index endpoints",
+    "E.5 - DEMO flag default false",
+    "F.1-F.4 - Branding/copy/meta updates",
+    "G.1 - Graduation honesty"
+  ],
+  "blocked_tasks": [],
+  "iteration": 15,
+  "created_at": "2026-08-06T22:05:51.878174",
+  "updated_at": "2026-08-06T22:05:51.878176"
+}

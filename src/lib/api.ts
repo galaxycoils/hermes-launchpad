@@ -81,7 +81,7 @@ export async function fetchTrades(tokenId?: string, limit = 25): Promise<Trade[]
   return req<Trade[]>(`/api/trades?limit=${limit}${tokenId ? `&token_id=${tokenId}` : ''}`);
 }
 
-export async function indexTrade(input: { mint: string; signature: string; side: 'buy' | 'sell' }): Promise<TradeResult> {
+export async function indexTrade(input: { mint: string; signature: string; wallet: string; side: 'buy' | 'sell' }): Promise<TradeResult> {
   return req<TradeResult>('/api/trades/index', 'POST', input);
 }
 

@@ -104,7 +104,7 @@ export default function CreateTokenModal({ onClose, onCreated }: Props) {
           <p className="mt-2 text-lg font-black">{name} <span className="font-mono text-sm text-white/55">$</span>{ticker}</p>
           <dl className="mt-4 space-y-2 text-xs text-white/65">
             <div className="flex justify-between"><dt>Curve</dt><dd>30 SOL virtual · 85 SOL graduation</dd></div>
-            <div className="flex justify-between"><dt>Fees</dt><dd>0.7% per trade</dd></div>
+            <div className="flex justify-between"><dt>Fees</dt><dd>0.5% per trade</dd></div>
             <div className="flex justify-between"><dt>Reward</dt><dd className="text-pump">+1,000 XP</dd></div>
           </dl>
         </div>

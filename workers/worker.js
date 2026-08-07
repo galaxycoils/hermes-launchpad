@@ -1,3 +1,5 @@
+import { verifyCreateTransaction, verifyTradeTransaction } from "./chain.js";
+
 // hermes-api v2 — Hermes Launchpad backend
 // Shared bonding-curve engine (mirrors programs/hermes-curve math) + trades,
 // comments, likes, profiles/XP/quests/streaks, referrals, and Workers AI agents.
@@ -190,8 +192,10 @@ export default {
         const { mint, name, ticker, emoji, creator, signature } = b;
         if (!mint || !name || !ticker || !creator || !signature) return err("mint, name, ticker, creator, signature required");
         if (!validWallet(creator)) return err("invalid creator wallet");
-        // Verify the signature by checking the transaction on devnet
-        // For now, accept and verify on-chain via RPC would be ideal but skipped for speed
+        const verified = await verifyCreateTransaction({
+          signature, mint, creator, programId: env.PROGRAM_ID, rpcUrl: env.SOLANA_RPC,
+        });
+        if (!verified) return err("unverified on-chain create transaction", 403);
         const id = String(ticker).toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 8) + "-" + shortRef().slice(0, 4);
         const spark = Array.from({ length: 24 }, () => Math.round(priceSol({ virtual_sol: V_SOL0, virtual_tokens: V_TOK0 }) * 1e12) / 1e6);
         await db.prepare(
@@ -386,11 +390,14 @@ export default {
       // ---- on-chain trade indexing ----
       if (path === "/api/trades/index" && request.method === "POST") {
         const b = await request.json().catch(() => ({}));
-        const { mint, signature, side } = b;
-        if (!mint || !signature || !side) return err("mint, signature, side required");
-        
-        // Optional: verify signature on devnet via RPC
-        // For now, check if signature already indexed (dedupe)
+        const { mint, signature, side, wallet } = b;
+        if (!mint || !signature || !wallet || !["buy", "sell"].includes(side)) {
+          return err("mint, signature, wallet, and buy/sell side required");
+        }
+        const verified = await verifyTradeTransaction({
+          signature, mint, wallet, side, programId: env.PROGRAM_ID, rpcUrl: env.SOLANA_RPC,
+        });
+        if (!verified) return err("unverified on-chain trade transaction", 403);
         const existing = await db.prepare("SELECT 1 x FROM trades WHERE signature = ?").bind(signature).first();
         if (existing) return json({ ok: true, already: true });
         
@@ -401,13 +408,12 @@ export default {
         // Record trade with signature (amounts are 0 since on-chain is source of truth)
         await db.prepare(
           "INSERT INTO trades (token_id, wallet, side, sol_amount, token_amount, price, ts, signature, source) VALUES (?, ?, ?, 0, 0, 0, ?, ?, 'onchain')"
-        ).bind(t.id, b.wallet || 'unknown', side, now(), signature).run();
+        ).bind(t.id, verified.wallet, side, now(), signature).run();
         
-        // Award XP if wallet provided and valid
-        if (b.wallet && validWallet(b.wallet)) {
-          await ensureProfile(db, b.wallet);
-          await db.prepare("UPDATE profiles SET trades = trades + 1 WHERE wallet = ?").bind(b.wallet).run();
-          const xp = await awardXp(db, b.wallet, XP.trade, "q1");
+        if (validWallet(verified.wallet)) {
+          await ensureProfile(db, verified.wallet);
+          await db.prepare("UPDATE profiles SET trades = trades + 1 WHERE wallet = ?").bind(verified.wallet).run();
+          const xp = await awardXp(db, verified.wallet, XP.trade, "q1");
           return json({ ok: true, ...xp });
         }
         return json({ ok: true });

@@ -1,0 +1,116 @@
+{
+  "tasks": [
+    {
+      "id": "A.1",
+      "title": "Generate program keypair",
+      "status": "complete"
+    },
+    {
+      "id": "A.3",
+      "title": "Update program IDs in code",
+      "status": "complete"
+    },
+    {
+      "id": "B.1",
+      "title": "Create .env.example and wire Vite env",
+      "status": "complete"
+    },
+    {
+      "id": "B.2",
+      "title": "Worker vars in wrangler.toml",
+      "status": "complete"
+    },
+    {
+      "id": "C.2",
+      "title": "Align ix builders with program",
+      "status": "complete"
+    },
+    {
+      "id": "C.3",
+      "title": "CreateTokenModal on-chain create + register",
+      "status": "complete"
+    },
+    {
+      "id": "C.4",
+      "title": "TokenModal on-chain buy/sell",
+      "status": "complete"
+    },
+    {
+      "id": "C.5",
+      "title": "Demo vs on-chain badges",
+      "status": "complete"
+    },
+    {
+      "id": "C.6",
+      "title": "WalletButton enforcement",
+      "status": "complete"
+    },
+    {
+      "id": "D.2",
+      "title": "Message signing client helper",
+      "status": "complete"
+    },
+    {
+      "id": "D.3",
+      "title": "Worker signature verify + gate endpoints",
+      "status": "complete"
+    },
+    {
+      "id": "D.5",
+      "title": "Disable anon writes for XP/trades",
+      "status": "complete"
+    },
+    {
+      "id": "E.2",
+      "title": "schema_v3 migration",
+      "status": "complete"
+    },
+    {
+      "id": "E.3",
+      "title": "register + trades/index endpoints",
+      "status": "complete"
+    },
+    {
+      "id": "E.5",
+      "title": "DEMO flag default false",
+      "status": "complete"
+    },
+    {
+      "id": "F.1-F.4",
+      "title": "Branding/copy/meta updates",
+      "status": "complete"
+    },
+    {
+      "id": "G.1",
+      "title": "Graduation honesty",
+      "status": "complete"
+    },
+    {
+      "id": "H.1",
+      "title": "Tests / smoke script",
+      "status": "pending"
+    },
+    {
+      "id": "H.2",
+      "title": "Security checklist",
+      "status": "pending"
+    },
+    {
+      "id": "H.3",
+      "title": "Docs update",
+      "status": "complete"
+    },
+    {
+      "id": "H.4",
+      "title": "Deploy Worker + Pages",
+      "status": "pending"
+    },
+    {
+      "id": "H.5",
+      "title": "End-to-end verification",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-08-06T22:05:51.878277",
+  "updated_at": "2026-08-06T22:05:51.878279"
+}

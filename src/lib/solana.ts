@@ -10,12 +10,10 @@ export const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9
 export const ATA_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
 export const RENT_SYSVAR = new PublicKey('SysvarRent111111111111111111111111111111111');
 
-// Keyless public devnet RPCs (api.devnet.solana.com blocks some providers).
-const RPC_CANDIDATES = [
-  'https://devnet.rpcpool.com',
-  'https://api.devnet.solana.com',
-];
-export const connection = new Connection(RPC_CANDIDATES[0], 'confirmed');
+export const connection = new Connection(
+  import.meta.env.VITE_SOLANA_RPC ?? 'https://api.devnet.solana.com',
+  'confirmed',
+);
 
 // Anchor instruction discriminators (sha256("global:<name>")[0..8]).
 const DISC = {
@@ -189,14 +187,14 @@ export function computeBuyQuote(solIn: number, vs: number, vt: number): { tokOut
 }
 
 export function computeSellQuote(tokIn: number, vs: number, vt: number): { solOut: number; minOut: bigint } {
-  const tokInRaw = BigInt(tokIn);
+  const tokInRaw = BigInt(Math.floor(tokIn * 1_000_000));
   const k = BigInt(vs) * BigInt(vt);
   const newVt = BigInt(vt) + tokInRaw;
   const newVs = k / newVt;
   const solGross = BigInt(vs) - newVs;
   const fee = (solGross * FEE_BPS * 2n) / BPS_DENOM;
   const solOut = solGross - fee;
-  return { solOut: Number(solOut) / 1_000_000_000, minOut: BigInt(Math.round((Number(solOut) * 0.99) * 1_000_000_000)) };
+  return { solOut: Number(solOut) / 1_000_000_000, minOut: (solOut * 99n) / 100n };
 }
 
 export async function ensureAtaIx(mint: PublicKey, owner: PublicKey): Promise<TransactionInstruction | null> {

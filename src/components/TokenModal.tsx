@@ -79,7 +79,9 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
       if (curveState.complete) throw new Error('Curve graduated — trading locked');
 
       // Build transaction
-      const feeWallet = new PublicKey(import.meta.env.VITE_FEE_WALLET || '11111111111111111111111111111111');
+      const configuredFeeWallet = import.meta.env.VITE_FEE_WALLET;
+      if (!configuredFeeWallet) throw new Error('Launchpad fee wallet is not configured');
+      const feeWallet = new PublicKey(configuredFeeWallet);
       const creatorWallet = new PublicKey(token.creator);
 
       let tx: Transaction;
@@ -102,7 +104,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
         // Ensure ATA exists
         const ataIx = await ensureAtaIx(mint, provider.publicKey);
         
-        const tokInRaw = BigInt(amt);
+        const tokInRaw = BigInt(Math.floor(amt * 1_000_000));
         const tradeIx = buildTradeIx('sell', provider.publicKey, mint, tokInRaw, quote.minOut, feeWallet, creatorWallet);
         tx = new Transaction();
         if (ataIx) tx.add(ataIx);
@@ -112,7 +114,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
       const sig = await sendTx(provider, tx);
       
       // Index the trade for XP/leaderboard
-      await indexTrade({ mint: token.onchainMint, signature: sig, side: tab });
+      await indexTrade({ mint: token.onchainMint, signature: sig, wallet: provider.publicKey.toBase58(), side: tab });
       
       // Refresh token from server
       const fresh = await fetchToken(token.id, identity);
@@ -121,7 +123,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
 
       if (fresh?.complete) {
         confetti({ particleCount: 300, spread: 120, origin: { y: 0.6 } });
-        toast.success(`🎓 ${token.ticker} GRADUATED! Liquidity migrates to Raydium — LP burned forever.`);
+        toast.success(`🎓 ${token.ticker} curve closed. Migration is not implemented in V1.`);
       } else if (tab === 'buy') {
         confetti({ particleCount: 120, spread: 80, origin: { y: 0.7 }, colors: ['#22c55e', '#a855f7', '#facc15'] });
         toast.success(`Bought on-chain! TX: ${sig.slice(0, 8)}…`);
@@ -182,7 +184,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
 
   const share = async () => {
     const link = shareLink(profile?.ref_code || identity, token.id);
-    const text = `$${token.ticker} — ${token.name}\n\n${token.curveProgress}% to Raydium graduation on Hermes Launchpad.\n\n${link}`;
+    const text = `$${token.ticker} — ${token.name}\n\n${token.curveProgress}% to on-chain curve closure on Hermes Launchpad.\n\n${link}`;
     if (navigator.share) { try { await navigator.share({ title: token.name, text, url: link }); return; } catch { /* Share dismissed. */ } }
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
   };
@@ -281,7 +283,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
           <div className="h-2.5 rounded-full bg-white/10 overflow-hidden">
             <div className="h-full rounded-full bg-gradient-to-r from-purple-500 via-green-400 to-emerald-300 transition-all" style={{ width: `${token.curveProgress}%` }} />
           </div>
-          <p className="text-[11px] text-white/40 mt-1">At {fmtUsd(MIGRATION_TARGET)} market cap, liquidity auto-migrates to Raydium and LP is burned forever.</p>
+          <p className="text-[11px] text-white/40 mt-1">At {fmtUsd(MIGRATION_TARGET)}, the V1 curve locks. No Raydium migration is implemented.</p>
         </div>
 
         {!token.complete && (
@@ -313,7 +315,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
             />
             <div className="flex justify-between text-xs text-white/50 mt-2">
               <span>{tab === 'buy' ? `You receive ≈ ${est} ${token.ticker}` : `You receive ≈ ${est}`}</span>
-              <span>Fees: 0.7%</span>
+              <span>Fees: 0.5%</span>
             </div>
             <button
               onClick={trade}
@@ -323,7 +325,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
               {busy ? 'Executing on the curve…' : tab === 'buy' ? `Buy ${token.ticker}` : `Sell ${token.ticker}`}
             </button>
             <p className="text-center text-[10px] text-white/30 mt-2">
-              Shared devnet curve engine — every trade moves the real price for everyone. On-chain program plugs in at deployment.
+              Solana devnet transaction. On-chain state is authoritative; the indexer verifies the signature.
             </p>
           </div>
         )}
