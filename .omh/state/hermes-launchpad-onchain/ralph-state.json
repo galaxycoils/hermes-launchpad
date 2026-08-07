@@ -1,10 +1,10 @@
 {
-  "C": { "1": true, "2": true, "3": false, "4": false },
+  "C": { "1": true, "2": true, "3": true, "4": true },
   "D": { "1": true, "2": true },
   "E": { "1": true, "2": false, "3": false, "4": false },
   "F": { "1": false, "2": false },
-  "wu": "WU-02",
-  "status": "complete-poc",
-  "note": "WU-02 Raydium CPMM migration POC done. Compile-only: account ordering + discriminator verified vs context7 Raydium CPMM docs. On-chain proof requires WU-03 deploy keypair restore.",
-  "ts": "2026-08-07T19:00:00Z"
+  "wu": "WU-03",
+  "status": "complete",
+  "note": "WU-03: Corrective program redeploy with devnet Raydium ID (DRaycpLY...), 5 fake-write paths removed (C.3/C.4 complete). All 19+ tests passing. On-chain migration proof blocked on Raydium account funding (WU-04+).",
+  "ts": "2026-08-07T19:30:00Z"
 }

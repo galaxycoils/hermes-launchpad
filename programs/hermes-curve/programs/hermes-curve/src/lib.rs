@@ -517,7 +517,7 @@ pub struct Migrate<'info> {
 /// Raydium CPMM program ID on devnet.
 /// Source: https://github.com/raydium-io/raydium-cpmm (devnet deployment)
 pub const RAYDIUM_CPMM_PROGRAM_ID: Pubkey =
-    pubkey!("CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C");
+    pubkey!("DRaycpLY18LhpbydsBWbVJtxpNv9oXPgjRSfpF2bWpYb");
 
 /// Discriminator for Raydium CPMM `initialize`.
 /// First 8 bytes of sha256("global:initialize") = [af,af,6d,1f,0d,98,9b,ed]

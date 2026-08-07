@@ -165,53 +165,6 @@ export default {
         return json(results.map(mapToken));
       }
 
-      if (path === "/api/tokens" && request.method === "POST") {
-        const b = await request.json().catch(() => ({}));
-        const { name, ticker, emoji, wallet } = b;
-        if (!name || !ticker || !validWallet(wallet)) return err("name, ticker, wallet required");
-        if (String(name).length > 32 || String(ticker).length > 10) return err("name/ticker too long");
-        const id = String(ticker).toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 8) + "-" + shortRef().slice(0, 4);
-        const spark = Array.from({ length: 24 }, () => Math.round(priceSol({ virtual_sol: V_SOL0, virtual_tokens: V_TOK0 }) * 1e12) / 1e6);
-        await db.prepare(
-          `INSERT INTO tokens (id, name, ticker, emoji, lore, creator, chain, price, market_cap, holders, spark, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, 'SOL', ?, ?, 1, ?, ?)`
-        ).bind(
-          id, String(name).slice(0, 32), String(ticker).toUpperCase().slice(0, 10),
-          (emoji || "🪙").slice(0, 4), "Fresh off the curve. Lore pending The Bard.",
-          wallet, V_SOL0 / V_TOK0, V_SOL0 * SOL_USD, JSON.stringify(spark), now()
-        ).run();
-        await ensureProfile(db, wallet);
-        const xp = await awardXp(db, wallet, XP.create, "q2");
-        const t = await getToken(db, id);
-        return json({ ...mapToken(t), ...xp }, 201);
-      }
-
-      // ---- on-chain token registration ----
-      if (path === "/api/tokens/register" && request.method === "POST") {
-        const b = await request.json().catch(() => ({}));
-        const { mint, name, ticker, emoji, creator, signature } = b;
-        if (!mint || !name || !ticker || !creator || !signature) return err("mint, name, ticker, creator, signature required");
-        if (!validWallet(creator)) return err("invalid creator wallet");
-        const verified = await verifyCreateTransaction({
-          signature, mint, creator, programId: env.PROGRAM_ID, rpcUrl: env.SOLANA_RPC,
-        });
-        if (!verified) return err("unverified on-chain create transaction", 403);
-        const id = String(ticker).toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 8) + "-" + shortRef().slice(0, 4);
-        const spark = Array.from({ length: 24 }, () => Math.round(priceSol({ virtual_sol: V_SOL0, virtual_tokens: V_TOK0 }) * 1e12) / 1e6);
-        await db.prepare(
-          `INSERT INTO tokens (id, name, ticker, emoji, lore, creator, chain, price, market_cap, holders, spark, created_at, onchain_mint)
-           VALUES (?, ?, ?, ?, ?, ?, 'SOL', ?, ?, 1, ?, ?, ?)`
-        ).bind(
-          id, String(name).slice(0, 32), String(ticker).toUpperCase().slice(0, 10),
-          (emoji || "🪙").slice(0, 4), "Fresh off the curve. Lore pending The Bard.",
-          creator, V_SOL0 / V_TOK0, V_SOL0 * SOL_USD, JSON.stringify(spark), now(), mint
-        ).run();
-        await ensureProfile(db, creator);
-        const xp = await awardXp(db, creator, XP.create, "q2");
-        const t = await getToken(db, id);
-        return json({ ...mapToken(t), ...xp }, 201);
-      }
-
       const tokenMatch = path.match(/^\/api\/tokens\/([a-z0-9-]+)(\/(comments|like|lore|risk))?$/);
 
       if (tokenMatch && !tokenMatch[2] && request.method === "GET") {

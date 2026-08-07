@@ -163,7 +163,7 @@ describe("hermes-curve (devnet)", () => {
           curveTokenAccount: curveAta,
           authority: migrationAuthority,
           authorityTokenAccount: getAssociatedTokenAddressSync(mint.publicKey, migrationAuthority),
-          cpmmProgram: new PublicKey("CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C"),
+          cpmmProgram: new PublicKey("DRaycpLY18LhpbydsBWbVJtxpNv9oXPgjRSfpF2bWpYb"),
           ammConfig: migrationAuthority,
           authorityPda: migrationAuthority,
           poolState: migrationAuthority,

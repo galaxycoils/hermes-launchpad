@@ -68,13 +68,14 @@ vitest.config.ts  playwright.config.ts  tests/setup.ts  tests/unit/smoke.test.ts
 - IDL: **built** (`programs/hermes-curve/target/idl/hermes_curve.json`) — WU-01; `migrate_to_raydium` present (WU-02)
 
 ## Verified Artifacts (on-chain)
-- Program ID: `9K5eAWBkrUJbUiUC8aM6xeuXM2ACj9XNHfbC1X6Scjgz` — devnet slot 481782747, 2.24 SOL, authority `GkHE2vb8j3PGyjMvCmWJMffiKb2QwVye5TfuUPG1NK5a` (verified `solana program show`)
+- Program ID: `9K5eAWBkrUJbUiUC8aM6xeuXM2ACj9XNHfbC1X6Scjgz` — devnet slot 481956048, 2.69 SOL, authority `GkHE2vb8j3PGyjMvCmWJMffiKb2QwVye5TfuUPG1NK5a` (verified `solana program show`)
 - Config PDA: `9Sv1kApQK428EUueU7dR9mTPqKqNR7dxkBmwtZuHDTkr` — initialized, fee wallet + migration authority = authority key
 - Fee wallet: `GkHE2vb8j3PGyjMvCmWJMffiKb2QwVye5TfuUPG1NK5a`
-- No deploy keypair in `programs/hermes-curve/target/deploy/` (verified empty) — upgrade via `target/deploy/hermes_curve-upgrade-buffer.json`
+- **No deploy keypair in `target/deploy/`** (verified empty)
 - Worker: `hermes-api.tahamtandariush.workers.dev` ; Pages: `hermes-launchpad.pages.dev` ; D1: `hermes-launchpad-db` (`afa984c4-30e5-4f47-afce-a401ee2df098`)
-- IDL: `programs/hermes-curve/target/idl/hermes_curve.json` — built (WU-01)
-- Program tests: 6/6 passing on devnet via `npm run test:program` (5 V1 + 1 WU-02 wiring)
+- IDL: `programs/hermes-curve/target/idl/hermes_curve.json` — built (WU-01); `migrate_to_raydium` present (WU-02); devnet Raydium ID patched (WU-03)
+- Raydium CPMM devnet program ID: `DRaycpLY18LhpbydsBWbVJtxpNv9oXPgjRSfpF2bWpYb` (verified `solana program show`)
+- Program tests: 6/6 passing on devnet via `npm run test:program`
 
 ## Build & Test (verified green)
 - `npm run build` → exit 0
@@ -84,18 +85,18 @@ vitest.config.ts  playwright.config.ts  tests/setup.ts  tests/unit/smoke.test.ts
 - `npm run test:client` → 1 passed
 - `npm run test:integration` → 1 passed
 - `npm run test:security` → 5 passed
-- `npm run test:program` → 6 passed on devnet (IDL built, config loaded, create/buy/sell/slippage + WU-02 migrate_to_raydium wiring)
+- `npm run test:program` → 6 passed on devnet (IDL built, config loaded, create/buy/sell/slippage + WU-02 migrate_to_raydium wiring, WU-03 devnet Raydium ID)
 - Configs: `vitest.config.ts` (unit/client/integration/worker), `playwright.config.ts` (5 browsers), `tests/setup.ts`
 
 ## OMH State
-`.omh/state/hermes-launchpad-onchain/` — autopilot-state.json + ralph-state.json (WU-00, WU-01, WU-02 complete; WU-03 pending approval). Swarm init via OMH file-backed fallback (claude-flow@alpha unavailable).
+`.omh/state/hermes-launchpad-onchain/` — autopilot-state.json + ralph-state.json (WU-00, WU-01, WU-02, WU-03 complete; WU-04 pending approval). Swarm init via OMH file-backed fallback (claude-flow@alpha unavailable).
 
-## WU-02 — Raydium CPMM Migration POC ✅ (compile-only)
-- `migrate_to_raydium` instruction: manual CPI to Raydium CPMM `initialize` (no external crate — avoids Anchor 0.31.1 vs 0.32.1 conflict)
-- Raydium program ID: `CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C` (devnet)
-- Discriminator: `[af,af,6d,1f,0d,98,9b,ed]` (sha256("global:initialize")[0..8])
-- Account ordering verified vs official Raydium CPMM context (context7 /raydium-io/raydium-cpi)
-- **Blocked on-chain proof**: no deploy keypair in target/deploy/ → WU-03 restores keypair + funds Raydium accounts
+## WU-03 — Fake-Write Removal + Devnet Raydium ID Fix ✅
+- Removed 5 quarantined fake-write paths: `createTokenServer`, `registerToken`, `postTrade` (api.ts); `POST /api/tokens`, `POST /api/tokens/register` (worker.js)
+- Corrected Raydium CPMM program ID from mainnet `CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C` → devnet `DRaycpLY18LhpbydsBWbVJtxpNv9oXPgjRSfpF2bWpYb` (verified via context7 + `solana program show`)
+- Program redeployed with fix (sig: `617yNMbQmR9Pft1B2gggBctmYkxn8gFvLcGCxhpLU9yRSn6sucbzdM5dWp4QC8hGCgiZeFhjSdeUyQAZtSnw1exS`)
+- All 19+ tests passing (unit:1, worker:6, client:1, integration:1, security:5, program:6)
+- **Blocked**: On-chain migration proof requires Raydium account funding (amm_config, pool_state, vaults) — WU-04+
 
 ## CI
 `.github/workflows/ci.yml` — extended with test-unit/worker/client/integration/security/program/e2e + Lighthouse ≥90 gate (this WU-00 commit).
