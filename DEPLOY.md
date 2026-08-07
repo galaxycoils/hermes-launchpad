@@ -14,7 +14,7 @@ Browser ──► Cloudflare Pages (hermes-launchpad.pages.dev)   [static fronte
 
 All trading runs on-chain via the Anchor program. The Worker is an indexer, not a ledger.
 
-**Status (2026-08-07):** Program deployed and initialized on devnet. Config PDA initialized. Worker routes live. Ready for E2E smoke test.
+**Status (2026-08-07):** Program deployed and initialized on devnet (slot 481782747, authority `GkHE2vb8j3PGyjMvCmWJMffiKb2QwVye5TfuUPG1NK5a`). Config PDA initialized. Worker routes live. Test infrastructure (WU-00) initialized. E2E gated behind wallet secret. Awaiting approval to proceed to WU-01. No deploy keypair is present in `programs/hermes-curve/target/deploy/` — the program was deployed from a backed-up keypair; restore it to that path for any future upgrade.
 
 ## IDs
 

@@ -7,7 +7,7 @@ AI-native fair launches on Solana. Bonding curves you can verify on-chain. Lore 
 - **App (Devnet):** https://hermes-launchpad.pages.dev
 - **API:** https://hermes-api.tahamtandariush.workers.dev/api/health
 
-**Status:** Program deployed and initialized on devnet. Config PDA initialized. Worker routes live. Ready for E2E smoke test
+**Status (2026-08-07):** Test infrastructure initialized (WU-00 complete). On-chain program deployed and initialized on devnet. Worker routes live. E2E is gated behind a funded devnet wallet secret (`E2E_BLOCKED_WALLET_UNAVAILABLE`); fake-write paths (`createTokenServer`, `registerToken`, `postTrade`) are quarantined for removal in WU-03/04. Awaiting approval to proceed to WU-01.
 
 ## Stack
 
