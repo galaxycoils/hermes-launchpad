@@ -6,6 +6,9 @@
   "wu": "WU-01",
   "status": "complete",
   "next": "WU-02-pending-approval",
-  "note": "D.1/D.2 = Anchor build + IDL + program tests complete. C.3/C.4 (fake-write removal) still WU-03/04 scope.",
-  "ts": "2026-08-07T16:45:00Z"
+  "swarm_init": true,
+  "swarm_topology": "star",
+  "swarm_agents": 2,
+  "note": "D.1/D.2 = Anchor build + IDL + program tests complete. C.3/C.4 (fake-write removal) still WU-03/04 scope. Swarm init via OMH fallback (claude-flow@alpha unavailable).",
+  "ts": "2026-08-07T16:55:00Z"
 }

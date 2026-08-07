@@ -1,0 +1,12 @@
+{
+  "status": "ready",
+  "topology": "star",
+  "agents": 2,
+  "agent_roles": [
+    { "name": "acting-coordinator", "type": "coordinator", "capabilities": ["task-execution", "on-chain", "cloudflare", "frontend", "docs", "test"] },
+    { "name": "reference-advisor", "type": "advisor", "capabilities": ["review", "critique", "alternative-paths"], "read_only": true }
+  ],
+  "note": "sub-agents spawn only on explicit WU approval; claude-flow@alpha non-functional (deprecated deps, timeout), using OMH file-backed fallback per omh-file-backed-fallback skill",
+  "ts": 1786137091,
+  "wu": "WU-01-complete"
+}

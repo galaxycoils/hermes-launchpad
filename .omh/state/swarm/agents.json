@@ -1,0 +1,4 @@
+{
+  "acting-coordinator": { "status": "ready", "wu": "WU-01-complete", "progress": "swarm-init complete, awaiting WU-02 approval" },
+  "reference-advisor": { "status": "ready", "wu": "WU-01-complete", "progress": "read-only review available" }
+}

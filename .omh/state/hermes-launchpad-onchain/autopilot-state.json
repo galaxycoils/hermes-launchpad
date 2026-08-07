@@ -4,5 +4,8 @@
   "wu": "WU-01",
   "status": "complete",
   "next": "WU-02-pending-approval",
-  "ts": "2026-08-07T16:45:00Z"
+  "swarm_init": true,
+  "swarm_topology": "star",
+  "swarm_agents": 2,
+  "ts": "2026-08-07T16:55:00Z"
 }
