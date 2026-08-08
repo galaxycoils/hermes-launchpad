@@ -94,7 +94,7 @@ vitest.config.ts  playwright.config.ts  tests/setup.ts  tests/unit/smoke.test.ts
 - **Frontend `provenance` badge** in `TokenCard.tsx`: ⛓ on-chain / ◷ indexed / (demo implied). `Token.provenance` added to interface.
 - **WU-04 honesty fix**: `TradeResult.graduated` → `migrationReady`; worker trade response + 409 message use "migration-ready" (not "graduated"). Negative test still asserts no "graduated|migrated" copy.
 - **AI honesty**: removed misleading "● live" badge on AI Research panel (now "AI agents"); share text notes lore/risk are AI-generated drafts to verify on-chain.
-- **CI gate fix**: rewrote `.github/workflows/ci.yml` to a known-good structure so the test suites (`test-unit`/`test-worker`/`test-client`/`test-integration`/`test-security`) actually run as PR checks (previous file failed at parse in 0s). `test-program`/`test-e2e` remain gated on `DEVNET_WALLET` secret; `blocked-checks` records intentional skips.
+- **CI gate fix**: Rewrote `.github/workflows/ci.yml` to a known-good structure so the test suites (`test-unit`/`test-worker`/`test-client`/`test-integration`/`test-security`) actually run as PR checks (previous file failed at parse in 0s). `test-program`/`test-e2e` remain gated on `DEVNET_WALLET`; `blocked-checks` records intentional skips. `push` trigger removed — this repo's push-handler reports 0s failures when a branch has an open PR; PR + `workflow_dispatch` triggers run correctly.
 - **Verification**: `npm run build` exit 0; full suite green (unit 12, worker 6, client 1, integration 1, security 5). `scripts/wu04-probe.mjs` re-confirms WU-04 block (0/50 Raydium `amm_config` on devnet).
 
 ## OMH State

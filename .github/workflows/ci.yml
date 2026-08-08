@@ -1,8 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -129,7 +127,7 @@ jobs:
           DEVNET_RPC: https://api.devnet.solana.com
 
   blocked-checks:
-    if: ${{ secrets.DEVNET_WALLET == '' }}
+    if: ${{ secrets.DEVNET_WALLET == "" }}
     runs-on: ubuntu-22.04
     steps:
-      - run: echo "TEST_PROGRAM_AND_E2E_BLOCKED - no DEVNET_WALLET secret, intentionally skipped, not a false pass."
+      - run: echo "TEST_PROGRAM_AND_E2E_BLOCKED - no DEVNET_WALLET secret; intentionally skipped, not a false pass."
