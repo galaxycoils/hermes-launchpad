@@ -112,6 +112,9 @@ jobs:
         run: sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
       - name: Install Anchor
         run: cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked
+      - name: Build program (IDL required by tests)
+        working-directory: programs/hermes-curve
+        run: anchor build
       - name: Run program tests if DEVNET_WALLET set
         env:
           ANCHOR_PROVIDER_URL: https://api.devnet.solana.com
@@ -137,13 +140,17 @@ jobs:
           cache: npm
       - run: npm ci || npm install
       - run: npx playwright install --with-deps
-      - name: Run E2E if DEVNET_WALLET set
+      - name: Run E2E if DEVNET_WALLET set and specs exist
         env:
           DEVNET_WALLET: ${{ secrets.DEVNET_WALLET }}
           DEVNET_RPC: https://api.devnet.solana.com
         run: |
           if [ -z "$DEVNET_WALLET" ]; then
             echo "TEST_E2E_SKIPPED - no DEVNET_WALLET secret; intentionally skipped, not a false pass."
+            exit 0
+          fi
+          if [ ! -d tests/e2e ] || [ -z "$(ls tests/e2e/*.spec.ts 2>/dev/null)" ]; then
+            echo "TEST_E2E_SKIPPED - no e2e specs in tests/e2e; not a false pass."
             exit 0
           fi
           npm run test:e2e
