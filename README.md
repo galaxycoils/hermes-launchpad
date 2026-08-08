@@ -7,7 +7,7 @@ AI-native fair launches on Solana. Bonding curves you can verify on-chain. Lore 
 - **App (Devnet):** https://hermes-launchpad.pages.dev
 - **API:** https://hermes-api.tahamtandariush.workers.dev/api/health
 
-**Status (2026-08-07):** Test infrastructure initialized (WU-00 complete). On-chain program deployed and initialized on devnet. Worker routes live. E2E is gated behind a funded devnet wallet secret (`E2E_BLOCKED_WALLET_UNAVAILABLE`); fake-write paths (`createTokenServer`, `registerToken`, `postTrade`) are quarantined for removal in WU-03/04. Awaiting approval to proceed to WU-01.
+**Status (2026-08-08):** WU-00..WU-05b complete and merged to `main`. Frontend truth remediation complete; Worker on-chain provenance live; CI PR gate verified. Public devnet preview is live. E2E/program-live verification remains gated on a funded `DEVNET_WALLET` secret. Raydium migration remains honestly blocked because devnet exposes 0/50 probed `amm_config` accounts; no mainnet deployment is planned.
 
 ## Stack
 
@@ -16,7 +16,7 @@ AI-native fair launches on Solana. Bonding curves you can verify on-chain. Lore 
 | Frontend | Vite + React 19 + TypeScript + Tailwind (this repo, root) |
 | Hosting | Cloudflare Pages (git build from `main`: `npm run build` → `dist`) |
 | Backend | Cloudflare Worker `hermes-api` (`workers/worker.js`) |
-| Database | Cloudflare D1 `hermes-launchpad-db` (`workers/schema_v3.sql`) |
+| Database | Cloudflare D1 `hermes-launchpad-db` (`workers/schema.sql`, canonical; `schema_v3.sql` historical migration) |
 | AI | Workers AI `@cf/meta/llama-3.1-8b-instruct` (The Bard / The Oracle) |
 | Chain | Solana devnet Anchor program (`programs/hermes-curve`) — program ID: `9K5eAWBkrUJbUiUC8aM6xeuXM2ACj9XNHfbC1X6Scjgz` |
 

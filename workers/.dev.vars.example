@@ -1,0 +1,8 @@
+# Local dev vars for workers/worker.js (wrangler dev). NO secrets here.
+# Real secrets (CF_API_TOKEN, D1 credentials) come from wrangler login / dashboard.
+PROGRAM_ID = "9K5eAWBkrUJbUiUC8aM6xeuXM2ACj9XNHfbC1X6Scjgz"
+CLUSTER = "devnet"
+GRADUATION_SOL = "85"
+REQUIRE_SIGNED_TRADES = "true"
+SOLANA_RPC = "https://api.devnet.solana.com"
+# DEVNET_WALLET is a secret — set via `wrangler secret put DEVNET_WALLET` (not in this file).

@@ -29,9 +29,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Dry-run worker deploy (syntax check)
+      - name: Dry-run worker deploy (syntax check, needs CF_API_TOKEN)
+        if: ${{ secrets.CF_API_TOKEN != '' }}
         working-directory: workers
         run: npx wrangler@4 deploy --dry-run
+      - name: Skip note (no CF_API_TOKEN)
+        if: ${{ secrets.CF_API_TOKEN == '' }}
+        run: echo "WORKER_CHECK_SKIPPED - no CF_API_TOKEN secret; intentionally skipped, not a false pass."
 
   test-unit:
     runs-on: ubuntu-22.04
