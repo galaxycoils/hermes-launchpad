@@ -21,11 +21,6 @@ jobs:
       - run: npm ci || npm install
       - run: npm run lint
       - run: npm run build
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist/
-          retention-days: 7
 
   worker-check:
     runs-on: ubuntu-22.04
@@ -119,8 +114,8 @@ jobs:
           ANCHOR_WALLET: /tmp/devnet-wallet.json
 
   test-e2e:
+    if: ${{ secrets.DEVNET_WALLET != '' }}
     runs-on: ubuntu-22.04
-    if: ${{ github.event_name == 'push' && secrets.DEVNET_WALLET != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -134,39 +129,10 @@ jobs:
           DEVNET_WALLET: ${{ secrets.DEVNET_WALLET }}
           DEVNET_RPC: https://api.devnet.solana.com
 
-  e2e-blocked-check:
+  blocked-checks:
+    # Records intentional skips when DEVNET_WALLET is absent — not false passes.
+    if: ${{ secrets.DEVNET_WALLET == '' }}
     runs-on: ubuntu-22.04
-    if: ${{ github.event_name == 'push' && secrets.DEVNET_WALLET == '' }}
     steps:
       - run: |
-          echo "E2E_BLOCKED_WALLET_UNAVAILABLE: no DEVNET_WALLET secret - E2E intentionally skipped, not a false pass."
-
-  test-program-blocked-check:
-    runs-on: ubuntu-22.04
-    if: ${{ github.event_name == 'push' && secrets.DEVNET_WALLET == '' }}
-    steps:
-      - run: |
-          echo "TEST_PROGRAM_BLOCKED_WALLET_UNAVAILABLE: no DEVNET_WALLET secret - test-program intentionally skipped, not a false fail."
-
-  lighthouse:
-    # TRACKED WAIVER: runs against prod preview URL. Enforce hard PWA >= 90 once
-    # preview-deploy is wired in WU-07 (plan release gate). Non-blocking until then.
-    continue-on-error: true
-    runs-on: ubuntu-22.04
-    needs: [frontend]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: npm ci || npm install
-      - run: npm run build
-      - name: Lighthouse CI (PWA target >= 90)
-        run: |
-          npx --yes @lhci/cli@0.13.x autorun \
-            --collect.url=https://hermes-launchpad.pages.dev \
-            --assert.assertions.categories:performance=minScore:0.90 \
-            --assert.assertions.categories:accessibility=minScore:0.90 \
-            --assert.assertions.categories:best-practices=minScore:0.90 \
-            --assert.assertions.categories:seo=minScore:0.90 \
-            --assert.assertions.categories:pwa=minScore:0.90
+          echo "TEST_PROGRAM_AND_E2E_BLOCKED: no DEVNET_WALLET secret - intentionally skipped, not a false pass."

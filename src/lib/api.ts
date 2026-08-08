@@ -62,7 +62,7 @@ export interface TradeResult extends XpResult {
   tokenAmount: number;
   price: number;
   pnl: number;
-  graduated: boolean;
+  migrationReady: boolean; // curve locked at threshold; NOT a Raydium graduation
   token: Token;
 }
 export async function fetchTrades(tokenId?: string, limit = 25): Promise<Trade[]> {

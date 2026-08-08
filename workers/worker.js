@@ -41,9 +41,12 @@ function priceSol(t) { return t.virtual_sol / t.virtual_tokens; }
 function mcapUsd(t) { return priceSol(t) * SUPPLY * SOL_USD; }
 function curveProgress(t) { return Math.min(100, (t.real_sol / MIGRATION_SOL) * 100); }
 
-function mapToken(t) {
+function mapToken(t, onchain) {
   const spark = JSON.parse(t.spark || "[]");
   const change = spark.length > 1 ? ((spark[spark.length - 1] - spark[0]) / Math.max(1e-9, spark[0])) * 100 : 0;
+  // Prefer on-chain decoded values when available (provenance: chain decode).
+  const realSol = onchain ? onchain.realSol : Math.round(t.real_sol * 100) / 100;
+  const complete = onchain ? onchain.complete : Boolean(t.complete);
   return {
     id: t.id, name: t.name, ticker: t.ticker, emoji: t.emoji, lore: t.lore,
     creator: t.creator, chain: t.chain,
@@ -52,14 +55,15 @@ function mapToken(t) {
     priceSol: priceSol(t),
     change24h: Math.round(change * 10) / 10,
     volume24h: Math.round(t.volume_24h), holders: t.holders,
-    curveProgress: Math.round(curveProgress(t) * 10) / 10,
+    curveProgress: Math.round(curveProgress({ ...t, real_sol: realSol }) * 10) / 10,
     replies: t.replies, likes: t.likes, riskScore: t.risk_score,
     riskFlag: t.risk_flag || undefined,
     sentiment: t.sentiment, spark,
     createdMinsAgo: Math.max(0, Math.floor((now() - t.created_at) / 60)),
     onchainMint: t.onchain_mint || undefined,
-    complete: Boolean(t.complete),
-    realSol: Math.round(t.real_sol * 100) / 100,
+    provenance: t.onchain_mint ? (onchain ? "onchain" : "index") : "demo",
+    complete,
+    realSol: Math.round(realSol * 100) / 100,
   };
 }
 
@@ -162,7 +166,14 @@ export default {
       // ---------- tokens ----------
       if (path === "/api/tokens" && request.method === "GET") {
         const { results } = await db.prepare("SELECT * FROM tokens ORDER BY created_at ASC").all();
-        return json(results.map(mapToken));
+        const enriched = await Promise.all(results.map(async (t) => {
+          let onchain = null;
+          if (t.onchain_mint && env.PROGRAM_ID && env.SOLANA_RPC) {
+            onchain = await fetchCurveState({ mint: t.onchain_mint, programId: env.PROGRAM_ID, rpcUrl: env.SOLANA_RPC });
+          }
+          return mapToken(t, onchain);
+        }));
+        return json(enriched);
       }
 
       const tokenMatch = path.match(/^\/api\/tokens\/([a-z0-9-]+)(\/(comments|like|lore|risk))?$/);
@@ -176,7 +187,11 @@ export default {
           const l = await db.prepare("SELECT 1 x FROM likes WHERE token_id = ? AND wallet = ?").bind(t.id, w).first();
           likedByMe = Boolean(l);
         }
-        return json({ ...mapToken(t), likedByMe });
+        let onchain = null;
+        if (t.onchain_mint && env.PROGRAM_ID && env.SOLANA_RPC) {
+          onchain = await fetchCurveState({ mint: t.onchain_mint, programId: env.PROGRAM_ID, rpcUrl: env.SOLANA_RPC });
+        }
+        return json({ ...mapToken(t, onchain), likedByMe });
       }
 
       // ---------- comments ----------
@@ -267,7 +282,7 @@ export default {
         }
         const t = await getToken(db, token_id);
         if (!t) return err("token not found", 404);
-        if (t.complete) return err("token graduated — curve closed", 409);
+        if (t.complete) return err("token migration-ready — curve closed", 409);
 
         // Demo mode: if DEMO_OFFCHAIN_CURVE is not true, reject unsigned trades
         if (env.DEMO_OFFCHAIN_CURVE !== "true") {
@@ -332,11 +347,15 @@ export default {
         const t2 = await getToken(db, token_id);
         await refreshStats(db, t2);
         const t3 = await getToken(db, token_id);
+        let onchain = null;
+        if (t3.onchain_mint && env.PROGRAM_ID && env.SOLANA_RPC) {
+          onchain = await fetchCurveState({ mint: t3.onchain_mint, programId: env.PROGRAM_ID, rpcUrl: env.SOLANA_RPC });
+        }
         return json({
           ok: true, side, solAmount: solAmt, tokenAmount: tokAmt, price: execPrice,
           pnl: Math.round(pnlDelta * 100) / 100,
-          graduated: Boolean(complete),
-          token: mapToken(t3), ...xp,
+          migrationReady: Boolean(complete),
+          token: mapToken(t3, onchain), ...xp,
         });
       }
 

@@ -7,6 +7,7 @@ export interface Token {
   creator: string;
   chain: 'SOL' | 'BASE';
   onchainMint?: string; // set when created on devnet for real
+  provenance?: 'demo' | 'index' | 'onchain'; // where realSol/complete came from
   complete?: boolean;   // curve reached threshold and locked; migration not proven
   realSol?: number;     // SOL raised on the curve
   priceSol?: number;    // SOL per token
