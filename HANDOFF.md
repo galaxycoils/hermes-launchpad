@@ -3,7 +3,7 @@
 **Generated:** 2026-08-08
 **Status:** Devnet-complete fair-launch product, public preview live, CI release gate verified.
 **Scope:** Solana devnet only. No mainnet activity. No on-chain mutations performed this session.
-**Repo:** https://github.com/galaxycoils/hermes-launchpad — branch `main` (HEAD `2fd9141`)
+**Repo:** https://github.com/galaxycoils/hermes-launchpad — branch `main` (HEAD `75279d7`)
 
 ---
 
@@ -108,6 +108,16 @@
 - **Why:** Transitive deps in `package-lock.json` (not audited this session).
 - **Impact:** Unknown. Not security-critical for a devnet demo, but should be triaged before any production/mainnet move.
 
+### Blocker 7 — `test-program` live tests need heavy devnet funding
+- **What:** `DEVNET_WALLET` secret IS set (fee wallet `GkHE2vb...`, 6.59 SOL). CI `test-program` job runs: builds program (anchor build --ignore-keys), runs ts-mocha. 5 tests pass. 2 fail: `InsufficientSolReserves (0x1)` because the test wallet cannot pre-fund the curve to the 85 SOL threshold + the curve-reserves tests need SOL airdropped into the curve account.
+- **Why:** The WU-04 negative test requires ~85 SOL funded to the curve; the devnet wallet only holds 6.59 SOL. The other failing test (`buy`/`sell` with reserves) needs the curve account pre-funded with SOL in `beforeEach` — not done in the harness.
+- **Impact:** Non-blocking (`continue-on-error: true`). The 6-pattern security audit PASSED. `cargo test` (7/7) passes locally (unit-level compilation). Full live program tests need a wallet with 85+ SOL + curve pre-funding.
+
+### Blocker 8 — `test-e2e` has no specs
+- **What:** `test:e2e` maps to Playwright config `testDir: tests/e2e` but that directory doesn't exist. CI now skips cleanly (no false pass).
+- **Why:** No E2E specs were written (scope was unit/worker/integration/security + program).
+- **Impact:** Non-blocking. Add `tests/e2e/*.spec.ts` if browser E2E is wanted.
+
 ---
 
 ## 4. WHY STUFF FAILED (root causes)
@@ -125,7 +135,7 @@
 ## 5. WHAT NEEDS DOING NEXT (prioritized)
 
 ### P0 — Before claiming "fully verified"
-1. **Set `DEVNET_WALLET` repo secret** (funded devnet keypair JSON) → unlocks `test-program` + `test:e2e` in CI. Run a live buy/sell through deployed worker to prove end-to-end.
+1. **`DEVNET_WALLET` IS SET** (fee wallet `GkHE2vb...`). `test-program` + `test:e2e` now run in CI. `test-program` shows 5 pass / 2 fail due to insufficient devnet SOL (needs 85+ SOL wallet + curve pre-funding). To fully green: fund the fee wallet to 85+ SOL OR add curve-reserves airdrop in test `beforeEach`.
 2. **Set `CF_API_TOKEN` repo secret** → unlocks `worker-check` dry-run + allows `wrangler d1 execute` to verify D1 seed state.
 3. **Query D1** (`wrangler d1 execute hermes-launchpad-db --remote --command="SELECT count(*) FROM tokens"`) → confirm schema + seed rows present.
 
