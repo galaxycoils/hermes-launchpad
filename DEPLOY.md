@@ -14,7 +14,7 @@ Browser ──► Cloudflare Pages (hermes-launchpad.pages.dev)   [static fronte
 
 All trading runs on-chain via the Anchor program. The Worker is an indexer, not a ledger.
 
-**Status (2026-08-07):** Program deployed and initialized on devnet (slot 481782747, authority `GkHE2vb8j3PGyjMvCmWJMffiKb2QwVye5TfuUPG1NK5a`). Config PDA initialized. Worker routes live. Test infrastructure (WU-00) initialized. E2E gated behind wallet secret. Awaiting approval to proceed to WU-01. No deploy keypair is present in `programs/hermes-curve/target/deploy/` — the program was deployed from a backed-up keypair; restore it to that path for any future upgrade.
+**Status (2026-08-08):** WU-00..WU-05b complete and merged to `main`; public devnet preview is live; CI PR gate verified. E2E/program-live verification requires funded `DEVNET_WALLET`. Raydium migration remains blocked by absent devnet `amm_config` state (0/50 probed accounts owned by Raydium).
 
 ## IDs
 
@@ -63,7 +63,8 @@ Worker environment variables (in `wrangler.toml` `[vars]`):
 
 ```bash
 cd workers
-npx wrangler d1 execute hermes-launchpad-db --remote --file=schema_v3.sql
+npx wrangler d1 execute hermes-launchpad-db --remote --file=schema.sql
+# For an existing pre-v3 database, apply schema_v3.sql once before verification.
 ```
 
 ## Curve parameters (shared by Worker / Frontend / on-chain)
