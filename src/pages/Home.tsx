@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Toaster, toast } from 'sonner';
-import { TOKENS, QUESTS, LEADERBOARD, fmtUsd, fmtAgo } from '@/lib/tokens';
 import { fetchTokens, fetchQuests, fetchLeaderboard, fetchProfile, checkin, fetchReferrals } from '@/lib/api';
 import { getAnonId, captureRef, shareLink } from '@/lib/identity';
 import type { Token, Quest, Trader, Profile, ReferralStats } from '@/lib/tokens';
@@ -14,14 +13,19 @@ import OnboardingTour from '@/components/OnboardingTour';
 
 type Filter = 'all' | 'trending' | 'new' | 'migrating';
 
+const ago = (ts: number) => {
+  const m = Math.max(1, Math.floor((Date.now() / 1000 - ts) / 60));
+  return m < 60 ? `${m}m` : `${Math.floor(m / 60)}h`;
+};
+
 export default function Home({ initialTab = 'tokens' }: { initialTab?: 'tokens' | 'profile' }) {
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Token | null>(null);
   const [tab, setTab] = useState<'tokens' | 'profile'>(initialTab);
-  const [allTokens, setAllTokens] = useState<Token[]>(TOKENS);
-  const [quests, setQuests] = useState<Quest[]>(QUESTS);
-  const [ranks, setRanks] = useState<Trader[]>(LEADERBOARD);
+  const [allTokens, setAllTokens] = useState<Token[]>([]);
+  const [quests, setQuests] = useState<Quest[]>([]);
+  const [ranks, setRanks] = useState<Trader[]>([]);
   const [live, setLive] = useState(false);
   const [wallet, setWallet] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -93,15 +97,15 @@ export default function Home({ initialTab = 'tokens' }: { initialTab?: 'tokens' 
     let list = allTokens.filter((t) =>
       (t.name + t.ticker).toLowerCase().includes(search.toLowerCase())
     );
-    if (filter === 'trending') list = [...list].sort((a, b) => b.volume24h - a.volume24h);
-    if (filter === 'new') list = [...list].sort((a, b) => a.createdMinsAgo - b.createdMinsAgo);
-    if (filter === 'migrating') list = [...list].sort((a, b) => b.curveProgress - a.curveProgress);
+    if (filter === 'trending') list = [...list].sort((a, b) => (b.realSol ?? 0) - (a.realSol ?? 0));
+    if (filter === 'new') list = [...list]; // no createdAt field; keep server order
+    if (filter === 'migrating') list = [...list].sort((a, b) => (b.realSol ?? 0) - (a.realSol ?? 0));
     return list;
   }, [filter, search, allTokens]);
 
   const king = useMemo(() => {
-    const contenders = allTokens.filter((t) => !t.complete && t.curveProgress > 0);
-    return contenders.sort((a, b) => b.curveProgress - a.curveProgress)[0] ?? null;
+    const contenders = allTokens.filter((t) => !t.complete && (t.realSol ?? 0) > 0);
+    return contenders.sort((a, b) => (b.realSol ?? 0) - (a.realSol ?? 0))[0] ?? null;
   }, [allTokens]);
 
   const tokenNames = useMemo(
@@ -114,7 +118,7 @@ export default function Home({ initialTab = 'tokens' }: { initialTab?: 'tokens' 
     if (t) setSelected(t);
   }, [allTokens]);
 
-  const totalVol = allTokens.reduce((s, t) => s + t.volume24h, 0);
+  const totalSolRaised = allTokens.reduce((s, t) => s + (t.realSol ?? 0), 0);
 
   // Referral stats load lazily when the tab opens.
   useEffect(() => {
@@ -147,7 +151,7 @@ export default function Home({ initialTab = 'tokens' }: { initialTab?: 'tokens' 
           <div className="flex items-center gap-2" translate="no"><span className="text-2xl" aria-hidden="true">🛸</span><span className="font-black tracking-tight">HERMES</span></div>
           <div className="flex items-center gap-3">
             {profile && <button onClick={copyRefLink} title="Copy referral link" className="hidden font-mono text-xs text-purple-300 sm:block">LVL {profile.level} · {profile.xp.toLocaleString()} XP</button>}
-            <span className={`hidden font-mono text-xs md:inline ${live ? 'text-pump' : 'text-white/45'}`}>{live ? '● LIVE' : '○ DEMO'} · VOL {fmtUsd(totalVol)}</span>
+            <span className={`hidden font-mono text-xs md:inline ${live ? 'text-pump' : 'text-white/45'}`}>{live ? '● LIVE' : '○ DEMO'} · SOL {totalSolRaised.toFixed(1)}</span>
             <button onClick={() => setShowCreate(true)} className="hidden rounded-md bg-pump px-3 py-2 text-sm font-black text-black sm:block">Create</button>
             <WalletButton wallet={wallet} setWallet={setWallet} />
           </div>
@@ -156,7 +160,7 @@ export default function Home({ initialTab = 'tokens' }: { initialTab?: 'tokens' 
       </nav>
 
       {/* Hero */}
-      <header className="relative overflow-hidden border-b border-[#2a2a2a]"><div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(168,85,247,.22),transparent_58%)]" /><div className="relative mx-auto max-w-6xl px-4 py-12 sm:py-16"><span className="font-mono text-xs uppercase tracking-[.2em] text-pump">AI-Native Fair Launches on Solana</span><h1 className="mt-3 max-w-3xl text-balance text-5xl font-black tracking-[-.06em] sm:text-7xl">Bonding curves<br /><span className="text-pump">you can verify on-chain.</span></h1><p className="mt-4 max-w-xl text-pretty text-sm leading-6 text-white/65 sm:text-base">Lore and risk from agents — not influencers. Graduate at {fmtUsd(69420)} market cap.</p><div className="mt-7 flex flex-wrap gap-2"><button onClick={() => setShowCreate(true)} className="rounded-md bg-pump px-5 py-3 font-black text-black transition-transform active:scale-[.98]">Launch Token</button><button onClick={copyRefLink} className="rounded-md border border-[#a855f7]/60 bg-[#a855f7]/10 px-5 py-3 font-bold text-purple-200">Copy Referral Link</button></div></div></header>
+      <header className="relative overflow-hidden border-b border-[#2a2a2a]"><div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(168,85,247,.22),transparent_58%)]" /><div className="relative mx-auto max-w-6xl px-4 py-12 sm:py-16"><span className="font-mono text-xs uppercase tracking-[.2em] text-pump">AI-Native Fair Launches on Solana</span><h1 className="mt-3 max-w-3xl text-balance text-5xl font-black tracking-[-.06em] sm:text-7xl">Bonding curves<br /><span className="text-pump">you can verify on-chain.</span></h1><p className="mt-4 max-w-xl text-pretty text-sm leading-6 text-white/65 sm:text-base">Lore and risk from agents — not influencers. Graduate at 85 SOL.</p><div className="mt-7 flex flex-wrap gap-2"><button onClick={() => setShowCreate(true)} className="rounded-md bg-pump px-5 py-3 font-black text-black transition-transform active:scale-[.98]">Launch Token</button><button onClick={copyRefLink} className="rounded-md border border-[#a855f7]/60 bg-[#a855f7]/10 px-5 py-3 font-bold text-purple-200">Copy Referral Link</button></div></div></header>
 
       {/* King of the Hill */}
       {king && (
@@ -217,6 +221,11 @@ export default function Home({ initialTab = 'tokens' }: { initialTab?: 'tokens' 
                 <div className="text-xs text-white/40 mt-1">{q.progress}/{q.total} complete{q.done ? ' — paid out' : ''}</div>
               </div>
             ))}
+            {quests.length === 0 && (
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center text-white/50 sm:col-span-2">
+                No quests yet — quests launch with mainnet.
+              </div>
+            )}
             <div className="rounded-xl border border-purple-400/20 bg-purple-500/10 p-4 sm:col-span-2 text-sm text-purple-200">
               🔥 <b>Streak bonus:</b> check in daily — day 7 activates a <b>2x XP multiplier</b>.
               {profile ? ` You're on a ${profile.streak_days}-day streak.` : ''} Level 50 unlocks the "Legend" badge + revenue share.
@@ -234,10 +243,15 @@ export default function Home({ initialTab = 'tokens' }: { initialTab?: 'tokens' 
                   {t.level ? <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-400/20">LVL {t.level}</span> : null}
                 </span>
                 <span className="hidden sm:block text-xs text-white/40">{t.trades} trades · {t.winRate}% win{t.streak ? ` · 🔥${t.streak}` : ''}</span>
-                <span className="text-green-400 font-bold">{fmtUsd(t.pnl)}</span>
+                <span className="text-green-400 font-bold">${t.pnl.toLocaleString()}</span>
                 <span className="hidden sm:block text-xs text-purple-300">{t.xp.toLocaleString()} XP</span>
               </div>
             ))}
+            {ranks.length === 0 && (
+              <div className="px-4 py-8 text-center text-white/40">
+                Leaderboard launches with mainnet.
+              </div>
+            )}
           </div>
         )}
         {tab === 'profile' && (
@@ -284,7 +298,7 @@ export default function Home({ initialTab = 'tokens' }: { initialTab?: 'tokens' 
                   {refStats.referred.map((r, i) => (
                     <div key={i} className="flex items-center justify-between text-sm border-b border-white/5 pb-1.5">
                       <span className="font-mono text-purple-300">{r.name}</span>
-                      <span className="text-xs text-white/40">{fmtAgo(Math.max(1, Math.floor((tick / 1000 - r.ts) / 60)))}</span>
+                      <span className="text-xs text-white/40">{ago(Math.max(1, Math.floor((tick / 1000 - r.ts) / 60)))}</span>
                       <span className="text-xs text-yellow-300 font-semibold">+{refStats.xpPerInvite} XP</span>
                     </div>
                   ))}

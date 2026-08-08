@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
 import { PublicKey, Transaction } from '@solana/web3.js';
-import { fmtUsd, MIGRATION_TARGET } from '@/lib/tokens';
+import { MIGRATION_TARGET } from '@/lib/tokens';
 import type { Token, CommentItem, Profile } from '@/lib/tokens';
 import {
   fetchComments, postComment, likeToken, genLore, genRisk, fetchToken,
@@ -10,7 +10,6 @@ import {
 } from '@/lib/api';
 import { shareLink } from '@/lib/identity';
 import { getProvider, buildTradeIx, sendTx, fetchCurveState, computeBuyQuote, computeSellQuote, ensureAtaIx, solToLamports } from '@/lib/solana';
-import Sparkline from './Sparkline';
 
 interface Props {
   token: Token;
@@ -43,7 +42,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
     fetchToken(token.id, identity).then((fresh) => {
       if (!fresh) return;
       setLiked(Boolean(fresh.likedByMe));
-      setToken((prev) => ({ ...prev, riskScore: fresh.riskScore, riskFlag: fresh.riskFlag, likes: fresh.likes, replies: fresh.replies, lore: fresh.lore }));
+      setToken((prev) => ({ ...prev, riskFlag: fresh.riskFlag, lore: fresh.lore }));
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token.id]);
@@ -58,7 +57,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
   const trade = async () => {
     const amt = parseFloat(amount);
     if (!amt || amt <= 0 || busy) return;
-    
+
     // Check if token has on-chain mint
     if (!token.onchainMint) {
       toast.error('This token is demo-only. On-chain trading requires a minted token.');
@@ -72,7 +71,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
       await provider.connect();
 
       const mint = new PublicKey(token.onchainMint);
-      
+
       // Fetch live curve state from chain
       const curveState = await fetchCurveState(mint);
       if (!curveState) throw new Error('Curve state not found on-chain');
@@ -89,10 +88,10 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
         // Buy flow
         const quote = computeBuyQuote(amt, curveState.virtualSol, curveState.virtualTokens);
         const solLamports = solToLamports(amt);
-        
+
         // Ensure ATA exists
         const ataIx = await ensureAtaIx(mint, provider.publicKey);
-        
+
         const tradeIx = buildTradeIx('buy', provider.publicKey, mint, solLamports, quote.minOut, feeWallet, creatorWallet);
         tx = new Transaction();
         if (ataIx) tx.add(ataIx);
@@ -100,10 +99,10 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
       } else {
         // Sell flow - check balance first
         const quote = computeSellQuote(amt, curveState.virtualSol, curveState.virtualTokens);
-        
+
         // Ensure ATA exists
         const ataIx = await ensureAtaIx(mint, provider.publicKey);
-        
+
         const tokInRaw = BigInt(Math.floor(amt * 1_000_000));
         const tradeIx = buildTradeIx('sell', provider.publicKey, mint, tokInRaw, quote.minOut, feeWallet, creatorWallet);
         tx = new Transaction();
@@ -112,10 +111,10 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
       }
 
       const sig = await sendTx(provider, tx);
-      
+
       // Index the trade for XP/leaderboard
       await indexTrade({ mint: token.onchainMint, signature: sig, wallet: provider.publicKey.toBase58(), side: tab });
-      
+
       // Refresh token from server
       const fresh = await fetchToken(token.id, identity);
       if (fresh) update(fresh);
@@ -144,7 +143,6 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
       const r = await postComment(token.id, identity, text);
       setCommentText('');
       setComments(await fetchComments(token.id));
-      setToken({ ...token, replies: token.replies + 1 });
       xpToast(r.xpGained, r.questCompleted);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Comment failed');
@@ -154,7 +152,6 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
   const like = async () => {
     if (liked) return;
     setLiked(true); // optimistic — server dedupes anyway
-    setToken({ ...token, likes: (token.likes ?? 0) + 1 });
     confetti({ particleCount: 22, spread: 55, startVelocity: 22, origin: { y: 0.8 }, colors: ['#f87171', '#fb7185', '#fca5a5'] });
     try {
       const r = await likeToken(token.id, identity);
@@ -176,7 +173,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
     setAiBusy('risk');
     try {
       const r = await genRisk(token.id);
-      setToken({ ...token, riskScore: r.score, riskFlag: r.flag });
+      setToken({ ...token, riskFlag: r.flag });
       toast.success(`🔮 The Oracle: ${r.score}/100 — ${r.flag}`);
     } catch { toast.error('The Oracle is meditating — try again'); }
     setAiBusy(null);
@@ -184,14 +181,18 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
 
   const share = async () => {
     const link = shareLink(profile?.ref_code || identity, token.id);
-    const text = `$${token.ticker} — ${token.name}\n\n${token.curveProgress}% to on-chain curve closure on Hermes Launchpad.\n\n${link}`;
+    const text = `$${token.ticker} — ${token.name}\n\n${Math.min(100, (token.realSol ?? 0) / MIGRATION_TARGET * 100).toFixed(0)}% to on-chain curve closure on Hermes Launchpad.\n\n${link}`;
     if (navigator.share) { try { await navigator.share({ title: token.name, text, url: link }); return; } catch { /* Share dismissed. */ } }
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
   };
 
-  const est = amount && tab === 'buy'
-    ? (parseFloat(amount) / (token.priceSol || 1e-8)).toLocaleString(undefined, { maximumFractionDigits: 0 })
-    : amount ? `${(parseFloat(amount) * (token.priceSol || 0)).toFixed(4)} SOL` : '—';
+  const est = amount && tab === 'buy' && token.priceSol
+    ? (parseFloat(amount) / token.priceSol).toLocaleString(undefined, { maximumFractionDigits: 0 })
+    : amount && tab === 'sell' && token.priceSol
+    ? `${(parseFloat(amount) * token.priceSol).toFixed(4)} SOL`
+    : '—';
+
+  const progressPct = Math.min(100, (token.realSol ?? 0) / 85 * 100);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 p-0 backdrop-blur-sm sm:justify-end" onClick={onClose} role="presentation">
@@ -220,17 +221,16 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
           <div className="flex items-center justify-between">
             <div>
               <div className="text-xs text-white/40">Price</div>
-              <div className="text-lg font-bold text-white">${token.price.toFixed(8)}</div>
+              <div className="text-lg font-bold text-white">${token.priceSol ? token.priceSol.toFixed(8) : '—'}</div>
             </div>
-            <Sparkline data={token.spark} positive={token.change24h >= 0} w={200} h={56} />
           </div>
           <div className="grid grid-cols-4 gap-2 mt-3 text-center text-sm">
-            <div><div className="text-[10px] text-white/40">MCAP</div><div className="font-semibold text-white">{fmtUsd(token.marketCap)}</div></div>
-            <div><div className="text-[10px] text-white/40">VOL 24H</div><div className="font-semibold text-white">{fmtUsd(token.volume24h)}</div></div>
-            <div><div className="text-[10px] text-white/40">HOLDERS</div><div className="font-semibold text-white">{token.holders.toLocaleString()}</div></div>
+            <div><div className="text-[10px] text-white/40">SOL Raised</div><div className="font-semibold text-white">{token.realSol ? token.realSol.toFixed(1) : '—'}</div></div>
+            <div><div className="text-[10px] text-white/40">Progress</div><div className="font-semibold text-white">{progressPct.toFixed(0)}%</div></div>
+            <div><div className="text-[10px] text-white/40">Creator</div><div className="font-semibold text-white">{token.creator.slice(0, 6)}…{token.creator.slice(-4)}</div></div>
             <div>
               <div className="text-[10px] text-white/40">AI RISK</div>
-              <div className={`font-semibold ${token.riskScore < 40 ? 'text-green-400' : token.riskScore < 65 ? 'text-yellow-400' : 'text-red-400'}`}>{token.riskScore}/100</div>
+              <div className="font-semibold text-white">{token.riskFlag ? 'Scanned' : 'Unscanned'}</div>
             </div>
           </div>
         </div>
@@ -267,14 +267,12 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
           <div className={showResearch ? 'mt-2 rounded-lg border border-cyan-400/15 bg-black/30 p-3' : 'hidden'}>
             <div className="flex items-center justify-between mb-1.5">
               <div className="text-[10px] font-semibold text-cyan-300">🔮 THE ORACLE'S VERDICT</div>
-              <div className={`text-xs font-black ${token.riskScore < 40 ? 'text-green-400' : token.riskScore < 65 ? 'text-yellow-400' : 'text-red-400'}`}>
-                {token.riskScore}/100 {token.riskScore < 40 ? '· SAFU-ish' : token.riskScore < 65 ? '· SPICY' : '· DANGER'}
-              </div>
+              <div className="text-xs font-black text-white">{token.riskFlag ? 'Scanned' : 'Unscanned'}</div>
             </div>
             <div className="h-2 rounded-full bg-white/10 overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all duration-700 ${token.riskScore < 40 ? 'bg-green-400' : token.riskScore < 65 ? 'bg-yellow-400' : 'bg-red-500'}`}
-                style={{ width: `${Math.max(4, token.riskScore)}%` }}
+                className="h-full rounded-full transition-all duration-700 bg-purple-500"
+                style={{ width: `${token.riskFlag ? 50 : 4}%` }}
               />
             </div>
             <p className="text-[11px] text-white/50 mt-1.5">{token.riskFlag ? `⚑ ${token.riskFlag}` : 'No scan on record — consult The Oracle.'}</p>
@@ -287,9 +285,9 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
             <span>{(token.realSol ?? 0).toFixed(1)} / 85 SOL</span>
           </div>
           <div className="h-2.5 rounded-full bg-white/10 overflow-hidden">
-            <div className="h-full rounded-full bg-gradient-to-r from-purple-500 via-green-400 to-emerald-300 transition-all" style={{ width: `${token.curveProgress}%` }} />
+            <div className="h-full rounded-full bg-gradient-to-r from-purple-500 via-green-400 to-emerald-300 transition-all" style={{ width: `${progressPct}%` }} />
           </div>
-          <p className="text-[11px] text-white/40 mt-1">At {fmtUsd(MIGRATION_TARGET)}, the V1 curve locks. No Raydium migration is implemented.</p>
+          <p className="text-[11px] text-white/40 mt-1">At {MIGRATION_TARGET.toLocaleString()}, the V1 curve locks. No Raydium migration is implemented.</p>
         </div>
 
         {!token.complete && (
@@ -338,7 +336,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
 
         <div className="mt-4 flex gap-2">
           <button onClick={like} className={`flex-1 py-2 rounded-lg text-sm font-semibold ${liked ? 'bg-red-500/20 text-red-300 border border-red-400/30' : 'bg-white/10 text-white/70 hover:bg-white/15'}`}>
-            <span key={String(liked)} className={liked ? 'animate-heart-pop' : ''}>{liked ? '❤️' : '🤍'}</span> {(token.likes ?? 0).toLocaleString()}
+            <span key={String(liked)} className={liked ? 'animate-heart-pop' : ''}>{liked ? '❤️' : '🤍'}</span> Liked
           </button>
           <button onClick={share} className="flex-1 py-2 rounded-lg bg-white/10 text-white/70 hover:bg-white/15 text-sm font-semibold">
             📣 Share on X
@@ -353,7 +351,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
 
         <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
           <div className="flex items-center justify-between mb-2">
-            <div className="text-xs font-semibold text-white/60">💬 {token.replies.toLocaleString()} replies</div>
+            <div className="text-xs font-semibold text-white/60">💬 Comments</div>
             <div className="text-[10px] text-yellow-300/80">+25 XP per reply · quest progress</div>
           </div>
           <div className="max-h-44 overflow-y-auto space-y-2">
