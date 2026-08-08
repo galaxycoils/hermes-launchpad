@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import { MIGRATION_TARGET } from '@/lib/tokens';
 import type { Token, CommentItem, Profile } from '@/lib/tokens';
+import { migrationProgress } from '@/lib/token-truth';
 import {
   fetchComments, postComment, likeToken, genLore, genRisk, fetchToken,
   indexTrade
@@ -75,7 +76,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
       // Fetch live curve state from chain
       const curveState = await fetchCurveState(mint);
       if (!curveState) throw new Error('Curve state not found on-chain');
-      if (curveState.complete) throw new Error('Curve graduated — trading locked');
+      if (curveState.complete) throw new Error('Curve is migration-ready — trading locked');
 
       // Build transaction
       const configuredFeeWallet = import.meta.env.VITE_FEE_WALLET;
@@ -192,7 +193,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
     ? `${(parseFloat(amount) * token.priceSol).toFixed(4)} SOL`
     : '—';
 
-  const progressPct = Math.min(100, (token.realSol ?? 0) / 85 * 100);
+  const progressPct = migrationProgress(token);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 p-0 backdrop-blur-sm sm:justify-end" onClick={onClose} role="presentation">
@@ -203,7 +204,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
             <div>
               <h2 className="text-xl font-bold text-white">
                 {token.name} <span className="text-white/50 text-sm">${token.ticker}</span>
-                {token.complete && <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-yellow-400/20 text-yellow-300 border border-yellow-400/30">🎓 GRADUATED</span>}
+                {token.complete && <span className="ml-2 rounded-full border border-yellow-400/30 bg-yellow-400/20 px-2 py-0.5 text-xs text-yellow-300">MIGRATION READY</span>}
               </h2>
               <div className="text-xs text-white/50">{token.chain} · created by {token.creator}</div>
               {token.onchainMint && (
@@ -221,11 +222,11 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
           <div className="flex items-center justify-between">
             <div>
               <div className="text-xs text-white/40">Price</div>
-              <div className="text-lg font-bold text-white">${token.priceSol ? token.priceSol.toFixed(8) : '—'}</div>
+              <div className="text-lg font-bold text-white">{token.onchainMint && token.priceSol ? `${token.priceSol.toFixed(8)} SOL` : '—'}</div>
             </div>
           </div>
           <div className="grid grid-cols-4 gap-2 mt-3 text-center text-sm">
-            <div><div className="text-[10px] text-white/40">SOL Raised</div><div className="font-semibold text-white">{token.realSol ? token.realSol.toFixed(1) : '—'}</div></div>
+            <div><div className="text-[10px] text-white/40">Indexed SOL</div><div className="font-semibold text-white">{token.onchainMint && token.realSol !== undefined ? token.realSol.toFixed(1) : '—'}</div></div>
             <div><div className="text-[10px] text-white/40">Progress</div><div className="font-semibold text-white">{progressPct.toFixed(0)}%</div></div>
             <div><div className="text-[10px] text-white/40">Creator</div><div className="font-semibold text-white">{token.creator.slice(0, 6)}…{token.creator.slice(-4)}</div></div>
             <div>
@@ -269,25 +270,19 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
               <div className="text-[10px] font-semibold text-cyan-300">🔮 THE ORACLE'S VERDICT</div>
               <div className="text-xs font-black text-white">{token.riskFlag ? 'Scanned' : 'Unscanned'}</div>
             </div>
-            <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-700 bg-purple-500"
-                style={{ width: `${token.riskFlag ? 50 : 4}%` }}
-              />
-            </div>
             <p className="text-[11px] text-white/50 mt-1.5">{token.riskFlag ? `⚑ ${token.riskFlag}` : 'No scan on record — consult The Oracle.'}</p>
           </div>
         </div>
 
         <div className="mt-4">
           <div className="flex justify-between text-xs text-white/60 mb-1">
-            <span>Graduation progress</span>
-            <span>{(token.realSol ?? 0).toFixed(1)} / 85 SOL</span>
+            <span>Migration threshold progress</span>
+            <span>{token.onchainMint ? (token.realSol ?? 0).toFixed(1) : '—'} / {MIGRATION_TARGET} SOL default</span>
           </div>
           <div className="h-2.5 rounded-full bg-white/10 overflow-hidden">
             <div className="h-full rounded-full bg-gradient-to-r from-purple-500 via-green-400 to-emerald-300 transition-all" style={{ width: `${progressPct}%` }} />
           </div>
-          <p className="text-[11px] text-white/40 mt-1">At {MIGRATION_TARGET.toLocaleString()}, the V1 curve locks. No Raydium migration is implemented.</p>
+          <p className="text-[11px] text-white/40 mt-1">The default threshold is {MIGRATION_TARGET.toLocaleString()} SOL; deployed config may differ. Migration execution is not yet proven on devnet.</p>
         </div>
 
         {!token.complete && (

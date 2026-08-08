@@ -3,7 +3,7 @@ import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
 import { Keypair, Transaction } from '@solana/web3.js';
 import { getProvider, buildCreateTokenIx, sendTx } from '@/lib/solana';
-import { type Token } from '@/lib/tokens';
+import { MIGRATION_TARGET, type Token } from '@/lib/tokens';
 
 const EMOJIS = ['🚀', '🐸', '🦍', '🌙', '⚡', '🔥', '🛸', '💎', '🐕', '🤖', '👑', '🍀'];
 type Props = { onClose: () => void; onCreated: (token: Token) => void };
@@ -33,8 +33,7 @@ export default function CreateTokenModal({ onClose, onCreated }: Props) {
       tx.partialSign(mint);
       const sig = await sendTx(provider, tx, { hasExtraSigners: true });
 
-      // On-chain create complete; backend indexing is async.
-      // Return only real on-chain fields — no fabricated marketCap/price/curveProgress.
+      // Return only confirmed on-chain fields; indexing status remains unknown.
       const token: Token = {
         id: ticker.trim().toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8) + '-' + sig.slice(0, 4),
         name: name.trim(),
@@ -106,9 +105,9 @@ export default function CreateTokenModal({ onClose, onCreated }: Props) {
           <p className="text-4xl">{emoji}</p>
           <p className="mt-2 text-lg font-black">{name} <span className="font-mono text-sm text-white/55">$</span>{ticker}</p>
           <dl className="mt-4 space-y-2 text-xs text-white/65">
-            <div className="flex justify-between"><dt>Curve</dt><dd>30 SOL virtual · 85 SOL graduation</dd></div>
+            <div className="flex justify-between"><dt>Curve</dt><dd>30 SOL virtual · {MIGRATION_TARGET} SOL default threshold</dd></div>
             <div className="flex justify-between"><dt>Fees</dt><dd>0.5% per trade</dd></div>
-            <div className="flex justify-between"><dt>Reward</dt><dd className="text-pump">+1,000 XP</dd></div>
+            <div className="flex justify-between"><dt>Indexing</dt><dd>Pending independent verification</dd></div>
           </dl>
         </div>
         {error && <p className="text-sm text-dump" aria-live="polite">{error}</p>}

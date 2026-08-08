@@ -7,7 +7,7 @@ export interface Token {
   creator: string;
   chain: 'SOL' | 'BASE';
   onchainMint?: string; // set when created on devnet for real
-  complete?: boolean;   // graduated / migrated
+  complete?: boolean;   // curve reached threshold and locked; migration not proven
   realSol?: number;     // SOL raised on the curve
   priceSol?: number;    // SOL per token
   riskFlag?: string;    // The Oracle's one-line verdict (persisted)
@@ -22,7 +22,7 @@ export interface ReferralStats {
   referred: { name: string; ts: number }[];
 }
 
-export const MIGRATION_TARGET = 85; // SOL threshold for curve graduation (matches on-chain program)
+export const MIGRATION_TARGET = 85; // SOL curve-lock/migration threshold (matches on-chain program)
 
 export const TOKENS: Token[] = [];
 

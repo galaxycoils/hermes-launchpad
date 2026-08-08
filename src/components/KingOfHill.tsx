@@ -1,7 +1,8 @@
 import type { Token } from '@/lib/tokens';
+import { migrationProgress, remainingToMigration } from '@/lib/token-truth';
 
 export default function KingOfHill({ token, onSelect }: { token: Token; onSelect: (t: Token) => void }) {
-  const remaining = Math.max(0, 85 - (token.realSol ?? 0));
+  const remaining = remainingToMigration(token);
   return (
     <button
       onClick={() => onSelect(token)}
@@ -16,11 +17,11 @@ export default function KingOfHill({ token, onSelect }: { token: Token; onSelect
             <span className="font-mono text-sm text-white/60">${token.ticker}</span>
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-black/50">
-            <div className="h-full bg-pump" style={{ width: `${Math.min(100, (token.realSol ?? 0) / 85 * 100)}%` }} />
+            <div className="h-full bg-pump" style={{ width: `${migrationProgress(token)}%` }} />
           </div>
           <p className="mt-1.5 text-xs text-white/65">
-            <b>{remaining.toFixed(1)} SOL</b> to Raydium
-            {token.complete && ' · 🎓 Graduated'}
+            <b>{remaining.toFixed(1)} SOL</b> to migration threshold
+            {token.complete && ' · Migration ready'}
           </p>
         </div>
       </div>
