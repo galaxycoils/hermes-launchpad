@@ -292,6 +292,99 @@ pub mod hermes_curve {
         emit!(Migrated { mint: curve.mint, sol_swept: sweep, tokens_swept: remaining });
         Ok(())
     }
+
+    /// Migrate a completed curve to Raydium CPMM via manual CPI.
+    /// Only callable by migration authority after curve.complete == true.
+    /// Sweeps SOL + tokens to authority, then invokes Raydium CPMM initialize.
+    /// COMPILE-ONLY POC: requires deploy keypair restore (WU-03) for on-chain verification.
+    pub fn migrate_to_raydium(
+        ctx: Context<MigrateRaydium>,
+        init_amount_0: u64,
+        init_amount_1: u64,
+        open_time: u64,
+    ) -> Result<()> {
+        // 1. Validate (immutable borrow)
+        require!(ctx.accounts.curve.complete, CurveError::CurveNotComplete);
+        require!(
+            ctx.accounts.authority.key() == ctx.accounts.config.migration_authority,
+            CurveError::Unauthorized
+        );
+
+        // 2. Build Raydium CPMM initialize instruction data + account metas (immutable)
+        let data = MigrateRaydium::build_initialize_data(
+            init_amount_0,
+            init_amount_1,
+            open_time,
+        );
+        let metas = ctx.accounts.build_initialize_metas();
+
+        // 3. Now mutable borrow for sweeps
+        let curve = &mut ctx.accounts.curve;
+
+        // 4. Sweep SOL from curve PDA to migration authority
+        let sol_balance = curve.to_account_info().lamports();
+        let rent = Rent::get()?.minimum_balance(Curve::LEN);
+        let sweep = sol_balance.saturating_sub(rent);
+        if sweep > 0 {
+            **curve.to_account_info().try_borrow_mut_lamports()? -= sweep;
+            **ctx.accounts.authority.to_account_info().try_borrow_mut_lamports()? += sweep;
+        }
+
+        // 5. Sweep remaining tokens from curve ATA to authority ATA
+        let remaining = ctx.accounts.curve_token_account.amount;
+        if remaining > 0 {
+            let mint_key = curve.mint;
+            let bump = curve.bump;
+            let seeds: &[&[u8]] = &[b"curve", mint_key.as_ref(), &[bump]];
+            let signer_seeds = [seeds];
+            token::transfer(
+                CpiContext::new_with_signer(
+                    ctx.accounts.token_program.to_account_info(),
+                    Transfer {
+                        from: ctx.accounts.curve_token_account.to_account_info(),
+                        to: ctx.accounts.authority_token_account.to_account_info(),
+                        authority: curve.to_account_info(),
+                    },
+                    &signer_seeds,
+                ),
+                remaining,
+            )?;
+        }
+
+        // 6. Invoke Raydium CPMM via manual CPI (migration authority signs)
+        let accounts_vec = [
+            ctx.accounts.cpmm_program.to_account_info(),
+            ctx.accounts.amm_config.to_account_info(),
+            ctx.accounts.authority_pda.to_account_info(),
+            ctx.accounts.pool_state.to_account_info(),
+            ctx.accounts.token_0_mint.to_account_info(),
+            ctx.accounts.token_1_mint.to_account_info(),
+            ctx.accounts.lp_mint.to_account_info(),
+            ctx.accounts.creator_token_0.to_account_info(),
+            ctx.accounts.creator_token_1.to_account_info(),
+            ctx.accounts.creator_lp_token.to_account_info(),
+            ctx.accounts.token_0_vault.to_account_info(),
+            ctx.accounts.token_1_vault.to_account_info(),
+            ctx.accounts.create_pool_fee.to_account_info(),
+            ctx.accounts.observation_state.to_account_info(),
+            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.token_program.to_account_info(), // token_program_2022
+            ctx.accounts.associated_token_program.to_account_info(),
+            ctx.accounts.system_program.to_account_info(),
+            ctx.accounts.rent.to_account_info(),
+        ];
+        anchor_lang::solana_program::program::invoke(
+            &anchor_lang::solana_program::instruction::Instruction {
+                program_id: RAYDIUM_CPMM_PROGRAM_ID,
+                accounts: metas,
+                data,
+            },
+            &accounts_vec,
+        )?;
+
+        emit!(Migrated { mint: curve.mint, sol_swept: sweep, tokens_swept: remaining });
+        Ok(())
+    }
 }
 
 // ---- Accounts --------------------------------------------------------------
@@ -417,6 +510,146 @@ pub struct Migrate<'info> {
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
+}
+
+// ---- Raydium CPMM Migration (manual CPI, compile-only POC) -----------------
+
+/// Raydium CPMM program ID on devnet.
+/// Source: https://github.com/raydium-io/raydium-cpmm (devnet deployment)
+pub const RAYDIUM_CPMM_PROGRAM_ID: Pubkey =
+    pubkey!("DRaycpLY18LhpbydsBWbVJtxpNv9oXPgjRSfpF2bWpYb");
+
+/// Discriminator for Raydium CPMM `initialize`.
+/// First 8 bytes of sha256("global:initialize") = [af,af,6d,1f,0d,98,9b,ed]
+pub const RAYDIUM_CPMM_INITIALIZE_DISCRIMINATOR: [u8; 8] =
+    [0xaf, 0xaf, 0x6d, 0x1f, 0x0d, 0x98, 0x9b, 0xed];
+
+/// Accounts for migrating a completed curve to Raydium CPMM via manual CPI.
+#[derive(Accounts)]
+pub struct MigrateRaydium<'info> {
+    #[account(seeds = [b"config"], bump = config.bump)]
+    pub config: Account<'info, Config>,
+
+    #[account(
+        mut,
+        seeds = [b"curve", mint.key().as_ref()],
+        bump = curve.bump,
+        has_one = mint,
+        constraint = curve.complete @ CurveError::CurveNotComplete,
+    )]
+    pub curve: Account<'info, Curve>,
+
+    pub mint: Account<'info, Mint>,
+
+    #[account(
+        mut,
+        associated_token::mint = mint,
+        associated_token::authority = curve,
+    )]
+    pub curve_token_account: Account<'info, TokenAccount>,
+
+    #[account(
+        mut,
+        constraint = authority.key() == config.migration_authority @ CurveError::Unauthorized,
+    )]
+    pub authority: Signer<'info>,
+
+    #[account(
+        init_if_needed,
+        payer = authority,
+        associated_token::mint = mint,
+        associated_token::authority = authority,
+    )]
+    pub authority_token_account: Account<'info, TokenAccount>,
+
+    /// Raydium CPMM program
+    /// CHECK: verified by program ID constraint
+    #[account(address = RAYDIUM_CPMM_PROGRAM_ID)]
+    pub cpmm_program: UncheckedAccount<'info>,
+
+    /// CHECK: Raydium amm config account, validated by Raydium program
+    pub amm_config: UncheckedAccount<'info>,
+    /// CHECK: Raydium pool vault authority PDA, validated by Raydium program
+    pub authority_pda: UncheckedAccount<'info>,
+    /// CHECK: Raydium pool state account (initialized by Raydium), validated by Raydium program
+    #[account(mut)]
+    pub pool_state: UncheckedAccount<'info>,
+    /// CHECK: Raydium token_0 mint, validated by Raydium program
+    pub token_0_mint: UncheckedAccount<'info>,
+    /// CHECK: Raydium token_1 mint, validated by Raydium program
+    pub token_1_mint: UncheckedAccount<'info>,
+    /// CHECK: Raydium LP mint (initialized by Raydium), validated by Raydium program
+    #[account(mut)]
+    pub lp_mint: UncheckedAccount<'info>,
+    /// CHECK: creator token_0 account, validated by Raydium program
+    #[account(mut)]
+    pub creator_token_0: UncheckedAccount<'info>,
+    /// CHECK: creator token_1 account, validated by Raydium program
+    #[account(mut)]
+    pub creator_token_1: UncheckedAccount<'info>,
+    /// CHECK: creator LP token account (initialized by Raydium), validated by Raydium program
+    #[account(mut)]
+    pub creator_lp_token: UncheckedAccount<'info>,
+    /// CHECK: Raydium pool token_0 vault, validated by Raydium program
+    #[account(mut)]
+    pub token_0_vault: UncheckedAccount<'info>,
+    /// CHECK: Raydium pool token_1 vault, validated by Raydium program
+    #[account(mut)]
+    pub token_1_vault: UncheckedAccount<'info>,
+    /// CHECK: Raydium create pool fee recipient, validated by Raydium program
+    #[account(mut)]
+    pub create_pool_fee: UncheckedAccount<'info>,
+    /// CHECK: Raydium observation state (initialized by Raydium), validated by Raydium program
+    #[account(mut)]
+    pub observation_state: UncheckedAccount<'info>,
+
+    pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub system_program: Program<'info, System>,
+    pub rent: Sysvar<'info, Rent>,
+}
+
+impl<'info> MigrateRaydium<'info> {
+    /// Build Raydium CPMM `initialize` instruction data:
+    /// discriminator + init_amount_0 (u64) + init_amount_1 (u64) + open_time (u64)
+    pub fn build_initialize_data(
+        init_amount_0: u64,
+        init_amount_1: u64,
+        open_time: u64,
+    ) -> Vec<u8> {
+        let mut data = Vec::with_capacity(32);
+        data.extend_from_slice(&RAYDIUM_CPMM_INITIALIZE_DISCRIMINATOR);
+        data.extend_from_slice(&init_amount_0.to_le_bytes());
+        data.extend_from_slice(&init_amount_1.to_le_bytes());
+        data.extend_from_slice(&open_time.to_le_bytes());
+        data
+    }
+
+    /// Build account metas for Raydium CPMM `initialize` CPI.
+    /// Order must match Raydium's Initialize accounts struct exactly.
+    pub fn build_initialize_metas(&self) -> Vec<AccountMeta> {
+        vec![
+            AccountMeta::new(self.authority.key(), true), // creator (signer, mut)
+            AccountMeta::new_readonly(self.amm_config.key(), false),
+            AccountMeta::new_readonly(self.authority_pda.key(), false),
+            AccountMeta::new(self.pool_state.key(), false),
+            AccountMeta::new_readonly(self.token_0_mint.key(), false),
+            AccountMeta::new_readonly(self.token_1_mint.key(), false),
+            AccountMeta::new(self.lp_mint.key(), false),
+            AccountMeta::new(self.creator_token_0.key(), false),
+            AccountMeta::new(self.creator_token_1.key(), false),
+            AccountMeta::new(self.creator_lp_token.key(), false),
+            AccountMeta::new(self.token_0_vault.key(), false),
+            AccountMeta::new(self.token_1_vault.key(), false),
+            AccountMeta::new(self.create_pool_fee.key(), false),
+            AccountMeta::new(self.observation_state.key(), false),
+            AccountMeta::new_readonly(self.token_program.key(), false),
+            AccountMeta::new_readonly(self.token_program.key(), false), // token_program_2022
+            AccountMeta::new_readonly(self.associated_token_program.key(), false),
+            AccountMeta::new_readonly(self.system_program.key(), false),
+            AccountMeta::new_readonly(self.rent.key(), false),
+        ]
+    }
 }
 
 // ---- State -----------------------------------------------------------------

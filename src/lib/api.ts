@@ -54,15 +54,6 @@ export async function fetchReferrals(wallet: string): Promise<ReferralStats | nu
 
 export interface XpResult { xpGained?: number; questCompleted?: { title: string; xp: number } | null }
 
-export interface CreatedToken { token: Token }
-export async function createTokenServer(input: { name: string; ticker: string; emoji?: string; wallet: string }): Promise<Token & XpResult> {
-  return req<Token & XpResult>('/api/tokens', 'POST', input);
-}
-
-export async function registerToken(input: { mint: string; name: string; ticker: string; emoji: string; creator: string; signature: string }): Promise<Token & XpResult> {
-  return req<Token & XpResult>('/api/tokens/register', 'POST', input);
-}
-
 // ---- trades ----
 export interface TradeResult extends XpResult {
   ok: boolean;
@@ -73,9 +64,6 @@ export interface TradeResult extends XpResult {
   pnl: number;
   graduated: boolean;
   token: Token;
-}
-export async function postTrade(input: { token_id: string; wallet: string; side: 'buy' | 'sell'; amount: number }): Promise<TradeResult> {
-  return req<TradeResult>('/api/trades', 'POST', input);
 }
 export async function fetchTrades(tokenId?: string, limit = 25): Promise<Trade[]> {
   return req<Trade[]>(`/api/trades?limit=${limit}${tokenId ? `&token_id=${tokenId}` : ''}`);
