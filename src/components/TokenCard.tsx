@@ -27,6 +27,12 @@ export default function TokenCard({ token, onSelect }: { token: Token; onSelect:
             {status === 'migration-ready' && (
               <span className="rounded border border-yellow-400/30 bg-yellow-400/20 px-1.5 py-0.5 font-mono text-[10px] text-yellow-300">Migration ready</span>
             )}
+            {token.provenance === 'onchain' && (
+              <span className="rounded border border-green-400/30 bg-green-400/10 px-1.5 py-0.5 font-mono text-[10px] text-green-300">⛓ on-chain</span>
+            )}
+            {token.provenance === 'index' && (
+              <span className="rounded border border-sky-400/30 bg-sky-400/10 px-1.5 py-0.5 font-mono text-[10px] text-sky-300">◷ indexed</span>
+            )}
           </div>
           <div className="truncate text-[11px] text-white/45">
             {token.creator ? `by ${token.creator.slice(0, 6)}…${token.creator.slice(-4)}` : 'unknown creator'}

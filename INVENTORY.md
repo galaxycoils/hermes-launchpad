@@ -85,11 +85,20 @@ vitest.config.ts  playwright.config.ts  tests/setup.ts  tests/unit/smoke.test.ts
 - `npm run test:client` → 1 passed
 - `npm run test:integration` → 1 passed
 - `npm run test:security` → 5 passed
-- `npm run test:program` → 6 passed on devnet (IDL built, config loaded, create/buy/sell/slippage + WU-02 migrate_to_raydium wiring, WU-03 devnet Raydium ID)
+- `npm run test:program` → 6 passed on devnet via `npm run test:program` (skipped in CI unless `DEVNET_WALLET` secret set)
 - Configs: `vitest.config.ts` (unit/client/integration/worker), `playwright.config.ts` (5 browsers), `tests/setup.ts`
 
+## WU-05b — On-chain Provenance + Social/AI Honesty ✅ (PR #2, pending merge)
+- **On-chain curve-state decoder** in `workers/chain.js` (`fetchCurveState`): decodes the `Curve` Anchor account (discriminator + creator/mint/reserves/complete) from devnet via `@solana/web3.js`, mirroring `src/lib/solana.ts`. Returns `{ realSol, complete, virtualSol, virtualTokens }`.
+- **`mapToken(t, onchain)`** now prefers on-chain decoded `realSol`/`complete` when `onchain_mint` present; adds `provenance: 'demo' | 'index' | 'onchain'`. Token list + detail + trade-index handlers now call `fetchCurveState` when `env.PROGRAM_ID` + `env.SOLANA_RPC` are set.
+- **Frontend `provenance` badge** in `TokenCard.tsx`: ⛓ on-chain / ◷ indexed / (demo implied). `Token.provenance` added to interface.
+- **WU-04 honesty fix**: `TradeResult.graduated` → `migrationReady`; worker trade response + 409 message use "migration-ready" (not "graduated"). Negative test still asserts no "graduated|migrated" copy.
+- **AI honesty**: removed misleading "● live" badge on AI Research panel (now "AI agents"); share text notes lore/risk are AI-generated drafts to verify on-chain.
+- **CI gate fix**: Rewrote `.github/workflows/ci.yml`. Trigger = `pull_request` + `workflow_dispatch` (push removed — repo push-handler reports 0s failures when branch has open PR). All test jobs (`frontend`=lint+build, `test-unit`, `test-worker`, `test-client`, `test-integration`, `test-security`) run on every PR. `test-program`/`test-e2e` are `continue-on-error` and shell-guard on `DEVNET_WALLET` secret (skip cleanly, not false pass). `worker-check` (`wrangler deploy --dry-run`) is `continue-on-error` (needs CF auth). **Verified**: PR #6 shows all jobs executing as PR checks — 9/10 pass, `test-program`/`test-e2e` skip without secret. **Root cause of earlier 0s failures**: `secrets`/`env` in job-level `if:` is invalid GitHub syntax; moved to `env:` + step-level shell guard.
+- **Verification**: `npm run build` exit 0; full suite green (unit 12, worker 6, client 1, integration 1, security 5). `scripts/wu04-probe.mjs` re-confirms WU-04 block (0/50 Raydium `amm_config` on devnet).
+
 ## OMH State
-`.omh/state/hermes-launchpad-onchain/` — autopilot-state.json + ralph-state.json (WU-00, WU-01, WU-02, WU-03 complete; WU-04 blocked at Raydium devnet amm_config provisioning — environmental, not code defect; WU-05 frontend truth remediation complete on branch `wu-05-frontend-truth`, pushed `5b30806`). Swarm init via OMH file-backed fallback (claude-flow@alpha unavailable).
+`.omh/state/hermes-launchpad-onchain/` — autopilot-state.json + ralph-state.json (WU-00..WU-03 complete; **WU-04 blocked** — Raydium devnet `amm_config` 0/50 owned, environmental not code defect, re-verified 2026-08-08; **WU-05** frontend truth remediation merged to main via PR #1; **WU-05b** on-chain provenance + social/AI-honesty + CI gate fix in PR #2). Swarm init via OMH file-backed fallback (claude-flow@alpha unavailable).
 
 ## WU-03 — Fake-Write Removal + Devnet Raydium ID Fix ✅
 - Removed 5 quarantined fake-write paths: `createTokenServer`, `registerToken`, `postTrade` (api.ts); `POST /api/tokens`, `POST /api/tokens/register` (worker.js)
@@ -98,7 +107,14 @@ vitest.config.ts  playwright.config.ts  tests/setup.ts  tests/unit/smoke.test.ts
 - All 19+ tests passing (unit:1, worker:6, client:1, integration:1, security:5, program:6)
 - **Blocked**: On-chain migration proof requires Raydium account funding (amm_config, pool_state, vaults) — WU-04+
 
-## WU-05 — Frontend Truth Remediation ✅ (branch `wu-05-frontend-truth`, commit `5b30806`)
+## WU-04 — Raydium Migration Proof (BLOCKED, re-verified 2026-08-08)
+- Re-ran honest probe `scripts/wu04-probe.mjs`: iterates Raydium CPMM devnet `amm_config` PDAs (seeds `["amm_config", u8(0..49)]`).
+- **Result: 0/50 accounts are Raydium-owned** (all empty / non-existent; one index hit a non-PDA account error). → Confirms the block is an **environmental devnet limitation**, not a code defect. CPI wiring in `migrate_to_raydium` is correct; it cannot succeed until devnet `amm_config` (and pool_state/vaults) are provisioned.
+- Negative test `tests/hermes-curve.ts` proves the CPI reaches Raydium and fails account validation — kept as evidence.
+- **No code change required.** Resolution = provision Raydium devnet state (out of scope for this repo) or accept migration as unproven on devnet.
+
+## WU-05 — Frontend Truth Remediation ✅ (merged to main, PR #1, commit `5171443`)
+
 - Stripped fabricated `Token` fields from `src/lib/tokens.ts`: removed `marketCap`, `change24h`, `volume24h`, `curveProgress`, `riskScore`, `sentiment`, `spark`, `createdMinsAgo`, `replies`, `likes`, `holders`. Interface now carries only on-chain-real + indexing-fallback fields (`onchainMint`, `realSol`, `priceSol`, `priceUsd`, `lore`, `riskFlag`, `creator`, `complete`).
 - `TOKENS` / `QUESTS` / `LEADERBOARD` const arrays now empty (`[]`); `api.ts` fallbacks return empty arrays — no fake feed.
 - New `src/lib/token-truth.ts` — single source of truth for migration math + curve status:

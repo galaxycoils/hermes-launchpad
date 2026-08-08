@@ -25,5 +25,17 @@
     "unit_tests_total": 12,
     "build": "exit 0"
   },
-  "ts": "2026-08-08T09:30:00Z"
+  "wu05b": {
+    "onchain_provenance": "workers/chain.js fetchCurveState wired into mapToken+handlers",
+    "provenance_badges": "TokenCard.tsx ⛓/◷",
+    "wu04_honesty": "graduated→migrationReady in TradeResult+worker",
+    "ai_honesty": "removed live badge; share text warns AI drafts",
+    "ci_gate_fixed": true,
+    "ci_verified_on_pr6": true,
+    "ci_root_cause": "secrets/env in job-level if: invalid; moved to env:+shell-guard",
+    "wu04_reverified_blocked": "0/50 Raydium amm_config on devnet",
+    "pr": "#6",
+    "merged": false
+  },
+  "ts": "2026-08-08T10:00:00Z"
 }

@@ -3,8 +3,8 @@
   "D": { "1": true, "2": true },
   "E": { "1": true, "2": false, "3": false, "4": false },
   "F": { "1": false, "2": false },
-  "wu": "WU-05",
+  "wu": "WU-05b",
   "status": "complete",
-  "note": "WU-05: Frontend truth remediation complete on branch wu-05-frontend-truth (commit 5b30806). Stripped fabricated Token fields, added token-truth.ts shared math, neutralized misleading copy, fixed referral timestamp bug, 11 new unit tests (total 12 pass), build exit 0. Not yet merged to main.",
-  "ts": "2026-08-08T09:30:00Z"
+  "note": "WU-05b: On-chain curve-state decoder (chain.js fetchCurveState) wired into mapToken + handlers; provenance badges; WU-04 graduated→migrationReady honesty; AI-honesty label fix; ci.yml gate fixed so test suites run as PR checks. Full suite green (unit12/worker6/client1/integration1/security5). WU-04 re-verified blocked (0/50 Raydium amm_config on devnet). PR #2 pending merge.",
+  "ts": "2026-08-08T10:00:00Z"
 }

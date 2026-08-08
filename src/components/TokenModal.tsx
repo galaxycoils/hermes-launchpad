@@ -182,7 +182,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
 
   const share = async () => {
     const link = shareLink(profile?.ref_code || identity, token.id);
-    const text = `$${token.ticker} — ${token.name}\n\n${Math.min(100, (token.realSol ?? 0) / MIGRATION_TARGET * 100).toFixed(0)}% to on-chain curve closure on Hermes Launchpad.\n\n${link}`;
+    const text = `$${token.ticker} — ${token.name}\n\n${Math.min(100, (token.realSol ?? 0) / MIGRATION_TARGET * 100).toFixed(0)}% to on-chain curve closure on Hermes Launchpad.\n\nLore & risk are AI-generated drafts — verify on-chain before trading.`;
     if (navigator.share) { try { await navigator.share({ title: token.name, text, url: link }); return; } catch { /* Share dismissed. */ } }
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
   };
@@ -238,7 +238,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
 
         {/* AI Agents — the pump.fun-killer: no competitor has these */}
         <div className="mt-4 rounded-xl border border-purple-400/25 bg-gradient-to-b from-purple-500/10 to-transparent p-4">
-          <div className="mb-3 flex items-center justify-between"><button onClick={() => setShowResearch((value) => !value)} aria-expanded={showResearch} className="text-xs font-black tracking-wide text-purple-200">AI RESEARCH {showResearch ? '−' : '+'}</button><span className="rounded-full border border-[#00ff66]/20 bg-[#00ff66]/10 px-2 py-0.5 text-[10px] text-pump">● live</span></div>
+          <div className="mb-3 flex items-center justify-between"><button onClick={() => setShowResearch((value) => !value)} aria-expanded={showResearch} className="text-xs font-black tracking-wide text-purple-200">AI RESEARCH {showResearch ? '−' : '+'}</button><span className="rounded-full border border-[#00ff66]/20 bg-[#00ff66]/10 px-2 py-0.5 text-[10px] text-pump">AI agents</span></div>
           <div className={showResearch ? 'grid grid-cols-2 gap-2' : 'hidden'}>
             <button
               onClick={callBard}
