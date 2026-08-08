@@ -24,7 +24,7 @@ export default tseslint.config(
     files: ['workers/**/*.js', 'public/**/*.js'],
     extends: [js.configs.recommended],
     languageOptions: {
-      globals: { ...globals.browser, ...globals.serviceworker },
+      globals: { ...globals.browser, ...globals.serviceworker, Buffer: 'readonly', process: 'readonly', console: 'readonly' },
     },
   },
 )

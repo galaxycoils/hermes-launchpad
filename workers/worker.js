@@ -1,4 +1,4 @@
-import { verifyCreateTransaction, verifyTradeTransaction } from "./chain.js";
+import { verifyTradeTransaction, fetchCurveState } from "./chain.js";
 
 // hermes-api v2 — Hermes Launchpad backend
 // Shared bonding-curve engine (mirrors programs/hermes-curve math) + trades,
@@ -14,8 +14,10 @@ const json = (data, status = 200) =>
 const err = (msg, status = 400) => json({ error: msg }, status);
 
 // ---- Curve constants (mirror on-chain program) ----
-const V_SOL0 = 30;             // 30 SOL virtual
-const V_TOK0 = 1.073e9;        // 1.073B tokens virtual
+// eslint-disable-next-line no-unused-vars
+const V_SOL0 = 30;             // 30 SOL virtual — virtual SOL reserves at curve start
+// eslint-disable-next-line no-unused-vars
+const V_TOK0 = 1.073e9;        // 1.073B tokens virtual — virtual token reserves at curve start
 const SUPPLY = 1e9;            // 1B tokens
 const MIGRATION_SOL = 85;      // graduate at 85 SOL raised
 const FEE = 0.005;             // 0.5% total on-chain (0.25 platform + 0.25 creator)

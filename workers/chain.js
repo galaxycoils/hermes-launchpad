@@ -8,11 +8,10 @@ const SIGNATURE_RE = /^[1-9A-HJ-NP-Za-km-z]{80,100}$/;
 //   real_token_reserves: u64 | real_sol_reserves: u64 | complete: bool | bump: u8
 //   name: (4 + len) | symbol: (4 + len) | uri: (4 + len)
 async function curvePda(mint, programId) {
-  const [pda] = await import("@solana/web3.js").then((m) =>
-    PublicKey.findProgramAddressSync(
-      [Buffer.from("curve"), new PublicKey(mint).toBuffer()],
-      new PublicKey(programId),
-    )
+  const { PublicKey, Buffer } = await import("@solana/web3.js").then((m) => ({ PublicKey: m.PublicKey, Buffer: m.Buffer || globalThis.Buffer }));
+  const [pda] = PublicKey.findProgramAddressSync(
+    [Buffer.from("curve"), new PublicKey(mint).toBuffer()],
+    new PublicKey(programId),
   );
   return pda;
 }
@@ -22,7 +21,7 @@ async function curvePda(mint, programId) {
 export async function fetchCurveState({ mint, programId, rpcUrl }) {
   if (!PUBKEY_RE.test(mint) || !PUBKEY_RE.test(programId)) return null;
   try {
-    const { Connection, PublicKey } = await import("@solana/web3.js");
+    const { Connection } = await import("@solana/web3.js");
     const conn = new Connection(rpcUrl || DEVNET_RPC, "confirmed");
     const pda = await curvePda(mint, programId);
     const info = await conn.getAccountInfo(pda);
