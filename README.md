@@ -7,7 +7,7 @@ AI-native fair launches on Solana. Bonding curves you can verify on-chain. Lore 
 - **App (Devnet):** https://hermes-launchpad.pages.dev
 - **API:** https://hermes-api.tahamtandariush.workers.dev/api/health
 
-**Status (2026-08-08):** WU-00..WU-05b complete and merged to `main`. Frontend truth remediation complete; Worker on-chain provenance live; CI PR gate verified. Public devnet preview is live. E2E/program-live verification remains gated on a funded `DEVNET_WALLET` secret. Raydium migration remains honestly blocked because devnet exposes 0/50 probed `amm_config` accounts; no mainnet deployment is planned.
+**Status (2026-08-08):** WU-00..WU-05b complete and merged to `main`. Frontend truth remediation complete; Worker on-chain provenance live; CI PR gate verified. Public devnet preview is live. Program-live verification remains underfunded: the fee wallet has ~0.11 SOL. Migration: ready at 85 SOL curve lock. Raydium CPMM pool creation is pending provisioned devnet `amm_config` (currently 0/50). No mainnet claim.
 
 ## Stack
 

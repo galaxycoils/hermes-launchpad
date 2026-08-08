@@ -14,7 +14,7 @@ Browser ──► Cloudflare Pages (hermes-launchpad.pages.dev)   [static fronte
 
 All trading runs on-chain via the Anchor program. The Worker is an indexer, not a ledger.
 
-**Status (2026-08-08):** WU-00..WU-05b complete and merged to `main`; public devnet preview is live; CI PR gate verified. E2E/program-live verification requires funded `DEVNET_WALLET`. Raydium migration remains blocked by absent devnet `amm_config` state (0/50 probed accounts owned by Raydium).
+**Status (2026-08-08):** WU-00..WU-05b complete and merged to `main`; public devnet preview is live; CI PR gate verified. Program-live verification remains underfunded: the fee wallet has ~0.11 SOL. Migration: ready at 85 SOL curve lock. Raydium CPMM pool creation is pending provisioned devnet `amm_config` (currently 0/50). No mainnet claim.
 
 ## IDs
 
