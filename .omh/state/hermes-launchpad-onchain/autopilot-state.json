@@ -14,5 +14,16 @@
     "onchain_proof": "blocked-WU-04-raydium-accounts-funding"
   },
   "fake_write_removal": true,
-  "ts": "2026-08-07T19:30:00Z"
+  "frontend_truth_remediation": {
+    "branch": "wu-05-frontend-truth",
+    "commit": "5b30806",
+    "pushed": true,
+    "merged_to_main": false,
+    "fabricated_fields_removed": true,
+    "shared_math_module": "src/lib/token-truth.ts",
+    "tests_added": 11,
+    "unit_tests_total": 12,
+    "build": "exit 0"
+  },
+  "ts": "2026-08-08T09:30:00Z"
 }

@@ -18,7 +18,7 @@ package.json  package-lock.json  eslint.config.js  index.html
 Anchor.toml  Cargo.toml  Cargo.lock
 workers/worker.js  workers/wrangler.toml  workers/schema.sql  workers/schema_v2.sql
 workers/schema_v3.sql  workers/seed_v2.sql  workers/chain.js
-src/lib/api.ts  src/lib/tokens.ts  src/components/*.tsx  src/pages/*.tsx  src/hooks/*.ts
+src/lib/api.ts  src/lib/tokens.ts  src/lib/token-truth.ts  src/components/*.tsx  src/pages/*.tsx  src/hooks/*.ts
 programs/hermes-curve/programs/hermes-curve/src/lib.rs  (Anchor instructions)
 .omh/state/hermes-launchpad-onchain/  (autopilot/ralph state)
 .github/workflows/ci.yml
@@ -80,7 +80,7 @@ vitest.config.ts  playwright.config.ts  tests/setup.ts  tests/unit/smoke.test.ts
 ## Build & Test (verified green)
 - `npm run build` → exit 0
 - `npm run lint` → exit 0
-- `npm run test:unit` → 1 passed
+- `npm run test:unit` → 12 passed (smoke:1, wu05-truth-regression:7, wu05-token-presentation:4)
 - `npm run test:worker` → 6 passed (incl. quarantine-traceability)
 - `npm run test:client` → 1 passed
 - `npm run test:integration` → 1 passed
@@ -89,7 +89,7 @@ vitest.config.ts  playwright.config.ts  tests/setup.ts  tests/unit/smoke.test.ts
 - Configs: `vitest.config.ts` (unit/client/integration/worker), `playwright.config.ts` (5 browsers), `tests/setup.ts`
 
 ## OMH State
-`.omh/state/hermes-launchpad-onchain/` — autopilot-state.json + ralph-state.json (WU-00, WU-01, WU-02, WU-03 complete; WU-04 pending approval). Swarm init via OMH file-backed fallback (claude-flow@alpha unavailable).
+`.omh/state/hermes-launchpad-onchain/` — autopilot-state.json + ralph-state.json (WU-00, WU-01, WU-02, WU-03 complete; WU-04 blocked at Raydium devnet amm_config provisioning — environmental, not code defect; WU-05 frontend truth remediation complete on branch `wu-05-frontend-truth`, pushed `5b30806`). Swarm init via OMH file-backed fallback (claude-flow@alpha unavailable).
 
 ## WU-03 — Fake-Write Removal + Devnet Raydium ID Fix ✅
 - Removed 5 quarantined fake-write paths: `createTokenServer`, `registerToken`, `postTrade` (api.ts); `POST /api/tokens`, `POST /api/tokens/register` (worker.js)
@@ -97,6 +97,19 @@ vitest.config.ts  playwright.config.ts  tests/setup.ts  tests/unit/smoke.test.ts
 - Program redeployed with fix (sig: `617yNMbQmR9Pft1B2gggBctmYkxn8gFvLcGCxhpLU9yRSn6sucbzdM5dWp4QC8hGCgiZeFhjSdeUyQAZtSnw1exS`)
 - All 19+ tests passing (unit:1, worker:6, client:1, integration:1, security:5, program:6)
 - **Blocked**: On-chain migration proof requires Raydium account funding (amm_config, pool_state, vaults) — WU-04+
+
+## WU-05 — Frontend Truth Remediation ✅ (branch `wu-05-frontend-truth`, commit `5b30806`)
+- Stripped fabricated `Token` fields from `src/lib/tokens.ts`: removed `marketCap`, `change24h`, `volume24h`, `curveProgress`, `riskScore`, `sentiment`, `spark`, `createdMinsAgo`, `replies`, `likes`, `holders`. Interface now carries only on-chain-real + indexing-fallback fields (`onchainMint`, `realSol`, `priceSol`, `priceUsd`, `lore`, `riskFlag`, `creator`, `complete`).
+- `TOKENS` / `QUESTS` / `LEADERBOARD` const arrays now empty (`[]`); `api.ts` fallbacks return empty arrays — no fake feed.
+- New `src/lib/token-truth.ts` — single source of truth for migration math + curve status:
+  `verifiedSol` (zeros demo records lacking `onchainMint`), `migrationProgress`, `remainingToMigration`, `sortByCurveProgress`, `tokenCurveStatus` (demo|active|migration-ready), `filterVerifiedTokens` (all|curve-progress|migration-ready), `formatUnixAge` (unix **seconds**).
+- Discovery filters changed from fabricated `trending|new|migrating` → evidence-backed `curve-progress|migration-ready`.
+- Neutralized misleading copy: "Graduate at 85 SOL" → "Default curve threshold: 85 SOL. Locked curves become migration-ready."; "Active market" dot → status-aware label; "🎓 Graduated" → "Migration ready"; removed fabricated risk-score bar in TokenModal.
+- Per-token threshold progress hidden for demo records (`status === 'demo'`); for `onchainMint` tokens shows Worker-supplied values with "default" disclaimer + "deployed config may differ" (Worker `mapToken` still derives price/real_sol from D1 seed, not decoded on-chain events — true verified provenance = future WU).
+- Fixed referral timestamp bug: Worker stores `created_at` as unix **seconds**; `formatUnixAge` now treats input as seconds (was incorrectly mixing `Date.now()/1000 - seconds` as minutes).
+- `vitest.config.ts`: added `@`→`src` alias via `fileURLToPath`, applied per-project resolve so component tests importing `@/lib/...` resolve.
+- Tests: added `tests/unit/wu05-truth-regression.test.ts` (7) + `tests/unit/wu05-token-presentation.test.ts` (4) — 11 new, all green. Full `npm run test:unit` = 12 passed. `npm run build` = exit 0.
+- **Not yet merged to main** — branch push only; merge pending review/approval.
 
 ## CI
 `.github/workflows/ci.yml` — extended with test-unit/worker/client/integration/security/program/e2e + Lighthouse ≥90 gate (this WU-00 commit).
