@@ -101,18 +101,19 @@ jobs:
         run: sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
       - name: Install Anchor
         run: cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked
-      - name: Run program tests (requires DEVNET_WALLET secret)
-        if: ${{ secrets.DEVNET_WALLET != '' }}
+      - name: Run program tests if DEVNET_WALLET set
         env:
           ANCHOR_PROVIDER_URL: https://api.devnet.solana.com
           ANCHOR_WALLET: /tmp/devnet-wallet.json
+          DEVNET_WALLET: ${{ secrets.DEVNET_WALLET }}
         run: |
-          echo "${{ secrets.DEVNET_WALLET }}" > /tmp/devnet-wallet.json
+          if [ -z "$DEVNET_WALLET" ]; then
+            echo "TEST_PROGRAM_SKIPPED - no DEVNET_WALLET secret; intentionally skipped, not a false pass."
+            exit 0
+          fi
+          echo "$DEVNET_WALLET" > /tmp/devnet-wallet.json
           chmod 600 /tmp/devnet-wallet.json
           npm run test:program
-      - name: Skip note (no DEVNET_WALLET)
-        if: ${{ secrets.DEVNET_WALLET == '' }}
-        run: echo "TEST_PROGRAM_SKIPPED - no DEVNET_WALLET secret, intentionally skipped, not a false pass."
 
   test-e2e:
     runs-on: ubuntu-22.04
@@ -125,15 +126,16 @@ jobs:
           cache: npm
       - run: npm ci || npm install
       - run: npx playwright install --with-deps
-      - name: Run E2E (requires DEVNET_WALLET secret)
-        if: ${{ secrets.DEVNET_WALLET != '' }}
+      - name: Run E2E if DEVNET_WALLET set
         env:
           DEVNET_WALLET: ${{ secrets.DEVNET_WALLET }}
           DEVNET_RPC: https://api.devnet.solana.com
-        run: npm run test:e2e
-      - name: Skip note (no DEVNET_WALLET)
-        if: ${{ secrets.DEVNET_WALLET == '' }}
-        run: echo "TEST_E2E_SKIPPED - no DEVNET_WALLET secret, intentionally skipped, not a false pass."
+        run: |
+          if [ -z "$DEVNET_WALLET" ]; then
+            echo "TEST_E2E_SKIPPED - no DEVNET_WALLET secret; intentionally skipped, not a false pass."
+            exit 0
+          fi
+          npm run test:e2e
 
   blocked-checks:
     runs-on: ubuntu-22.04
