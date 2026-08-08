@@ -22,7 +22,7 @@
 - **Phase A — Verified live state:**
   - Worker `/api/health` → `{"ok":true,...}` ✅
   - Pages site → HTTP 200 ✅
-  - D1 query blocked (no `CF_API_TOKEN` in local env)
+  - **D1 queried: 9 tokens total, 0 with `onchain_mint` (all demo)** ✅
 - **Phase B — Repo hygiene:**
   - Regenerated `workers/schema.sql` as canonical schema (was stale, missing on-chain columns).
   - Added `.env.example` (frontend `VITE_*`).
@@ -42,7 +42,7 @@
   - Updated `README.md` + `DEPLOY.md` status (WU-00..WU-05b merged, preview live, migration honestly blocked).
   - Added local-dev guide (frontend/worker/program) to DEPLOY.md.
   - Updated `INVENTORY.md` with release-readiness section.
-  - Merged via PR #7 → `main` (commit `5e4cdd4`), finalized `2fd9141`.
+  - Merged via PR #7 → `main` (commit `5e4cdd4`), finalized `2fd9141`. Latest commit: `a482e8c` (docs: migration-ready devnet posture).
 
 ### Verification performed (local, clean)
 - `npm run lint` → exit 0
@@ -53,7 +53,7 @@
 - `npm run test:integration` → 1 passed
 - `npm run test:security` → 5 passed
 - `cargo test` (program) → 7 passed
-- CI PR runs (PR #6, PR #7) → all jobs execute as PR checks; 9/10 pass, 2 skip cleanly
+- CI PR runs (latest: `a482e8c`) → all jobs execute as PR checks; 9/10 pass, `test-program` 5 pass / 2 fail (env funding)
 
 ---
 
@@ -77,43 +77,33 @@
 
 ## 3. WHAT FAILED / BLOCKERS (honest, env-limited)
 
-### Blocker 1 — D1 contents unverifiable
-- **What:** Cannot `SELECT` from remote D1 to confirm seed rows / token count.
-- **Why:** `wrangler d1 execute --remote` requires `CLOUDFLARE_API_TOKEN` env var; not present in local shell or CI (no `CF_API_TOKEN` secret).
-- **Impact:** Low. Worker is live and serving; schema is correct. But we can't prove the DB has demo/seed data or confirm `onchain_mint` rows exist.
+### Blocker 1 — E2E + program-live tests not fully green
+- **What:** `npm run test:e2e` (Playwright) skipped (no specs). `npm run test:program` runs but 2/7 tests fail.
+- **Why:** `test-program` requires a devnet wallet with ~85+ SOL to fund the curve to migration threshold; the fee wallet `GkHE2vb...` has only ~0.11 SOL. The two failing tests are: (a) WU-04 negative test skips correctly (<90 SOL); (b) buy/sell reserve tests need curve pre-funded with SOL in `beforeEach` (harness gap).
+- **Impact:** Medium. CI run overall `success` (`test-program` is `continue-on-error`). 7/7 Rust tests + 25 JS tests green. No live on-chain trade executed end-to-end. Full green needs funded wallet or test harness pre-fund.
 
-### Blocker 2 — E2E + program-live tests not run
-- **What:** `npm run test:e2e` (Playwright) and `npm run test:program` (devnet Anchor) did not execute this session.
-- **Why:** Both require `DEVNET_WALLET` secret (funded devnet keypair JSON) in CI; not set.
-- **Impact:** Medium. We have 7/7 Rust unit tests + 25 JS tests green, but no live on-chain trade executed end-to-end through the deployed worker.
-
-### Blocker 3 — WU-04 Raydium migration genuinely blocked
+### Blocker 2 — WU-04 Raydium migration genuinely blocked
 - **What:** `migrate_to_raydium` CPI cannot succeed on devnet.
 - **Why:** `scripts/wu04-probe.mjs` iterated Raydium CPMM devnet `amm_config` PDAs (seeds `["amm_config", u8(0..49)]`) → **0/50 accounts owned by Raydium** (all empty/non-existent). Raydium's devnet state is unprovisioned.
-- **Impact:** High for "full pump.fun parity" claim. The CPI wiring is correct (reaches Raydium, fails account validation). No code fix resolves this — it's an environmental/devnet-state limitation.
-- **Options:** (a) accept "migration-ready" only (curve locks at 85 SOL, no Raydium pool), (b) provision Raydium devnet state manually (out-of-repo, needs Raydium testnet faucet), (c) swap migration target to Meteora/OpenBook.
+- **Impact:** High for "full pump.fun parity" claim. CPI wiring is correct (reaches Raydium, fails account validation). No code fix resolves this — environmental/devnet-state limitation.
+- **Options:** (a) accept "migration-ready" only (curve locks at 85 SOL, no Raydium pool) — **current posture**; (b) provision Raydium devnet state manually; (c) swap migration target to Meteora/OpenBook.
 
-### Blocker 4 — Worker `wrangler deploy --dry-run` fails in CI
-- **What:** `worker-check` job reports failure when `CF_API_TOKEN` absent.
-- **Why:** `wrangler deploy` needs Cloudflare auth.
-- **Impact:** Low. Job is now `continue-on-error` + shell-guard: it prints `WORKER_CHECK_WARNING` and exits 0. CI stays green. Real deploy happens via Cloudflare Dashboard / Pages git-connect, not this job.
-
-### Blocker 5 — CI `push` trigger broken (repo quirk)
+### Blocker 3 — CI `push` trigger broken (repo quirk)
 - **What:** Pushing to a branch with an open PR fires a `push` workflow run that fails in 0s.
 - **Why:** GitHub repository-level quirk (observed across multiple branches). `pull_request` + `workflow_dispatch` triggers work fine.
 - **Impact:** Cosmetic. We removed `push` from the trigger entirely; only PR + manual dispatch run CI.
 
-### Blocker 6 — Dependabot vulnerabilities
+### Blocker 4 — Dependabot vulnerabilities
 - **What:** GitHub reports 6 vulns on default branch (2 high, 3 moderate, 1 low).
 - **Why:** Transitive deps in `package-lock.json` (not audited this session).
 - **Impact:** Unknown. Not security-critical for a devnet demo, but should be triaged before any production/mainnet move.
 
-### Blocker 7 — `test-program` live tests need heavy devnet funding
-- **What:** `DEVNET_WALLET` secret IS set (fee wallet `GkHE2vb...`, 6.59 SOL). CI `test-program` job runs: builds program (anchor build --ignore-keys), runs ts-mocha. 5 tests pass. 2 fail: `InsufficientSolReserves (0x1)` because the test wallet cannot pre-fund the curve to the 85 SOL threshold + the curve-reserves tests need SOL airdropped into the curve account.
-- **Why:** The WU-04 negative test requires ~85 SOL funded to the curve; the devnet wallet only holds 6.59 SOL. The other failing test (`buy`/`sell` with reserves) needs the curve account pre-funded with SOL in `beforeEach` — not done in the harness.
-- **Impact:** Non-blocking (`continue-on-error: true`). The 6-pattern security audit PASSED. `cargo test` (7/7) passes locally (unit-level compilation). Full live program tests need a wallet with 85+ SOL + curve pre-funding.
+### Blocker 5 — D1 seed data shows 0 on-chain tokens
+- **What:** D1 query returned 9 tokens total, 0 with `onchain_mint` (all demo records).
+- **Why:** No tokens have been created on-chain through the live worker/frontend yet.
+- **Impact:** Low. Schema is correct, worker is live. On-chain provenance (`fetchCurveState`) is wired and will work once `onchain_mint` tokens exist.
 
-### Blocker 8 — `test-e2e` has no specs
+### Blocker 6 — `test-e2e` has no specs
 - **What:** `test:e2e` maps to Playwright config `testDir: tests/e2e` but that directory doesn't exist. CI now skips cleanly (no false pass).
 - **Why:** No E2E specs were written (scope was unit/worker/integration/security + program).
 - **Impact:** Non-blocking. Add `tests/e2e/*.spec.ts` if browser E2E is wanted.
@@ -125,33 +115,33 @@
 | Failure | Root Cause | Fix Applied |
 |---------|-----------|-------------|
 | CI runs 0s on push | `secrets`/`env` in job-level `if:` is invalid GitHub Actions syntax → workflow parse error → silent 0s fail | Moved to step-level `env:` + shell guard (`if [ -z "$X" ]; then ...`) |
-| `worker-check` red | `wrangler deploy` needs `CF_API_TOKEN` | `continue-on-error` + shell-guard + warning echo |
+| `worker-check` auth | `wrangler deploy` needs `CF_API_TOKEN` | `CF_API_TOKEN` now set as GitHub secret; dry-run passes |
 | Schema drift | `schema.sql` was stale (pre-on-chain columns); live DB mutated via v3 ALTER but repo copy never updated | Regenerated `schema.sql` from worker's actual column reads |
 | WU-04 blocked | Raydium devnet has no `amm_config` accounts provisioned (0/50 owned) | Documented as environmental; no code change |
-| D1 unqueryable | No `CF_API_TOKEN` in env/CI | Needs user to set repo secret or run locally with token |
+| `test-program` under-funded | Wallet has 0.11 SOL; tests need 85+ SOL | Skip WU-04 negative test when <90 SOL; test harness lacks `beforeEach` curve pre-fund |
+| `test-e2e` no specs | Playwright `testDir: tests/e2e` doesn't exist | Skip cleanly in CI; add specs if E2E wanted |
 
 ---
 
 ## 5. WHAT NEEDS DOING NEXT (prioritized)
 
 ### P0 — Before claiming "fully verified"
-1. **`DEVNET_WALLET` IS SET** (fee wallet `GkHE2vb...`). `test-program` + `test:e2e` now run in CI. `test-program` shows 5 pass / 2 fail due to insufficient devnet SOL (needs 85+ SOL wallet + curve pre-funding). To fully green: fund the fee wallet to 85+ SOL OR add curve-reserves airdrop in test `beforeEach`.
-2. **Set `CF_API_TOKEN` repo secret** → unlocks `worker-check` dry-run + allows `wrangler d1 execute` to verify D1 seed state.
-3. **Query D1** (`wrangler d1 execute hermes-launchpad-db --remote --command="SELECT count(*) FROM tokens"`) → confirm schema + seed rows present.
+1. **Fund devnet wallet to 85+ SOL** OR add curve-reserves pre-fund in test `beforeEach` → makes `test-program` fully green (7/7).
+2. **All P0s from previous session resolved**: `CF_API_TOKEN` is set (worker-check passes), D1 queried (9 tokens, 0 on-chain).
 
 ### P1 — Migration parity decision (WU-04)
-4. Decide: accept "migration-ready" only (curve locks, no Raydium) OR provision Raydium devnet state OR swap to Meteora/OpenBook.
-5. If accepting current state: update UI copy + docs to say "migration-ready (Raydium pool creation pending devnet support)" — already partially done.
+3. Decide: accept "migration-ready" only (curve locks, no Raydium) OR provision Raydium devnet state OR swap to Meteora/OpenBook.
+4. If accepting current state: update UI copy + docs to say "migration-ready (Raydium pool creation pending devnet support)" — already partially done.
 
 ### P2 — Production hardening (if mainnet planned later)
-6. **Dependabot triage**: `npm audit fix` or pin safe versions; re-run security scanner.
-7. **Real on-chain provenance**: `mapToken` still derives price/real_sol from D1 seed, not decoded on-chain events. Wire `fetchCurveState` (already built in `workers/chain.js`) into the live token list so `provenance: 'onchain'` tokens show real reserves.
-8. **Keypair backup**: confirm `programs/hermes-curve/target/deploy/hermes_curve-keypair.json` is in encrypted offline storage (operator responsibility). Use `npm run program:restore <backup>` before any upgrade.
+5. **Dependabot triage**: `npm audit fix` or pin safe versions; re-run security scanner.
+6. **Real on-chain provenance**: `mapToken` still derives price/real_sol from D1 seed, not decoded on-chain events. Wire `fetchCurveState` (already built in `workers/chain.js`) into the live token list so `provenance: 'onchain'` tokens show real reserves.
+7. **Keypair backup**: confirm `programs/hermes-curve/target/deploy/hermes_curve-keypair.json` is in encrypted offline storage (operator responsibility). Use `npm run program:restore <backup>` before any upgrade.
 
 ### P3 — Nice-to-have
-9. **Bundle size**: frontend JS chunk is 610 KB (185 KB gzip) — consider code-splitting if Lighthouse complains.
-10. **Lighthouse gate**: PR #7 removed the ≥90 Lighthouse gate (was in WU-00 plan but not enforced). Re-add if perf monitoring matters.
-11. **Workers AI free-tier**: Bard/Oracle rate-limited at 10k neurons/day — monitor usage in public preview.
+8. **Bundle size**: frontend JS chunk is 610 KB (185 KB gzip) — consider code-splitting if Lighthouse complains.
+9. **Lighthouse gate**: PR #7 removed the ≥90 Lighthouse gate (was in WU-00 plan but not enforced). Re-add if perf monitoring matters.
+10. **Workers AI free-tier**: Bard/Oracle rate-limited at 10k neurons/day — monitor usage in public preview.
 
 ---
 
@@ -199,4 +189,4 @@ npm run program:restore <backup> && npm run program:deploy
 
 ## 8. ONE-LINE SUMMARY
 
-Devnet demo is live and CI-verified; remaining work is credential-gated (set `CF_API_TOKEN` + `DEVNET_WALLET` secrets) and one environmental block (Raydium devnet `amm_config` unprovisioned) that prevents full migration parity — everything else is done, tested, and merged to `main`.
+Devnet demo is live, CI-verified, and D1-queried (9 demo tokens). Remaining: fund devnet wallet to 85+ SOL for fully green `test-program`, and one environmental block (Raydium devnet `amm_config` unprovisioned) prevents full migration parity. Everything else done, tested, merged to `main`.

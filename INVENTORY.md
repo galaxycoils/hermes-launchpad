@@ -70,12 +70,12 @@ vitest.config.ts  playwright.config.ts  tests/setup.ts  tests/unit/smoke.test.ts
 ## Verified Artifacts (on-chain)
 - Program ID: `9K5eAWBkrUJbUiUC8aM6xeuXM2ACj9XNHfbC1X6Scjgz` — devnet slot 481956048, 2.69 SOL, authority `GkHE2vb8j3PGyjMvCmWJMffiKb2QwVye5TfuUPG1NK5a` (verified `solana program show`)
 - Config PDA: `9Sv1kApQK428EUueU7dR9mTPqKqNR7dxkBmwtZuHDTkr` — initialized, fee wallet + migration authority = authority key
-- Fee wallet: `GkHE2vb8j3PGyjMvCmWJMffiKb2QwVye5TfuUPG1NK5a`
+- Fee wallet: `GkHE2vb8j3PGyjMvCmWJMffiKb2QwVye5TfuUPG1NK5a` (0.11 SOL)
 - **No deploy keypair in `target/deploy/`** (verified empty)
 - Worker: `hermes-api.tahamtandariush.workers.dev` ; Pages: `hermes-launchpad.pages.dev` ; D1: `hermes-launchpad-db` (`afa984c4-30e5-4f47-afce-a401ee2df098`)
 - IDL: `programs/hermes-curve/target/idl/hermes_curve.json` — built (WU-01); `migrate_to_raydium` present (WU-02); devnet Raydium ID patched (WU-03)
 - Raydium CPMM devnet program ID: `DRaycpLY18LhpbydsBWbVJtxpNv9oXPgjRSfpF2bWpYb` (verified `solana program show`)
-- Program tests: 6/6 passing on devnet via `npm run test:program`
+- Program tests: CI `test-program` → 5 pass / 2 fail (env funding); local `cargo test` 7/7
 
 ## Build & Test (verified green)
 - `npm run build` → exit 0
@@ -85,7 +85,7 @@ vitest.config.ts  playwright.config.ts  tests/setup.ts  tests/unit/smoke.test.ts
 - `npm run test:client` → 1 passed
 - `npm run test:integration` → 1 passed
 - `npm run test:security` → 5 passed
-- `npm run test:program` → 6 passed on devnet via `npm run test:program` (skipped in CI unless `DEVNET_WALLET` secret set)
+- `npm run test:program` → CI: 5 pass / 2 fail (wallet 0.11 SOL < 85 SOL); local `cargo test` 7/7
 - Configs: `vitest.config.ts` (unit/client/integration/worker), `playwright.config.ts` (5 browsers), `tests/setup.ts`
 
 ## WU-05b — On-chain Provenance + Social/AI Honesty ✅ (merged to main, PR #6, commit `4f602e5`)
@@ -140,6 +140,16 @@ vitest.config.ts  playwright.config.ts  tests/setup.ts  tests/unit/smoke.test.ts
 - **Local dev guide added** to DEPLOY.md (frontend/worker/program).
 
 ## CI Gate Status
-- PR checks verified on PR #6 (wu05b-v2) and PR #7 (release-readiness): frontend/lint/build, test-unit (12), test-worker (6), test-client (1), test-integration (1), test-security (5), test-e2e (skip), test-program (skip), worker-check (warn), blocked-checks — all execute as PR checks.
+- PR checks verified on PR #6 (wu05b-v2) and PR #7 (release-readiness): frontend/lint/build, test-unit (12), test-worker (6), test-client (1), test-integration (1), test-security (5), test-e2e (skip), test-program (5/7), worker-check (pass), blocked-checks — all execute as PR checks.
 - Push events fail in 0s (repo quirk when branch has open PR); `pull_request` + `workflow_dispatch` triggers verified working.
 - Root cause: `secrets`/`env` in job-level `if:` invalid; fixed via step-level `env:` + shell guard.
+
+## Release Readiness Hardening (2026-08-08) ✅
+- **Canonical D1 schema** (`workers/schema.sql`) regenerated from worker actual column usage — includes `onchain_mint`, `real_sol`, `complete`, `created_at`, `risk_flag`, `volume_24h`, `price_sol`, `price_usd`, `virtual_sol`, `virtual_tokens` + all social/index tables. Previous `schema.sql` was stale (lacked on-chain columns); `schema_v3.sql` kept as historical migration only.
+- **Deploy docs updated** (`README.md`, `DEPLOY.md`): status reflects WU-00..WU-05b merged; public devnet preview live; CI PR gate verified; migration honestly blocked (0/50 Raydium `amm_config` on devnet).
+- **Local env examples added**: `.env.example` (frontend `VITE_*`), `workers/.dev.vars.example` (worker vars, no secrets).
+- **CI hardening**: `worker-check` now shell-guards on `CF_API_TOKEN` (skips cleanly, reports warning on auth failure); `test-program`/`test-e2e` shell-guard on `DEVNET_WALLET` (skip cleanly). `CF_API_TOKEN` secret set in CI — dry-run passes.
+- **Security audit**: trailofbits 6-pattern scan on `programs/hermes-curve` — no critical findings (Arbitrary CPI: constant program ID; PDA: Anchor seeds/bump; Ownership: Anchor Account types; Signer: Signer+constraint; Sysvar: 1.8.1+; Introspection: none). `cargo test` 7/7.
+- **Upgrade safety**: `scripts/restore-keypair.sh` + `npm run program:restore` + `npm run program:deploy` documented in DEPLOY.md + package.json.
+- **Local dev guide added** to DEPLOY.md (frontend/worker/program).
+- **D1 query verified**: 9 tokens total, 0 with `onchain_mint` (all demo). Schema correct, worker live.

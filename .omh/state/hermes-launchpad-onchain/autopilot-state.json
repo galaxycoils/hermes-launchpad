@@ -1,9 +1,9 @@
 {
-  "phase": "A",
-  "step": 3,
-  "wu": "WU-03",
+  "phase": "F",
+  "step": 7,
+  "wu": "WU-06",
   "status": "complete",
-  "next": "WU-04-pending-approval",
+  "next": "done",
   "swarm_init": true,
   "swarm_topology": "star",
   "swarm_agents": 2,
@@ -18,7 +18,7 @@
     "branch": "wu-05-frontend-truth",
     "commit": "5b30806",
     "pushed": true,
-    "merged_to_main": false,
+    "merged_to_main": true,
     "fabricated_fields_removed": true,
     "shared_math_module": "src/lib/token-truth.ts",
     "tests_added": 11,
@@ -35,7 +35,18 @@
     "ci_root_cause": "secrets/env in job-level if: invalid; moved to env:+shell-guard",
     "wu04_reverified_blocked": "0/50 Raydium amm_config on devnet",
     "pr": "#6",
-    "merged": false
+    "merged": true
   },
-  "ts": "2026-08-08T10:00:00Z"
+  "release_readiness": {
+    "canonical_schema": "workers/schema.sql regenerated",
+    "ci_hardened": true,
+    "security_audit": "trailofbits 6-pattern scan: no critical findings",
+    "upgrade_safety": "scripts/restore-keypair.sh + npm scripts",
+    "d1_verified": "9 tokens, 0 onchain_mint",
+    "worker_check_passes": true,
+    "test_program": "5/7 pass (env funding)",
+    "docs_updated": ["README.md", "DEPLOY.md", "INVENTORY.md", "HANDOFF.md"],
+    "latest_commit": "a482e8c"
+  },
+  "ts": "2026-08-08T19:00:00Z"
 }
