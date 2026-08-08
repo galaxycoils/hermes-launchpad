@@ -16,7 +16,9 @@
     "test:integration": "vitest run --project integration",
     "test:security": "vitest run --project worker tests/worker/security",
     "test:client": "vitest run --project client",
-    "test:all": "npm run test:unit && npm run test:worker && npm run test:client && npm run test:integration && npm run test:program && npm run test:e2e"
+    "test:all": "npm run test:unit && npm run test:worker && npm run test:client && npm run test:integration && npm run test:program && npm run test:e2e",
+    "program:deploy": "cd programs/hermes-curve && anchor build && anchor deploy --provider.cluster devnet",
+    "program:restore": "bash scripts/restore-keypair.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

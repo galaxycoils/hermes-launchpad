@@ -88,7 +88,7 @@ vitest.config.ts  playwright.config.ts  tests/setup.ts  tests/unit/smoke.test.ts
 - `npm run test:program` → 6 passed on devnet via `npm run test:program` (skipped in CI unless `DEVNET_WALLET` secret set)
 - Configs: `vitest.config.ts` (unit/client/integration/worker), `playwright.config.ts` (5 browsers), `tests/setup.ts`
 
-## WU-05b — On-chain Provenance + Social/AI Honesty ✅ (PR #2, pending merge)
+## WU-05b — On-chain Provenance + Social/AI Honesty ✅ (merged to main, PR #6, commit `4f602e5`)
 - **On-chain curve-state decoder** in `workers/chain.js` (`fetchCurveState`): decodes the `Curve` Anchor account (discriminator + creator/mint/reserves/complete) from devnet via `@solana/web3.js`, mirroring `src/lib/solana.ts`. Returns `{ realSol, complete, virtualSol, virtualTokens }`.
 - **`mapToken(t, onchain)`** now prefers on-chain decoded `realSol`/`complete` when `onchain_mint` present; adds `provenance: 'demo' | 'index' | 'onchain'`. Token list + detail + trade-index handlers now call `fetchCurveState` when `env.PROGRAM_ID` + `env.SOLANA_RPC` are set.
 - **Frontend `provenance` badge** in `TokenCard.tsx`: ⛓ on-chain / ◷ indexed / (demo implied). `Token.provenance` added to interface.
@@ -130,8 +130,16 @@ vitest.config.ts  playwright.config.ts  tests/setup.ts  tests/unit/smoke.test.ts
 ## CI
 `.github/workflows/ci.yml` — extended with test-unit/worker/client/integration/security/program/e2e + Lighthouse ≥90 gate (this WU-00 commit).
 
-## Notes
-- Quarantined routes (`createTokenServer`, `registerToken`, `postTrade`, `POST /api/tokens`, `POST /api/tokens/register`, `POST /api/trades`) present in source, marked prohibited in FEATURE_MATRIX.md; removal tracked in WU-03/04.
-- No on-chain mutations performed; program authority unchanged.
-- `workers/_worker.js` referenced by DEPLOY for `/rpc` proxy — **absent** at `workers/_worker.js` (verify path before WU-04).
-- esbuild postinstall was blocked by npm allowScripts; fixed via `npm install-scripts approve esbuild` + `npm rebuild esbuild` (documented recurring env issue).
+## Release Readiness Hardening (2026-08-08) ✅
+- **Canonical D1 schema** (`workers/schema.sql`) regenerated from worker actual column usage — includes `onchain_mint`, `real_sol`, `complete`, `created_at`, `risk_flag`, `volume_24h`, `price_sol`, `price_usd`, `virtual_sol`, `virtual_tokens` + all social/index tables. Previous `schema.sql` was stale (lacked on-chain columns); `schema_v3.sql` kept as historical migration only.
+- **Deploy docs updated** (`README.md`, `DEPLOY.md`): status reflects WU-00..WU-05b merged; public devnet preview live; CI PR gate verified; migration honestly blocked (0/50 Raydium `amm_config` on devnet).
+- **Local env examples added**: `.env.example` (frontend `VITE_*`), `workers/.dev.vars.example` (worker vars, no secrets).
+- **CI hardening**: `worker-check` now shell-guards on `CF_API_TOKEN` (skips cleanly, reports warning on auth failure); `test-program`/`test-e2e` shell-guard on `DEVNET_WALLET` (skip cleanly).
+- **Security audit**: trailofbits 6-pattern scan on `programs/hermes-curve` — no critical findings (Arbitrary CPI: constant program ID; PDA: Anchor seeds/bump; Ownership: Anchor Account types; Signer: Signer+constraint; Sysvar: 1.8.1+; Introspection: none).
+- **Upgrade safety**: `scripts/restore-keypair.sh` + `npm run program:restore` + `npm run program:deploy` documented in DEPLOY.md + package.json.
+- **Local dev guide added** to DEPLOY.md (frontend/worker/program).
+
+## CI Gate Status
+- PR checks verified on PR #6 (wu05b-v2) and PR #7 (release-readiness): frontend/lint/build, test-unit (12), test-worker (6), test-client (1), test-integration (1), test-security (5), test-e2e (skip), test-program (skip), worker-check (warn), blocked-checks — all execute as PR checks.
+- Push events fail in 0s (repo quirk when branch has open PR); `pull_request` + `workflow_dispatch` triggers verified working.
+- Root cause: `secrets`/`env` in job-level `if:` invalid; fixed via step-level `env:` + shell guard.

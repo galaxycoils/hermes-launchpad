@@ -115,6 +115,27 @@ solana program show 9K5eAWBkrUJbUiUC8aM6xeuXM2ACj9XNHfbC1X6Scjgz --url devnet
 - Add `*-keypair.json` to `.gitignore` (already present)
 - Never commit private keys to git
 - Document recovery: operator must restore keypair to same path for future upgrades
+- Use `npm run program:restore <backup-path>` to restore from backup
+
+## Local development
+
+```bash
+# Frontend
+cp .env.example .env
+npm install
+npm run dev
+
+# Worker (local with wrangler)
+cd workers
+cp .dev.vars.example .dev.vars
+# Edit .dev.vars with local values
+wrangler dev --local
+
+# Program (localnet)
+cd programs/hermes-curve
+solana-test-validator --reset
+anchor test
+```
 
 ## Free-tier notes
 
