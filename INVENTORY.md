@@ -34,6 +34,7 @@ vitest.config.ts  playwright.config.ts  tests/setup.ts  tests/unit/smoke.test.ts
 | GET /api/tokens | list tokens | live |
 | POST /api/tokens | create token (off-chain) | **QUARANTINED WU-03** (line 168) |
 | POST /api/tokens/register | client-trusted on-chain register | **QUARANTINED WU-04** (line 190) |
+| POST /api/tokens/index | index on-chain token (verified create) | live (Task 4) |
 | GET /api/tokens/:id | token detail | live |
 | GET/POST /api/tokens/:id/comments | social | live (P1 hidden) |
 | POST /api/tokens/:id/like | social | live (P1 hidden) |
@@ -70,22 +71,22 @@ vitest.config.ts  playwright.config.ts  tests/setup.ts  tests/unit/smoke.test.ts
 ## Verified Artifacts (on-chain)
 - Program ID: `9K5eAWBkrUJbUiUC8aM6xeuXM2ACj9XNHfbC1X6Scjgz` — devnet slot 481956048, 2.69 SOL, authority `GkHE2vb8j3PGyjMvCmWJMffiKb2QwVye5TfuUPG1NK5a` (verified `solana program show`)
 - Config PDA: `9Sv1kApQK428EUueU7dR9mTPqKqNR7dxkBmwtZuHDTkr` — initialized, fee wallet + migration authority = authority key
-- Fee wallet: `GkHE2vb8j3PGyjMvCmWJMffiKb2QwVye5TfuUPG1NK5a` (0.11 SOL)
+- Fee wallet: `GkHE2vb8j3PGyjMvCmWJMffiKb2QwVye5TfuUPG1NK5a` (104.37 SOL)
 - **No deploy keypair in `target/deploy/`** (verified empty)
 - Worker: `hermes-api.tahamtandariush.workers.dev` ; Pages: `hermes-launchpad.pages.dev` ; D1: `hermes-launchpad-db` (`afa984c4-30e5-4f47-afce-a401ee2df098`)
 - IDL: `programs/hermes-curve/target/idl/hermes_curve.json` — built (WU-01); `migrate_to_raydium` present (WU-02); devnet Raydium ID patched (WU-03)
 - Raydium CPMM devnet program ID: `DRaycpLY18LhpbydsBWbVJtxpNv9oXPgjRSfpF2bWpYb` (verified `solana program show`)
-- Program tests: CI `test-program` → 5 pass / 2 fail (env funding); local `cargo test` 7/7
+- Program tests: CI `test-program` → 9/10 pass (env funding); local `cargo test` 7/7
 
 ## Build & Test (verified green)
 - `npm run build` → exit 0
 - `npm run lint` → exit 0
-- `npm run test:unit` → 12 passed (smoke:1, wu05-truth-regression:7, wu05-token-presentation:4)
-- `npm run test:worker` → 6 passed (incl. quarantine-traceability)
+- `npm run test:unit` → 15 passed (smoke:1, wu05-truth-regression:7, wu05-token-presentation:4, api-index-token:1, solana-sendtx-heap:2)
+- `npm run test:worker` → 7 passed (incl. quarantine-traceability, token-index)
 - `npm run test:client` → 1 passed
 - `npm run test:integration` → 1 passed
 - `npm run test:security` → 5 passed
-- `npm run test:program` → CI: 5 pass / 2 fail (wallet 0.11 SOL < 85 SOL); local `cargo test` 7/7
+- `npm run test:program` → CI: 9/10 pass; local `cargo test` 7/7
 - Configs: `vitest.config.ts` (unit/client/integration/worker), `playwright.config.ts` (5 browsers), `tests/setup.ts`
 
 ## WU-05b — On-chain Provenance + Social/AI Honesty ✅ (merged to main, PR #6, commit `4f602e5`)
@@ -140,7 +141,8 @@ vitest.config.ts  playwright.config.ts  tests/setup.ts  tests/unit/smoke.test.ts
 - **Local dev guide added** to DEPLOY.md (frontend/worker/program).
 
 ## CI Gate Status
-- PR checks verified on PR #6 (wu05b-v2) and PR #7 (release-readiness): frontend/lint/build, test-unit (12), test-worker (6), test-client (1), test-integration (1), test-security (5), test-e2e (skip), test-program (5/7), worker-check (pass), blocked-checks — all execute as PR checks.
+- PR checks verified on PR #6 (wu05b-v2) and PR #7 (release-readiness): frontend/lint/build, test-unit (12), test-worker (6), test-client (1), test-integration (1), test-security (5), test-e2e (skip), test-program (5/7), worker-check (warn), blocked-checks — all execute as PR checks.
+- PR check verified on latest run `31529459105` (HEAD `89c8284`): all 10 jobs pass (frontend, test-unit, test-worker, test-client, test-integration, test-security, test-e2e, test-program, worker-check, blocked-checks).
 - Push events fail in 0s (repo quirk when branch has open PR); `pull_request` + `workflow_dispatch` triggers verified working.
 - Root cause: `secrets`/`env` in job-level `if:` invalid; fixed via step-level `env:` + shell guard.
 
