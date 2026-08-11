@@ -1,4 +1,4 @@
-import { verifyTradeTransaction, fetchCurveState } from "./chain.js";
+import { verifyCreateTransaction, verifyTradeTransaction, fetchCurveState } from "./chain.js";
 
 // hermes-api v2 — Hermes Launchpad backend
 // Shared bonding-curve engine (mirrors programs/hermes-curve math) + trades,
@@ -176,6 +176,32 @@ export default {
           return mapToken(t, onchain);
         }));
         return json(enriched);
+      }
+
+      if (path === "/api/tokens/index" && request.method === "POST") {
+        const b = await request.json().catch(() => ({}));
+        const name = typeof b.name === "string" ? b.name.trim().slice(0, 32) : "";
+        const ticker = typeof b.ticker === "string" ? b.ticker.trim().toUpperCase().slice(0, 10) : "";
+        const emoji = typeof b.emoji === "string" ? b.emoji.slice(0, 16) : "🪙";
+        const { mint, signature, creator } = b;
+        if (!name || !ticker || !mint || !signature || !creator) {
+          return err("name, ticker, emoji, mint, signature, and creator required");
+        }
+        const verified = await verifyCreateTransaction({
+          signature, mint, creator, programId: env.PROGRAM_ID, rpcUrl: env.SOLANA_RPC,
+        });
+        if (!verified) return err("unverified on-chain create transaction", 403);
+        const existing = await db.prepare("SELECT id FROM tokens WHERE onchain_mint = ?").bind(mint).first();
+        if (existing) return json({ ok: true, already: true, id: existing.id, onchainMint: mint, provenance: "onchain" });
+        const onchain = await fetchCurveState({ mint, programId: env.PROGRAM_ID, rpcUrl: env.SOLANA_RPC });
+        const id = `${ticker.toLowerCase()}-${signature.slice(0, 4)}`;
+        await db.prepare(
+          "INSERT INTO tokens (id, name, ticker, emoji, lore, creator, chain, onchain_mint, real_sol, complete, created_at) VALUES (?, ?, ?, ?, '', ?, 'SOL', ?, ?, ?, ?)"
+        ).bind(id, name, ticker, emoji, verified.creator, mint, onchain?.realSol ?? 0, onchain?.complete ? 1 : 0, now()).run();
+        return json({
+          ok: true, id, onchainMint: mint, provenance: "onchain",
+          realSol: onchain?.realSol ?? 0, complete: onchain?.complete ?? false,
+        }, 201);
       }
 
       const tokenMatch = path.match(/^\/api\/tokens\/([a-z0-9-]+)(\/(comments|like|lore|risk))?$/);

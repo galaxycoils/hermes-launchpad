@@ -2,6 +2,7 @@ import { useState } from 'react';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
 import { Keypair, Transaction } from '@solana/web3.js';
+import { indexToken } from '@/lib/api';
 import { getProvider, buildCreateTokenIx, sendTx } from '@/lib/solana';
 import { MIGRATION_TARGET, type Token } from '@/lib/tokens';
 
@@ -30,20 +31,26 @@ export default function CreateTokenModal({ onClose, onCreated }: Props) {
       const uri = '';
       const ix = buildCreateTokenIx(provider.publicKey, mint.publicKey, name.trim(), ticker.trim().toUpperCase().replace(/^\$/, ''), uri);
       const tx = new Transaction().add(ix);
-      tx.partialSign(mint);
-      const sig = await sendTx(provider, tx, { hasExtraSigners: true });
+      const sig = await sendTx(provider, tx, { extraSigner: mint });
+      const creator = provider.publicKey.toBase58();
+      const indexed = await indexToken({
+        name: name.trim(), ticker: ticker.trim().toUpperCase().replace(/^\$/, ''), emoji,
+        creator, mint: mint.publicKey.toBase58(), signature: sig,
+      }).catch(() => null);
 
-      // Return only confirmed on-chain fields; indexing status remains unknown.
+      // The transaction is confirmed on-chain even if the optional index write is unavailable.
       const token: Token = {
-        id: ticker.trim().toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8) + '-' + sig.slice(0, 4),
+        id: indexed?.id ?? ticker.trim().toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8) + '-' + sig.slice(0, 4),
         name: name.trim(),
         ticker: ticker.trim().toUpperCase().replace(/^\$/, ''),
         emoji,
         lore: 'Fresh off the curve. Lore pending The Bard.',
-        creator: provider.publicKey.toBase58(),
+        creator,
         chain: 'SOL',
         onchainMint: mint.publicKey.toBase58(),
-        complete: false,
+        provenance: indexed?.provenance,
+        realSol: indexed?.realSol,
+        complete: indexed?.complete ?? false,
       };
 
       confetti({ particleCount: 180, spread: 90, origin: { y: .65 }, colors: ['#00ff66', '#a855f7', '#ffd60a'] });

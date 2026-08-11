@@ -73,6 +73,26 @@ export async function indexTrade(input: { mint: string; signature: string; walle
   return req<TradeResult>('/api/trades/index', 'POST', input);
 }
 
+export interface TokenIndexResult {
+  ok: boolean;
+  id: string;
+  onchainMint: string;
+  provenance: 'onchain';
+  realSol: number;
+  complete: boolean;
+}
+
+export async function indexToken(input: {
+  name: string;
+  ticker: string;
+  emoji: string;
+  creator: string;
+  mint: string;
+  signature: string;
+}): Promise<TokenIndexResult> {
+  return req<TokenIndexResult>('/api/tokens/index', 'POST', input);
+}
+
 // ---- social ----
 export async function fetchComments(tokenId: string): Promise<CommentItem[]> {
   return req<CommentItem[]>(`/api/tokens/${tokenId}/comments`);

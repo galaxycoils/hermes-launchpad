@@ -1,6 +1,6 @@
 import { Buffer } from 'buffer';
 import {
-  Connection, PublicKey, Transaction, TransactionInstruction,
+  ComputeBudgetProgram, Connection, Keypair, PublicKey, Transaction, TransactionInstruction,
   SystemProgram, LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
 
@@ -126,13 +126,18 @@ export function getProvider(): WalletProvider | null {
 export async function sendTx(
   provider: WalletProvider,
   tx: Transaction,
-  opts?: { hasExtraSigners?: boolean }
+  opts?: { extraSigner?: Keypair }
 ): Promise<string> {
+  tx.instructions = tx.instructions.filter((ix) => !(
+    ix.programId.equals(ComputeBudgetProgram.programId) && ix.data.length > 0 && ix.data[0] === 1
+  ));
+  tx.instructions.unshift(ComputeBudgetProgram.requestHeapFrame({ bytes: 256 * 1024 }));
   tx.feePayer = provider.publicKey;
   tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+  if (opts?.extraSigner) tx.partialSign(opts.extraSigner);
 
   const needsRaw =
-    opts?.hasExtraSigners === true ||
+    opts?.extraSigner !== undefined ||
     // heuristic: already has signatures beyond empty
     tx.signatures.some((s) => s.signature != null);
 
