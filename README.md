@@ -7,7 +7,9 @@ AI-native fair launches on Solana. Bonding curves you can verify on-chain. Lore 
 - **App (Devnet):** https://hermes-launchpad.pages.dev
 - **API:** https://hermes-api.tahamtandariush.workers.dev/api/health
 
-**Status (2026-08-11):** WU-00..WU-05b + provenance wiring complete and merged to `main` (HEAD `89c8284`). Frontend truth remediation complete; Worker `fetchCurveState` wired into `mapToken` and `/api/tokens/index` endpoint; frontend `indexToken` for on-chain token registration. CI PR gate verified (latest run `31529459105` = success, all 10 jobs pass). Public devnet preview is live. Fee wallet funded: `104.37 SOL`. Migration: ready at 85 SOL curve lock. Raydium CPMM pool creation is pending provisioned devnet `amm_config` (currently unprovisioned). Devnet only. No mainnet claim.
+**Status (2026-08-13):** Public devnet preview is live. Migration is ready at the 85 SOL curve lock. Raydium CPMM pool creation remains pending an unprovisioned devnet `amm_config`. Devnet only. No mainnet claim.
+
+**Devnet smoke:** create [`5dyWsG…cxT9`](https://explorer.solana.com/tx/5dyWsG1VpGz6QzmGUfpyZTMAAe9WghtyiXeNk6jJBwhsYJ5A8LQH3QsiybAo8zB8L3ctCxYEqsXS2vwxAiXwcxT9?cluster=devnet) → buy [`4vbiH8…MvKa`](https://explorer.solana.com/tx/4vbiH8ChvaM2b71Dch4xuNWHviVsz4jXttdqWkDThWab1NRVDmR9pX4oVw1PbLoTy3s5K3LghHqqcJUV4LLsMvKa?cluster=devnet) → sell [`3PAv8d…BqFY`](https://explorer.solana.com/tx/3PAv8dYYnrTUBayMbPkcnURvXn6HA6okjLv8UHeFENxyb96K4L2dEtchmx2ZFmdYfnttuYhLiqSDTTLkXJJzBqFY?cluster=devnet) finalized successfully for mint [`HnqNov…wnKbJ`](https://explorer.solana.com/address/HnqNovn7kkJbCbwxMYuxZDgGQoMAbmnbLxpFooCwnKbJ?cluster=devnet). Worker indexing remains blocked because Solana's public devnet RPC rejects Cloudflare Worker egress with HTTP 403; an authenticated compatible RPC is required before indexed provenance is claimed.
 
 ## Stack
 

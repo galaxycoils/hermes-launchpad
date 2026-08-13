@@ -14,7 +14,17 @@ Browser ──► Cloudflare Pages (hermes-launchpad.pages.dev)   [static fronte
 
 All trading runs on-chain via the Anchor program. The Worker is an indexer, not a ledger.
 
-**Status (2026-08-11):** WU-00..WU-05b + provenance wiring complete and merged to `main` (HEAD `89c8284`); public devnet preview is live; CI PR gate verified (latest run `31529459105` = success, all 10 jobs pass). Fee wallet funded: `104.37 SOL`. Migration: ready at 85 SOL curve lock. Raydium CPMM pool creation is pending provisioned devnet `amm_config` (currently unprovisioned). Devnet only. No mainnet claim.
+**Status (2026-08-13):** Public devnet preview is live. Migration is ready at the 85 SOL curve lock; Raydium CPMM pool creation remains pending an unprovisioned devnet `amm_config`. Devnet only. No mainnet claim.
+
+## Devnet smoke proof
+
+The create → buy → sell path completed successfully on Solana devnet for mint [`HnqNovn7kkJbCbwxMYuxZDgGQoMAbmnbLxpFooCwnKbJ`](https://explorer.solana.com/address/HnqNovn7kkJbCbwxMYuxZDgGQoMAbmnbLxpFooCwnKbJ?cluster=devnet):
+
+- Create: [`5dyWsG1VpGz6QzmGUfpyZTMAAe9WghtyiXeNk6jJBwhsYJ5A8LQH3QsiybAo8zB8L3ctCxYEqsXS2vwxAiXwcxT9`](https://explorer.solana.com/tx/5dyWsG1VpGz6QzmGUfpyZTMAAe9WghtyiXeNk6jJBwhsYJ5A8LQH3QsiybAo8zB8L3ctCxYEqsXS2vwxAiXwcxT9?cluster=devnet)
+- Buy: [`4vbiH8ChvaM2b71Dch4xuNWHviVsz4jXttdqWkDThWab1NRVDmR9pX4oVw1PbLoTy3s5K3LghHqqcJUV4LLsMvKa`](https://explorer.solana.com/tx/4vbiH8ChvaM2b71Dch4xuNWHviVsz4jXttdqWkDThWab1NRVDmR9pX4oVw1PbLoTy3s5K3LghHqqcJUV4LLsMvKa?cluster=devnet)
+- Sell: [`3PAv8dYYnrTUBayMbPkcnURvXn6HA6okjLv8UHeFENxyb96K4L2dEtchmx2ZFmdYfnttuYhLiqSDTTLkXJJzBqFY`](https://explorer.solana.com/tx/3PAv8dYYnrTUBayMbPkcnURvXn6HA6okjLv8UHeFENxyb96K4L2dEtchmx2ZFmdYfnttuYhLiqSDTTLkXJJzBqFY?cluster=devnet)
+
+All three transactions are finalized with no on-chain error. Worker indexing is not yet proven live: Solana public devnet RPC returns HTTP 403 to Cloudflare Worker egress (`Your IP or provider is blocked from this endpoint`), so `/api/tokens/index` and `/api/trades/index` fail closed. Local verification of the same signatures succeeds. Configure an authenticated Cloudflare-compatible devnet RPC before claiming indexed provenance.
 
 ## IDs
 
@@ -66,6 +76,8 @@ cd workers
 npx wrangler d1 execute hermes-launchpad-db --remote --file=schema.sql
 # For an existing pre-v3 database, apply schema_v3.sql once before verification.
 ```
+
+`schema.sql` is canonical for fresh databases. Never re-run it against a populated remote database if a change can overwrite seed rows. Apply additive live changes only with explicit `ALTER TABLE ... ADD COLUMN` statements, then verify with `PRAGMA table_info(<table>)`.
 
 ## Curve parameters (shared by Worker / Frontend / on-chain)
 
