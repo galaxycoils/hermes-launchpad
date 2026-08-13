@@ -184,7 +184,7 @@ export default function TokenModal({ token: initial, identity, profile, onClose,
     const link = shareLink(profile?.ref_code || identity, token.id);
     const text = `$${token.ticker} — ${token.name}\n\n${Math.min(100, (token.realSol ?? 0) / MIGRATION_TARGET * 100).toFixed(0)}% to on-chain curve closure on Hermes Launchpad.\n\nLore & risk are AI-generated drafts — verify on-chain before trading.`;
     if (navigator.share) { try { await navigator.share({ title: token.name, text, url: link }); return; } catch { /* Share dismissed. */ } }
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link)}`, '_blank');
   };
 
   const est = amount && tab === 'buy' && token.priceSol

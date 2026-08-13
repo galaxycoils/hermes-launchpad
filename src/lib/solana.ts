@@ -11,7 +11,9 @@ export const ATA_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efT
 export const RENT_SYSVAR = new PublicKey('SysvarRent111111111111111111111111111111111');
 
 export const connection = new Connection(
-  import.meta.env.VITE_SOLANA_RPC ?? 'https://api.devnet.solana.com',
+  import.meta.env.VITE_RPC_PROXY
+    || import.meta.env.VITE_SOLANA_RPC
+    || 'https://api.devnet.solana.com',
   'confirmed',
 );
 
