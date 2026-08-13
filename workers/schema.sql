@@ -11,72 +11,87 @@ CREATE TABLE IF NOT EXISTS tokens (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   ticker TEXT NOT NULL,
-  emoji TEXT,
-  lore TEXT,
-  creator TEXT,
-  chain TEXT,
+  emoji TEXT DEFAULT '🪙',
+  lore TEXT DEFAULT '',
+  creator TEXT NOT NULL,
+  chain TEXT DEFAULT 'SOL',
+  virtual_sol REAL NOT NULL DEFAULT 30,
+  virtual_tokens REAL NOT NULL DEFAULT 1073000000,
+  real_sol REAL NOT NULL DEFAULT 0,
+  real_tokens REAL NOT NULL DEFAULT 0,
+  complete INTEGER NOT NULL DEFAULT 0,
+  price REAL NOT NULL DEFAULT 0.0000279,
+  market_cap REAL NOT NULL DEFAULT 0,
+  volume_24h REAL NOT NULL DEFAULT 0,
+  holders INTEGER NOT NULL DEFAULT 1,
+  change_24h REAL NOT NULL DEFAULT 0,
+  risk_score INTEGER NOT NULL DEFAULT 50,
+  sentiment TEXT DEFAULT 'neutral',
+  spark TEXT DEFAULT '[]',
+  replies INTEGER NOT NULL DEFAULT 0,
+  likes INTEGER NOT NULL DEFAULT 0,
   onchain_mint TEXT,
-  real_sol REAL,
-  price_sol REAL,
-  price_usd REAL,
-  volume_24h REAL,
-  holders INTEGER,
-  curve_progress INTEGER,
-  replies INTEGER,
-  likes INTEGER,
-  risk_score INTEGER,
-  risk_flag TEXT,
-  sentiment TEXT,
-  spark TEXT,
-  complete INTEGER DEFAULT 0,
-  created_at INTEGER
+  created_at INTEGER NOT NULL,
+  risk_flag TEXT
 );
 
 CREATE TABLE IF NOT EXISTS trades (
-  id TEXT PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   token_id TEXT NOT NULL,
   wallet TEXT NOT NULL,
   side TEXT NOT NULL,
-  sol_amount REAL,
-  token_amount REAL,
-  price REAL,
-  pnl REAL,
+  sol_amount REAL NOT NULL,
+  token_amount REAL NOT NULL,
+  price REAL NOT NULL,
+  ts INTEGER NOT NULL,
   signature TEXT,
-  source TEXT DEFAULT 'demo',
-  created_at INTEGER
+  source TEXT DEFAULT 'demo'
 );
 
 CREATE TABLE IF NOT EXISTS comments (
-  id TEXT PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   token_id TEXT NOT NULL,
-  wallet TEXT,
-  body TEXT NOT NULL,
-  created_at INTEGER
+  wallet TEXT NOT NULL,
+  text TEXT NOT NULL,
+  ts INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS likes (
   token_id TEXT NOT NULL,
   wallet TEXT NOT NULL,
-  created_at INTEGER,
+  ts INTEGER NOT NULL,
   PRIMARY KEY (token_id, wallet)
 );
 
 CREATE TABLE IF NOT EXISTS profiles (
   wallet TEXT PRIMARY KEY,
-  handle TEXT,
-  xp INTEGER DEFAULT 0,
-  streak INTEGER DEFAULT 0,
-  last_active INTEGER,
-  ref_code TEXT,
-  referred_by TEXT
+  xp INTEGER NOT NULL DEFAULT 0,
+  level INTEGER NOT NULL DEFAULT 1,
+  streak_days INTEGER NOT NULL DEFAULT 0,
+  last_active_day TEXT,
+  ref_code TEXT NOT NULL,
+  referred_by TEXT,
+  trades INTEGER NOT NULL DEFAULT 0,
+  wins INTEGER NOT NULL DEFAULT 0,
+  pnl REAL NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS positions (
   wallet TEXT NOT NULL,
   token_id TEXT NOT NULL,
-  amount REAL,
-  avg_price REAL,
+  tokens REAL NOT NULL DEFAULT 0,
+  avg_cost REAL NOT NULL DEFAULT 0,
   PRIMARY KEY (wallet, token_id)
+);
+
+CREATE TABLE IF NOT EXISTS quest_progress (
+  wallet TEXT NOT NULL,
+  quest_id TEXT NOT NULL,
+  progress INTEGER NOT NULL DEFAULT 0,
+  done INTEGER NOT NULL DEFAULT 0,
+  day TEXT NOT NULL,
+  UNIQUE (wallet, quest_id, day)
 );
 
 CREATE TABLE IF NOT EXISTS quests (
