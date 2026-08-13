@@ -8,7 +8,7 @@ async function main() {
   const results = [];
   for (let i = 0; i < 50; i++) {
     const [pda] = PublicKey.findProgramAddressSync(
-      [Buffer.from("amm_config"), new Uint8Array([i])],
+      [Buffer.from("amm_config"), Buffer.from([0, i])],
       RAYDIUM,
     );
     try {
