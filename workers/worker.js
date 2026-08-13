@@ -24,6 +24,9 @@ const FEE = 0.005;             // 0.5% total on-chain (0.25 platform + 0.25 crea
 const SOL_USD = 150;           // display peg (demo)
 const MAX_TRADE_FRAC = 0.10;   // anti-whale: max 10% of virtual reserves per trade
 const AI_MODEL = "@cf/meta/llama-3.1-8b-fast-v2";
+const CURVE_CACHE_TTL_MS = 20_000;
+const CURVE_CACHE_MAX = 200;
+const curveStateCache = new Map();
 
 const QUESTS = [
   { id: "q1", title: "Make 3 trades today", xp: 500, total: 3 },
@@ -40,21 +43,23 @@ const shortRef = () => Math.random().toString(36).slice(2, 8);
 const validWallet = (w) => typeof w === "string" && /^[a-zA-Z0-9-]{3,64}$/.test(w);
 
 function priceSol(t) { return t.virtual_sol / t.virtual_tokens; }
-function mcapUsd(t) { return priceSol(t) * SUPPLY * SOL_USD; }
 function curveProgress(t) { return Math.min(100, (t.real_sol / MIGRATION_SOL) * 100); }
 
 function mapToken(t, onchain) {
   const spark = JSON.parse(t.spark || "[]");
   const change = spark.length > 1 ? ((spark[spark.length - 1] - spark[0]) / Math.max(1e-9, spark[0])) * 100 : 0;
   // Prefer on-chain decoded values when available (provenance: chain decode).
+  const vs = onchain?.virtualSol ?? t.virtual_sol;
+  const vt = onchain?.virtualTokens ?? t.virtual_tokens;
+  const priceSolVal = vt > 0 ? vs / vt : priceSol(t);
   const realSol = onchain ? onchain.realSol : Math.round(t.real_sol * 100) / 100;
   const complete = onchain ? onchain.complete : Boolean(t.complete);
   return {
     id: t.id, name: t.name, ticker: t.ticker, emoji: t.emoji, lore: t.lore,
     creator: t.creator, chain: t.chain,
-    marketCap: Math.round(mcapUsd(t)),
-    price: priceSol(t) * SOL_USD,
-    priceSol: priceSol(t),
+    marketCap: Math.round(priceSolVal * SUPPLY * SOL_USD),
+    price: priceSolVal * SOL_USD,
+    priceSol: priceSolVal,
     change24h: Math.round(change * 10) / 10,
     volume24h: Math.round(t.volume_24h), holders: t.holders,
     curveProgress: Math.round(curveProgress({ ...t, real_sol: realSol }) * 10) / 10,
@@ -67,6 +72,18 @@ function mapToken(t, onchain) {
     complete,
     realSol: Math.round(realSol * 100) / 100,
   };
+}
+
+async function cachedCurveState({ mint, programId, rpcUrl }) {
+  const cached = curveStateCache.get(mint);
+  if (cached && Date.now() - cached.ts < CURVE_CACHE_TTL_MS) return cached.state;
+  const state = await fetchCurveState({ mint, programId, rpcUrl });
+  curveStateCache.delete(mint);
+  curveStateCache.set(mint, { ts: Date.now(), state });
+  while (curveStateCache.size > CURVE_CACHE_MAX) {
+    curveStateCache.delete(curveStateCache.keys().next().value);
+  }
+  return state;
 }
 
 async function getToken(db, id) {
@@ -171,7 +188,7 @@ export default {
         const enriched = await Promise.all(results.map(async (t) => {
           let onchain = null;
           if (t.onchain_mint && env.PROGRAM_ID && env.SOLANA_RPC) {
-            onchain = await fetchCurveState({ mint: t.onchain_mint, programId: env.PROGRAM_ID, rpcUrl: env.SOLANA_RPC });
+            onchain = await cachedCurveState({ mint: t.onchain_mint, programId: env.PROGRAM_ID, rpcUrl: env.SOLANA_RPC });
           }
           return mapToken(t, onchain);
         }));
@@ -217,7 +234,7 @@ export default {
         }
         let onchain = null;
         if (t.onchain_mint && env.PROGRAM_ID && env.SOLANA_RPC) {
-          onchain = await fetchCurveState({ mint: t.onchain_mint, programId: env.PROGRAM_ID, rpcUrl: env.SOLANA_RPC });
+          onchain = await cachedCurveState({ mint: t.onchain_mint, programId: env.PROGRAM_ID, rpcUrl: env.SOLANA_RPC });
         }
         return json({ ...mapToken(t, onchain), likedByMe });
       }
@@ -273,7 +290,7 @@ export default {
       if (tokenMatch && tokenMatch[3] === "risk" && request.method === "POST") {
         const t = await getToken(db, tokenMatch[1]);
         if (!t) return err("not found", 404);
-        const stats = `mcap $${Math.round(mcapUsd(t))}, holders ${t.holders}, curve ${Math.round(curveProgress(t))}%, vol24h $${Math.round(t.volume_24h)}, replies ${t.replies}`;
+        const stats = `mcap $${Math.round(priceSol(t) * SUPPLY * SOL_USD)}, holders ${t.holders}, curve ${Math.round(curveProgress(t))}%, vol24h $${Math.round(t.volume_24h)}, replies ${t.replies}`;
         const out = await callAi(env,
           "You are The Oracle, a memecoin risk analyst. Reply with ONLY a JSON object: {\"score\": <0-100 integer, 100=extreme risk>, \"flag\": \"<one short phrase>\"}. Base it on the stats: low mcap + low holders = higher risk.",
           `Token ${t.name} ($${t.ticker}): ${stats}`);
