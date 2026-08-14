@@ -10,12 +10,28 @@ export const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9
 export const ATA_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
 export const RENT_SYSVAR = new PublicKey('SysvarRent111111111111111111111111111111111');
 
-export const connection = new Connection(
-  import.meta.env.VITE_RPC_PROXY
-    || import.meta.env.VITE_SOLANA_RPC
-    || 'https://api.devnet.solana.com',
-  'confirmed',
-);
+/** Resolve RPC URL for web3.js Connection. VITE_RPC_PROXY may be a relative Pages path (e.g. "/rpc"). */
+function rpcEndpoint(): string {
+  const proxy = import.meta.env.VITE_RPC_PROXY as string | undefined;
+  if (proxy && proxy.length > 0) {
+    if (proxy.startsWith('/')) {
+      if (typeof window !== 'undefined' && window.location?.origin) {
+        return `${window.location.origin}${proxy}`;
+      }
+      return (
+        (import.meta.env.VITE_SOLANA_RPC as string | undefined) ||
+        'https://api.devnet.solana.com'
+      );
+    }
+    return proxy;
+  }
+  return (
+    (import.meta.env.VITE_SOLANA_RPC as string | undefined) ||
+    'https://api.devnet.solana.com'
+  );
+}
+
+export const connection = new Connection(rpcEndpoint(), 'confirmed');
 
 // Anchor instruction discriminators (sha256("global:<name>")[0..8]).
 const DISC = {
