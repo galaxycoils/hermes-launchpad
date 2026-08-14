@@ -4,5 +4,6 @@ PROGRAM_ID = "9K5eAWBkrUJbUiUC8aM6xeuXM2ACj9XNHfbC1X6Scjgz"
 CLUSTER = "devnet"
 GRADUATION_SOL = "85"
 REQUIRE_SIGNED_TRADES = "true"
-SOLANA_RPC = "https://api.devnet.solana.com"
+# Prefer an RPC that allows Cloudflare Workers egress (public Solana RPC often blocks CF).
+SOLANA_RPC = "https://devnet.rpcpool.com"
 # DEVNET_WALLET is a secret — set via `wrangler secret put DEVNET_WALLET` (not in this file).
