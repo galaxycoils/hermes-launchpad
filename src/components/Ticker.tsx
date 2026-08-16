@@ -36,7 +36,12 @@ export default function Ticker({ tokenNames, onSelect }: { tokenNames: Record<st
   if (!items.length) return null;
 
   return (
-    <div className="group relative overflow-hidden border-t border-white/10 bg-black/60 py-2" aria-label="Live trades">
+    <div
+      role="region"
+      aria-live="polite"
+      aria-label="Live trades ticker"
+      className="group relative overflow-hidden border-t border-white/10 bg-black/60 py-2"
+    >
       <style>{`
         @keyframes hermes-ticker {
           from { transform: translateX(0); }

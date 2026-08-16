@@ -3,12 +3,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { fetchTokens, fetchQuests, fetchLeaderboard, fetchProfile, checkin, fetchReferrals } from "@/lib/api";
 import { getAnonId, captureRef, shareLink } from "@/lib/identity";
+import { getProvider } from "@/lib/solana";
 import type { Token, Quest, Trader, Profile, ReferralStats } from "@/lib/tokens";
 import { filterVerifiedTokens, formatUnixAge } from "@/lib/token-truth";
 import type { VerifiedTokenFilter } from "@/lib/token-truth";
 import TokenCard from "@/components/TokenCard";
 import TokenModal from "@/components/TokenModal";
 import CreateTokenModal from "@/components/CreateTokenModal";
+import GraduationModal from "@/components/GraduationModal";
 import KingOfHill from "@/components/KingOfHill";
 import Hero from "@/components/Hero";
 import TopNav from "@/components/TopNav";
@@ -31,9 +33,95 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
   const [showCreate, setShowCreate] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [refStats, setRefStats] = useState<ReferralStats | null>(null);
+  const [graduatedToken, setGraduatedToken] = useState<Token | null>(null);
 
   const [anonId] = useState(getAnonId);
   const identity = wallet ?? anonId;
+
+  const checkGraduations = useCallback((tokens: Token[]) => {
+    for (const t of tokens) {
+      if (t.complete) {
+        try {
+          const key = `graduation_seen_${t.id}`;
+          if (!localStorage.getItem(key)) {
+            localStorage.setItem(key, "1");
+            try {
+              const bc = new BroadcastChannel("hermes-graduation");
+              bc.postMessage({ tokenId: t.id });
+              bc.close();
+            } catch {
+              // ignore
+            }
+            setGraduatedToken(t);
+            break;
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+  }, []);
+
+  const checkLikedGraduations = useCallback((tokens: Token[]) => {
+    for (const t of tokens) {
+      if (t.complete && t.liked) {
+        try {
+          const key = `grad_toast_liked_${t.id}`;
+          if (!localStorage.getItem(key)) {
+            localStorage.setItem(key, "1");
+            try {
+              const bc = new BroadcastChannel("hermes-reengagement");
+              bc.postMessage({ tokenId: t.id });
+              bc.close();
+            } catch {
+              // ignore
+            }
+            toast.info(`🎓 ${t.name} ($${t.ticker}) from your watchlist just graduated!`, { duration: 6000 });
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    let bc1: BroadcastChannel | null = null;
+    let bc2: BroadcastChannel | null = null;
+    try {
+      bc1 = new BroadcastChannel("hermes-graduation");
+      bc1.onmessage = (e) => {
+        if (e.data?.tokenId) {
+          try {
+            localStorage.setItem(`graduation_seen_${e.data.tokenId}`, "1");
+          } catch {
+            // ignore
+          }
+        }
+      };
+
+      bc2 = new BroadcastChannel("hermes-reengagement");
+      bc2.onmessage = (e) => {
+        if (e.data?.tokenId) {
+          try {
+            localStorage.setItem(`grad_toast_liked_${e.data.tokenId}`, "1");
+          } catch {
+            // ignore
+          }
+        }
+      };
+    } catch {
+      // ignore
+    }
+    return () => {
+      try {
+        bc1?.close();
+        bc2?.close();
+      } catch {
+        // ignore
+      }
+    };
+  }, []);
 
   const refreshProfile = useCallback(() => {
     fetchProfile(identity).then((p) => p && setProfile(p));
@@ -45,6 +133,8 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
     fetchTokens().then(({ data, live: isLive }) => {
       setAllTokens(data);
       setLive(isLive);
+      checkGraduations(data);
+      checkLikedGraduations(data);
       const tid = new URLSearchParams(window.location.search).get("token");
       if (tid) {
         const t = data.find((x) => x.id === tid);
@@ -63,17 +153,19 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
       toast(`🔥 Day ${c.streak} streak! +${c.xpGained ?? 50} XP${mult}`, { duration: 5000 });
     });
     fetchQuests(identity).then(({ data }) => setQuests(data));
-  }, [identity]);
+  }, [identity, checkGraduations, checkLikedGraduations]);
 
   useEffect(() => {
     const iv = setInterval(() => {
       fetchTokens().then(({ data, live: isLive }) => {
         setAllTokens(data);
         setLive(isLive);
+        checkGraduations(data);
+        checkLikedGraduations(data);
       });
     }, 30000);
     return () => clearInterval(iv);
-  }, []);
+  }, [checkGraduations, checkLikedGraduations]);
 
   const onCreated = useCallback((t: Token) => {
     setAllTokens((prev) => [t, ...prev]);
@@ -83,8 +175,8 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
   }, [refreshProfile]);
 
   // TokenModal wire-up: like/comment state per token
-  const likedByMe = (id: string) => (allTokens.find((t) => t.id === id) as any)?.liked;
-  const selectedComments = (id: string) => (allTokens.find((t) => t.id === id) as any)?.comments ?? [];
+  const likedByMe = (id: string) => allTokens.find((t) => t.id === id)?.liked;
+  const selectedComments = (id: string) => allTokens.find((t) => t.id === id)?.comments ?? [];
   const handleLike = useCallback((id: string) => {
     setAllTokens((prev) =>
       prev.map((t) => (t.id === id ? { ...t, liked: !t.liked } : t))
@@ -114,8 +206,42 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
     return filterVerifiedTokens(contenders, "curve-progress")[0] ?? null;
   }, [allTokens]);
 
+  const [refLoading, setRefLoading] = useState(false);
+  const [refError, setRefError] = useState<string | null>(null);
+
+  const loadReferrals = useCallback(() => {
+    setRefLoading(true);
+    setRefError(null);
+    fetchReferrals(identity)
+      .then((s) => {
+        setRefStats(s);
+        if (!s) setRefError("Could not load referral data");
+      })
+      .catch(() => {
+        setRefError("Could not load referral data");
+      })
+      .finally(() => {
+        setRefLoading(false);
+      });
+  }, [identity]);
+
   useEffect(() => {
-    if (tab === "profile") fetchReferrals(identity).then((s) => s && setRefStats(s));
+    if (tab === "profile") {
+      let active = true;
+      fetchReferrals(identity)
+        .then((s) => {
+          if (!active) return;
+          setRefStats(s);
+          if (!s) setRefError("Could not load referral data");
+        })
+        .catch(() => {
+          if (!active) return;
+          setRefError("Could not load referral data");
+        });
+      return () => {
+        active = false;
+      };
+    }
   }, [tab, identity]);
 
   const copyRefLink = () => {
@@ -159,7 +285,13 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
         <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-purple-500/10 blur-[80px] animate-float" style={{ animationDelay: "6s" }} />
       </div>
 
-      <TopNav wallet={wallet} onWalletChange={setWallet} live={live} />
+      <TopNav
+        wallet={wallet}
+        onWalletChange={setWallet}
+        live={live}
+        refCode={refStats?.code ?? profile?.ref_code ?? identity}
+        streak={profile?.streak_days}
+      />
 
       <main id="main-content" className="mx-auto max-w-6xl px-3 sm:px-4">
         {/* Hero */}
@@ -198,6 +330,32 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
         {/* Tokens tab */}
         {tab === "tokens" && (
           <section className="feed-animate">
+            {/* Top 3 Leaderboard snippet */}
+            <div className="mb-4 rounded-xl border border-white/10 bg-surface p-3.5">
+              <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/5">
+                <span className="text-xs font-bold uppercase tracking-wider text-white/50">🏆 Top Degens</span>
+                <button
+                  onClick={() => setTab("profile")}
+                  className="text-[11px] font-mono text-pump hover:underline"
+                >
+                  Full Ranks →
+                </button>
+              </div>
+              {ranks.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {ranks.slice(0, 3).map((r) => (
+                    <div key={r.rank} className="flex items-center gap-2 rounded-lg bg-white/[0.02] border border-white/5 px-2.5 py-1.5 text-xs">
+                      <span>{["🥇", "🥈", "🥉"][r.rank - 1] ?? r.rank}</span>
+                      <span className="truncate font-semibold text-white/90 flex-1">{r.name}</span>
+                      <span className="font-mono text-green-400 font-bold">${r.pnl.toFixed(0)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-white/40 text-center py-1">No trades yet</p>
+              )}
+            </div>
+
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
               <input
                 value={search}
@@ -242,6 +400,60 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
         {/* Profile tab */}
         {tab === "profile" && (
           <section className="space-y-4 feed-animate">
+            {/* Wallet Management */}
+            <div className="rounded-xl border border-white/10 bg-surface p-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-white/40">Connected Wallet</div>
+                  <div className="mt-0.5 font-mono text-sm font-bold text-white">
+                    {wallet ? `${wallet.slice(0, 8)}…${wallet.slice(-8)}` : "Guest (Anonymous ID: " + anonId.slice(0, 6) + "…)"}
+                  </div>
+                </div>
+                {wallet ? (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(wallet);
+                        toast.success("Wallet address copied");
+                      }}
+                      className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-white/80 hover:bg-white/10 transition-colors"
+                    >
+                      Copy
+                    </button>
+                    <button
+                      onClick={() => {
+                        setWallet(null);
+                        toast.info("Wallet disconnected");
+                      }}
+                      className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-xs font-bold text-red-400 hover:bg-red-500/20 transition-colors"
+                    >
+                      Disconnect
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={async () => {
+                      const p = getProvider();
+                      if (p) {
+                        try {
+                          const res = await p.connect();
+                          setWallet(res.publicKey.toBase58());
+                          toast.success("Wallet connected!");
+                        } catch {
+                          // user canceled
+                        }
+                      } else {
+                        window.open("https://phantom.com", "_blank");
+                      }
+                    }}
+                    className="rounded-lg bg-hermes px-3 py-1.5 text-xs font-black text-white hover:bg-hermes/90 transition-all active:scale-[0.98]"
+                  >
+                    Connect Wallet
+                  </button>
+                )}
+              </div>
+            </div>
+
             {/* Level + XP */}
             <div className="rounded-xl border border-white/10 bg-surface p-5">
               <div className="flex items-center gap-4">
@@ -403,6 +615,26 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
                 </button>
               </div>
 
+              {/* Loading state */}
+              {refLoading && !refStats && (
+                <div className="mb-4 rounded-xl border border-white/5 bg-white/5 p-4 text-center">
+                  <div className="h-6 w-32 mx-auto animate-pulse rounded bg-white/10" />
+                </div>
+              )}
+
+              {/* Error state */}
+              {refError && !refStats && !refLoading && (
+                <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-center">
+                  <p className="text-xs font-semibold text-red-400">Could not load referral data</p>
+                  <button
+                    onClick={loadReferrals}
+                    className="mt-2 text-xs font-bold text-pump hover:underline"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
+
               {/* Stats row */}
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div className="rounded-xl bg-white/5 p-4">
@@ -423,8 +655,8 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
                 </div>
               </div>
 
-              {/* Recruits list */}
-              {refStats && refStats.referred.length > 0 && (
+              {/* Recruits list or Empty state */}
+              {refStats && refStats.referred && refStats.referred.length > 0 ? (
                 <div className="mt-4">
                   <h3 className="text-xs font-semibold text-white/60 mb-2">Your recruits</h3>
                   <div className="space-y-1.5 max-h-32 overflow-y-auto">
@@ -436,6 +668,10 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
                       </div>
                     ))}
                   </div>
+                </div>
+              ) : (
+                <div className="mt-4 rounded-xl border border-white/5 bg-black/20 p-4 text-center">
+                  <p className="text-xs text-white/40">No referrals yet — share your link to start earning XP</p>
                 </div>
               )}
             </div>
@@ -449,7 +685,7 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
       {/* Footer */}
       <footer className="sm:hidden border-t border-white/10 px-4 py-4 text-center text-xs text-white/30">
         <p>🛸 Hermes Launchpad — AI-native fair launches on Solana.</p>
-        <p className="mt-0.5">Devnet demo / experimental. Not financial advice.</p>
+        <p className="mt-0.5">Devnet / experimental. Not financial advice.</p>
       </footer>
 
       {/* Modals */}
@@ -461,14 +697,30 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
             refreshProfile();
           }}
           onLike={handleLike}
-          liked={likedByMe(selected.id)}
+          liked={Boolean(likedByMe(selected.id))}
           comments={selectedComments(selected.id)}
           onComment={handleComment}
           wallet={wallet}
+          refCode={refStats?.code ?? profile?.ref_code ?? identity}
+          onTradeComplete={() => {
+            fetchTokens().then(({ data }) => setAllTokens(data));
+            refreshProfile();
+            // Quest progress micro-toast
+            fetchQuests(identity).then(({ data }) => {
+              setQuests(data);
+              const completed = data.find((q) => q.done);
+              if (completed) {
+                toast.success(`Quest: ${completed.title} ✅ +${completed.xp} XP`);
+              }
+            }).catch(() => {});
+          }}
         />
       )}
       {showCreate && (
         <CreateTokenModal onClose={() => setShowCreate(false)} onCreated={onCreated} />
+      )}
+      {graduatedToken && (
+        <GraduationModal token={graduatedToken} onClose={() => setGraduatedToken(null)} />
       )}
     </div>
   );

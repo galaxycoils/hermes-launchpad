@@ -3,5 +3,15 @@ import ErrorBoundary from './components/ErrorBoundary';
 import Home from './pages/Home';
 
 export default function App() {
-  return <ErrorBoundary><Routes><Route path="/" element={<Home />} /><Route path="/profile" element={<Home initialTab="profile" />} /></Routes></ErrorBoundary>;
+  return (
+    <ErrorBoundary>
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/profile" element={<Home initialTab="profile" />} />
+      </Routes>
+    </ErrorBoundary>
+  );
 }

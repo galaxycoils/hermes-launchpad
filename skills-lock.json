@@ -1,6 +1,18 @@
 {
   "version": 1,
   "skills": {
+    "brainstorming": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "skillPath": "skills/brainstorming/SKILL.md",
+      "computedHash": "b58d55b64742ecd37923985ec7bdfbe678ffbcb9895562abd28c0a32dcacd7fb"
+    },
+    "brainstorming-extension": {
+      "source": "dsifry/metaswarm",
+      "sourceType": "github",
+      "skillPath": "skills/brainstorming-extension/SKILL.md",
+      "computedHash": "bdb6b0e55b1c02be7980f42bee5436c3ce54cbed15ebcf3df51ac2fa0887a30d"
+    },
     "cloudflare-d1": {
       "source": "secondsky/claude-skills",
       "sourceType": "github",
@@ -19,6 +31,66 @@
       "skillPath": "skills/context7/SKILL.md",
       "computedHash": "fccbea654f8e35824a8bdce3e059e206efeb6c1fab9f6c096c3867e761081983"
     },
+    "create-issue": {
+      "source": "dsifry/metaswarm",
+      "sourceType": "github",
+      "skillPath": "skills/create-issue/SKILL.md",
+      "computedHash": "e4476402046724b3f722108e5e071390701464d090e8b4fdca1ff2c914ea625e"
+    },
+    "design-review-gate": {
+      "source": "dsifry/metaswarm",
+      "sourceType": "github",
+      "skillPath": "skills/design-review-gate/SKILL.md",
+      "computedHash": "433f4b8d47e9f3ee2c8f4a4b1618bce105c687402e1888f8f2265cb6fdcb70e0"
+    },
+    "external-tools": {
+      "source": "dsifry/metaswarm",
+      "sourceType": "github",
+      "skillPath": "skills/external-tools/SKILL.md",
+      "computedHash": "f938dce3a7b4e02c96afe48cfc13312e21ef6c0bac9d44188bf41010df4198d8"
+    },
+    "handling-pr-comments": {
+      "source": "dsifry/metaswarm",
+      "sourceType": "github",
+      "skillPath": "skills/handling-pr-comments/SKILL.md",
+      "computedHash": "0c26fa21e3babece2a5481b9d47286488c4bdc61ffd46a3ed0510d85bcbf067a"
+    },
+    "handoff": {
+      "source": "dsifry/metaswarm",
+      "sourceType": "github",
+      "skillPath": "skills/handoff/SKILL.md",
+      "computedHash": "7ab824b673c374f59cf2c3825168051780c942d0407ba671ca78c3ad713a37b7"
+    },
+    "migrate": {
+      "source": "dsifry/metaswarm",
+      "sourceType": "github",
+      "skillPath": "skills/migrate/SKILL.md",
+      "computedHash": "117cc80c1dd032768f90a2d7267eccd42ddc6232043b49f231fe6c003f5c4042"
+    },
+    "orchestrated-execution": {
+      "source": "dsifry/metaswarm",
+      "sourceType": "github",
+      "skillPath": "skills/orchestrated-execution/SKILL.md",
+      "computedHash": "175589ea3b07316ad2bac679e5c993448df82055da9ce212e6958c715ae9df3e"
+    },
+    "plan-review-gate": {
+      "source": "dsifry/metaswarm",
+      "sourceType": "github",
+      "skillPath": "skills/plan-review-gate/SKILL.md",
+      "computedHash": "bbae0255cbd92d7aa3f5afced0f09c5919d8176b8dda7a810ba9a2c24a4be805"
+    },
+    "pr-shepherd": {
+      "source": "dsifry/metaswarm",
+      "sourceType": "github",
+      "skillPath": "skills/pr-shepherd/SKILL.md",
+      "computedHash": "1ff05804260ed8bd8c439df9ab10b609907cb9ba2477d8a47a7581fc931edaf0"
+    },
+    "setup": {
+      "source": "dsifry/metaswarm",
+      "sourceType": "github",
+      "skillPath": "skills/setup/SKILL.md",
+      "computedHash": "ec3811d0bca70f14427d0eb9591e9d2b3070e6b28f8348a2d3b87bd2dd6186c0"
+    },
     "solana-anchor": {
       "source": "hairyf/blockchain-skills",
       "sourceType": "github",
@@ -30,6 +102,24 @@
       "sourceType": "github",
       "skillPath": "plugins/building-secure-contracts/skills/solana-vulnerability-scanner/SKILL.md",
       "computedHash": "06789074422403f707f0be218a770fe55e444c57d2f5ad367afe578a0aea2f6a"
+    },
+    "start": {
+      "source": "dsifry/metaswarm",
+      "sourceType": "github",
+      "skillPath": "skills/start/SKILL.md",
+      "computedHash": "30c62cfd0af1902ac27b01a7aa9d7ceedfe54f3d351a256fac873606f34b924b"
+    },
+    "status": {
+      "source": "dsifry/metaswarm",
+      "sourceType": "github",
+      "skillPath": "skills/status/SKILL.md",
+      "computedHash": "83347986be690a82cea741701298430938a651f6cbce042a7568a23674bd075e"
+    },
+    "visual-review": {
+      "source": "dsifry/metaswarm",
+      "sourceType": "github",
+      "skillPath": "skills/visual-review/SKILL.md",
+      "computedHash": "7c28fb38816793253a0ea95596e94f851facec9fda9fa456f6c38b5556b12777"
     }
   }
 }

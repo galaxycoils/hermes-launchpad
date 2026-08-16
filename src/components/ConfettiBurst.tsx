@@ -23,17 +23,17 @@ const presets: Record<Preset, PresetOpts> = {
 
 export function confettiBurst(preset: Preset) {
   const opts = presets[preset];
-  try { confetti(opts as any); } catch { /* silent */ }
+  try { confetti(opts as confetti.Options); } catch { /* silent */ }
 }
 
 export function xpFlyIn() {
   try {
-    const raw: any = {
+    const raw: confetti.Options = {
       particleCount: 1,
       spread: 0,
       startVelocity: 45,
       colors: ["#ffd60a"],
-      drift: { x: 0, y: -40 },
+      drift: 0,
     };
     confetti(raw);
   } catch { /* silent */ }

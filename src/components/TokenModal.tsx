@@ -1,11 +1,14 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/Button";
 import Badge from "@/components/Badge";
 import { confettiBurst } from "@/components/ConfettiBurst";
+import TradePanel from "@/components/TradePanel";
+import TradeReceiptCard from "@/components/TradeReceiptCard";
 import { fmtUsd } from "@/lib/tokens";
 import { formatUnixAge } from "@/lib/token-truth";
 import type { Token, CommentItem } from "@/lib/tokens";
+import type { TradeResult } from "@/lib/api";
 
 interface Props {
   token: Token;
@@ -15,11 +18,14 @@ interface Props {
   comments: CommentItem[];
   onComment: (text: string) => void;
   wallet: string | null;
+  refCode?: string;
+  onTradeComplete?: (result: TradeResult) => void;
 }
 
-export default function TokenModal({ token, onClose, onLike, liked, comments, onComment, wallet }: Props) {
+export default function TokenModal({ token, onClose, onLike, liked, comments, onComment, wallet, refCode, onTradeComplete }: Props) {
   const [pending, setPending] = useState(false);
   const [comment, setComment] = useState("");
+  const [tradeReceipt, setTradeReceipt] = useState<TradeResult | null>(null);
 
   const handleLike = useCallback(() => {
     if (pending) return;
@@ -43,6 +49,14 @@ export default function TokenModal({ token, onClose, onLike, liked, comments, on
     toast.success("Comment posted");
   }, [comment, onComment]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   const verified = token.provenance === "onchain" || token.provenance === "index";
   const isDemo = token.provenance === "demo";
 
@@ -56,7 +70,7 @@ export default function TokenModal({ token, onClose, onLike, liked, comments, on
         role="dialog"
         aria-modal="true"
         aria-labelledby="tm-title"
-        className="w-full max-w-lg overscroll-contain rounded-t-xl border bg-surface p-5 sm:rounded-xl"
+        className="w-full max-w-lg overscroll-contain rounded-t-xl border bg-surface p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-5 sm:rounded-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between">
@@ -103,6 +117,33 @@ export default function TokenModal({ token, onClose, onLike, liked, comments, on
           </div>
         </div>
 
+        {/* Trade Receipt Share Card */}
+        {tradeReceipt && (
+          <TradeReceiptCard
+            result={tradeReceipt}
+            token={token}
+            refCode={refCode}
+            onClose={() => setTradeReceipt(null)}
+          />
+        )}
+
+        {/* Trade Panel — only for on-chain tokens */}
+        {token.onchainMint ? (
+          <TradePanel
+            token={token}
+            wallet={wallet}
+            onTradeComplete={(result) => {
+              confettiBurst(result.side);
+              setTradeReceipt(result);
+              onTradeComplete?.(result);
+            }}
+          />
+        ) : (
+          <div className="mb-4 rounded-lg border border-white/5 bg-black/20 p-3 text-center">
+            <p className="text-xs text-white/40">Trading unavailable · token not deployed on-chain</p>
+          </div>
+        )}
+
         <div className="mb-4 rounded-lg border border-white/5 bg-black/20 p-3">
           <p className="text-xs font-bold uppercase tracking-wide text-white/60">Lore</p>
           <p className="mt-1 text-sm text-white/75">{token.lore}</p>
@@ -134,7 +175,7 @@ export default function TokenModal({ token, onClose, onLike, liked, comments, on
                 <li key={c.ts} className="rounded-md border border-white/5 bg-black/20 p-2">
                   <div className="flex items-center gap-2 text-xs">
                     <span className="font-mono font-bold text-white/60">{c.wallet.slice(0, 6)}…{c.wallet.slice(-4)}</span>
-                    <span className="text-white/30">{formatUnixAge((Date.now() - c.ts) / 60000)}</span>
+                    <span className="text-white/30">{formatUnixAge(Math.floor(c.ts / 1000))}</span>
                   </div>
                   <p className="mt-1 text-sm text-white/75">{c.text}</p>
                 </li>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/Button';
 import Badge from '@/components/Badge';
 import { Surface } from '@/components/Surface';
@@ -24,6 +24,14 @@ export default function CreateTokenModal({ onClose, onCreated }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const valid = name.trim().length >= 2 && ticker.trim().length >= 2;
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !busy) onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, busy]);
 
   const launch = async () => {
     if (!valid || busy) return;
@@ -163,7 +171,7 @@ export default function CreateTokenModal({ onClose, onCreated }: Props) {
           </div>
         </dl>
         <div className="mt-3 flex items-center gap-2 text-[10px] text-white/40">
-          <Badge variant="demo" label="devnet demo" />
+          <Badge variant="onchain" label="devnet" />
           <Badge variant="active" label="live curve" />
         </div>
         </Surface>
@@ -198,7 +206,7 @@ export default function CreateTokenModal({ onClose, onCreated }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="ct-title"
-        className="w-full max-w-md overscroll-contain rounded-t-xl border bg-surface p-5 sm:rounded-xl"
+        className="w-full max-w-md overscroll-contain rounded-t-xl border bg-surface p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-5 sm:rounded-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-5 flex items-center justify-between">
