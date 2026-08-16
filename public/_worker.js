@@ -1,5 +1,5 @@
-// Hermes Pages worker: /rpc → Solana devnet proxy (CORS-safe), else static assets.
-const RPC_TARGET = 'https://devnet.rpcpool.com';
+const RPC_TARGET = 'https://devnet.helius-rpc.com/?api-key=d2891b4a-5a20-48ea-9ce1-046c2b899bbe';
+
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
