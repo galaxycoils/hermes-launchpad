@@ -224,7 +224,7 @@ export default {
         }, 201);
       }
 
-      const tokenMatch = path.match(/^\/api\/tokens\/([a-z0-9-]+)(\/(comments|like|lore|risk))?$/);
+      const tokenMatch = path.match(/^\/api\/tokens\/([a-zA-Z0-9-]+)(\/(comments|like|lore|risk))?$/);
 
       if (tokenMatch && !tokenMatch[2] && request.method === "GET") {
         const t = await getToken(db, tokenMatch[1]);
