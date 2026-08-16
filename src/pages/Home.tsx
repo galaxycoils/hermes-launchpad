@@ -3,7 +3,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { fetchTokens, fetchQuests, fetchLeaderboard, fetchProfile, checkin, fetchReferrals, postComment, likeToken } from "@/lib/api";
 import { getAnonId, captureRef, shareLink } from "@/lib/identity";
-import { getProvider, signAuthChallenge } from "@/lib/solana";
+import { connectWallet } from "@/lib/wallet";
+import { signAuthChallenge } from "@/lib/solana";
 import type { Token, Quest, Trader, Profile, ReferralStats } from "@/lib/tokens";
 import { filterVerifiedTokens, formatUnixAge } from "@/lib/token-truth";
 import type { VerifiedTokenFilter } from "@/lib/token-truth";
@@ -450,17 +451,11 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
                 ) : (
                   <button
                     onClick={async () => {
-                      const p = getProvider();
-                      if (p) {
-                        try {
-                          const res = await p.connect();
-                          setWallet(res.publicKey.toBase58());
-                          toast.success("Wallet connected!");
-                        } catch {
-                          // user canceled
-                        }
-                      } else {
-                        window.open("https://phantom.com", "_blank");
+                      try {
+                        await connectWallet(setWallet);
+                        toast.success("Wallet connected!");
+                      } catch {
+                        // user canceled
                       }
                     }}
                     className="rounded-lg bg-hermes px-3 py-1.5 text-xs font-black text-white hover:bg-hermes/90 transition-all active:scale-[0.98]"

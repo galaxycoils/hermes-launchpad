@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { toast } from "sonner";
-import { Toaster } from "sonner";
+import { toast, Toaster } from "sonner";
 import Avatar from "@/components/Avatar";
+import { connectWallet } from "@/lib/wallet";
 import { useInterval } from "@/hooks/useInterval";
 import { shareLink } from "@/lib/identity";
 
@@ -112,7 +112,15 @@ export default function TopNav({ wallet, onWalletChange, live, refCode, streak }
 
             {/* Wallet button */}
             <button
-              onClick={handleWalletClick}
+              onClick={async (e) => {
+                if (wallet) {
+                  handleWalletClick(e);
+                } else {
+                  e.stopPropagation();
+                  await connectWallet(onWalletChange);
+                  setShowWalletMenu(true);
+                }
+              }}
               className="relative rounded-md bg-hermes px-3 py-1.5 text-sm font-black text-white hover:bg-hermes/90 transition-all active:scale-[0.97]"
             >
               {wallet ? (
