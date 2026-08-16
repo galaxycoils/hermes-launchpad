@@ -27,6 +27,9 @@ const AI_MODEL = "@cf/meta/llama-3.1-8b-fast-v2";
 const CURVE_CACHE_TTL_MS = 20_000;
 const CURVE_CACHE_MAX = 200;
 const curveStateCache = new Map();
+const HELIUS_DEVNET_RPC = "https://devnet.helius-rpc.com/?api-key=d2891b4a-5a20-48ea-9ce1-046c2b899bbe";
+const getRpcUrl = (env) => env.SOLANA_RPC || HELIUS_DEVNET_RPC;
+
 
 const QUESTS = [
   { id: "q1", title: "Make 3 trades today", xp: 500, total: 3 },
@@ -187,8 +190,8 @@ export default {
         const { results } = await db.prepare("SELECT * FROM tokens ORDER BY created_at ASC").all();
         const enriched = await Promise.all(results.map(async (t) => {
           let onchain = null;
-          if (t.onchain_mint && env.PROGRAM_ID && env.SOLANA_RPC) {
-            onchain = await cachedCurveState({ mint: t.onchain_mint, programId: env.PROGRAM_ID, rpcUrl: env.SOLANA_RPC });
+          if (t.onchain_mint && env.PROGRAM_ID) {
+            onchain = await cachedCurveState({ mint: t.onchain_mint, programId: env.PROGRAM_ID, rpcUrl: getRpcUrl(env) });
           }
           return mapToken(t, onchain);
         }));
@@ -205,12 +208,12 @@ export default {
           return err("name, ticker, emoji, mint, signature, and creator required");
         }
         const verified = await verifyCreateTransaction({
-          signature, mint, creator, programId: env.PROGRAM_ID, rpcUrl: env.SOLANA_RPC || "https://devnet.helius-rpc.com/?api-key=d2891b4a-5a20-48ea-9ce1-046c2b899bbe",
+          signature, mint, creator, programId: env.PROGRAM_ID, rpcUrl: getRpcUrl(env),
         });
         if (!verified) return err("unverified on-chain create transaction", 403);
         const existing = await db.prepare("SELECT id FROM tokens WHERE onchain_mint = ?").bind(mint).first();
         if (existing) return json({ ok: true, already: true, id: existing.id, onchainMint: mint, provenance: "onchain" });
-        const onchain = await fetchCurveState({ mint, programId: env.PROGRAM_ID, rpcUrl: env.SOLANA_RPC });
+        const onchain = await fetchCurveState({ mint, programId: env.PROGRAM_ID, rpcUrl: getRpcUrl(env) });
         const id = `${ticker.toLowerCase()}-${signature.slice(0, 4)}`;
         await db.prepare(
           "INSERT INTO tokens (id, name, ticker, emoji, lore, creator, chain, onchain_mint, real_sol, complete, created_at) VALUES (?, ?, ?, ?, '', ?, 'SOL', ?, ?, ?, ?)"
@@ -233,8 +236,8 @@ export default {
           likedByMe = Boolean(l);
         }
         let onchain = null;
-        if (t.onchain_mint && env.PROGRAM_ID && env.SOLANA_RPC) {
-          onchain = await cachedCurveState({ mint: t.onchain_mint, programId: env.PROGRAM_ID, rpcUrl: env.SOLANA_RPC });
+        if (t.onchain_mint && env.PROGRAM_ID) {
+          onchain = await cachedCurveState({ mint: t.onchain_mint, programId: env.PROGRAM_ID, rpcUrl: getRpcUrl(env) });
         }
         return json({ ...mapToken(t, onchain), likedByMe });
       }
@@ -393,8 +396,8 @@ export default {
         await refreshStats(db, t2);
         const t3 = await getToken(db, token_id);
         let onchain = null;
-        if (t3.onchain_mint && env.PROGRAM_ID && env.SOLANA_RPC) {
-          onchain = await fetchCurveState({ mint: t3.onchain_mint, programId: env.PROGRAM_ID, rpcUrl: env.SOLANA_RPC });
+        if (t3.onchain_mint && env.PROGRAM_ID) {
+          onchain = await fetchCurveState({ mint: t3.onchain_mint, programId: env.PROGRAM_ID, rpcUrl: getRpcUrl(env) });
         }
         return json({
           ok: true, side, solAmount: solAmt, tokenAmount: tokAmt, price: execPrice,
@@ -412,7 +415,7 @@ export default {
           return err("mint, signature, wallet, and buy/sell side required");
         }
         const verified = await verifyTradeTransaction({
-          signature, mint, wallet, side, programId: env.PROGRAM_ID, rpcUrl: env.SOLANA_RPC,
+          signature, mint, wallet, side, programId: env.PROGRAM_ID, rpcUrl: getRpcUrl(env),
         });
         if (!verified) return err("unverified on-chain trade transaction", 403);
         const existing = await db.prepare("SELECT 1 x FROM trades WHERE signature = ?").bind(signature).first();
