@@ -81,6 +81,7 @@ const instructionAccounts = (instruction, keys) =>
 async function confirmedTransaction(signature, rpcUrl) {
   if (!SIGNATURE_RE.test(signature)) return null;
   for (const url of rpcList(rpcUrl || DEVNET_RPC)) {
+    console.error("[DBG] confirmedTransaction rpcUrl", url.slice(0, 60) + "...");
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -101,9 +102,11 @@ async function confirmedTransaction(signature, rpcUrl) {
       });
       if (!response.ok) continue;
       const body = await response.json();
+      console.error("[DBG] confirmedTransaction response", body?.result ? "ok" : "empty", "err", body?.result?.meta?.err);
       if (body?.result?.meta?.err) return null;
       if (body?.result) return body.result;
-    } catch {
+    } catch (e) {
+      console.error("[DBG] confirmedTransaction error", String(e));
       // try next RPC
     }
   }
@@ -136,9 +139,16 @@ export async function verifyCreateTransaction({
   rpcUrl,
 }) {
   const result = await confirmedTransaction(signature, rpcUrl);
-  return result && matchingInstruction(result, programId, mint, creator, 4)
-    ? { creator }
-    : null;
+  console.error("[DBG] verifyCreateTransaction sig", signature.slice(0, 24) + "...", "result", result ? "present" : "null");
+  if (result) {
+    const keys = result.transaction.message.accountKeys.map((k) => (typeof k === "string" ? k : k.pubkey));
+    console.error("[DBG] accountKeys", keys.slice(0, 12));
+    console.error("[DBG] instructions", JSON.stringify(result.transaction.message.instructions));
+    const match = matchingInstruction(result, programId, mint, creator, 4);
+    console.error("[DBG] matchingInstruction", match ? "match" : "no-match");
+    return match ? { creator } : null;
+  }
+  return null;
 }
 
 export async function verifyTradeTransaction({

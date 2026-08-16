@@ -205,7 +205,7 @@ export default {
           return err("name, ticker, emoji, mint, signature, and creator required");
         }
         const verified = await verifyCreateTransaction({
-          signature, mint, creator, programId: env.PROGRAM_ID, rpcUrl: env.SOLANA_RPC,
+          signature, mint, creator, programId: env.PROGRAM_ID, rpcUrl: env.SOLANA_RPC || "https://devnet.helius-rpc.com/?api-key=d2891b4a-5a20-48ea-9ce1-046c2b899bbe",
         });
         if (!verified) return err("unverified on-chain create transaction", 403);
         const existing = await db.prepare("SELECT id FROM tokens WHERE onchain_mint = ?").bind(mint).first();

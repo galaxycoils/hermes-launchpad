@@ -13,6 +13,12 @@
       "skillPath": "plugins/cloudflare-workers/skills/cloudflare-workers-security/SKILL.md",
       "computedHash": "80b37347948d3c4268ddf77eba62d841dfa5afbf3ce4cc2ef66310e9064da02a"
     },
+    "context7": {
+      "source": "intellectronica/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/context7/SKILL.md",
+      "computedHash": "fccbea654f8e35824a8bdce3e059e206efeb6c1fab9f6c096c3867e761081983"
+    },
     "solana-anchor": {
       "source": "hairyf/blockchain-skills",
       "sourceType": "github",
