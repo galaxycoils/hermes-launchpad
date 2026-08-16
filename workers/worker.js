@@ -75,12 +75,7 @@ function verifyAuth(request) {
   return entry.wallet;
 }
 
-// Periodic cleanup of expired challenges
-setInterval(() => {
-  for (const [k, v] of challengeStore) {
-    if (Date.now() > v.expires) challengeStore.delete(k);
-  }
-}, 60 * 1000);
+// Periodic cleanup is handled by TTL checks in verifyAuth; no setInterval in global scope (CF Worker constraint)
 
 // ---- Curve constants (mirror on-chain program) ----
 // eslint-disable-next-line no-unused-vars
