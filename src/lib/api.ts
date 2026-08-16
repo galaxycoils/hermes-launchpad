@@ -7,14 +7,19 @@ export type { Token } from './tokens';
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? 'https://hermes-api.tahamtandariush.workers.dev';
 
-async function req<T>(path: string, method: 'GET' | 'POST' = 'GET', body?: unknown, timeoutMs = 8000): Promise<T> {
+async function req<T>(path: string, method: 'GET' | 'POST' = 'GET', body?: unknown, timeoutMs = 8000, auth?: { signature: string; nonce: string }): Promise<T> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
+    const headers: Record<string, string> = body ? { 'Content-Type': 'application/json' } : {};
+    if (auth) {
+      headers['Wallet-Signature'] = auth.signature;
+      headers['Wallet-Nonce'] = auth.nonce;
+    }
     const res = await fetch(`${API_BASE}${path}`, {
       method,
       signal: ctrl.signal,
-      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      headers,
       body: body ? JSON.stringify(body) : undefined,
     });
     if (!res.ok) {
@@ -97,11 +102,11 @@ export async function indexToken(input: {
 export async function fetchComments(tokenId: string): Promise<CommentItem[]> {
   return req<CommentItem[]>(`/api/tokens/${tokenId}/comments`);
 }
-export async function postComment(tokenId: string, wallet: string, text: string): Promise<XpResult> {
-  return req<XpResult>(`/api/tokens/${tokenId}/comments`, 'POST', { wallet, text });
+export async function postComment(tokenId: string, wallet: string, text: string, auth?: { signature: string; nonce: string }): Promise<XpResult> {
+  return req<XpResult>(`/api/tokens/${tokenId}/comments`, 'POST', { wallet, text }, 8000, auth);
 }
-export async function likeToken(tokenId: string, wallet: string): Promise<{ liked: boolean } & XpResult> {
-  return req<{ liked: boolean } & XpResult>(`/api/tokens/${tokenId}/like`, 'POST', { wallet });
+export async function likeToken(tokenId: string, auth?: { signature: string; nonce: string }): Promise<{ liked: boolean } & XpResult> {
+  return req<{ liked: boolean } & XpResult>(`/api/tokens/${tokenId}/like`, 'POST', null, 8000, auth);
 }
 
 // ---- AI agents ----

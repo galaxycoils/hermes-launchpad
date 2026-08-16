@@ -1,9 +1,9 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { fetchTokens, fetchQuests, fetchLeaderboard, fetchProfile, checkin, fetchReferrals } from "@/lib/api";
+import { fetchTokens, fetchQuests, fetchLeaderboard, fetchProfile, checkin, fetchReferrals, postComment, likeToken } from "@/lib/api";
 import { getAnonId, captureRef, shareLink } from "@/lib/identity";
-import { getProvider } from "@/lib/solana";
+import { getProvider, signAuthChallenge } from "@/lib/solana";
 import type { Token, Quest, Trader, Profile, ReferralStats } from "@/lib/tokens";
 import { filterVerifiedTokens, formatUnixAge } from "@/lib/token-truth";
 import type { VerifiedTokenFilter } from "@/lib/token-truth";
@@ -28,6 +28,7 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
   const [allTokens, setAllTokens] = useState<Token[]>([]);
   const [quests, setQuests] = useState<Quest[]>([]);
   const [ranks, setRanks] = useState<Trader[]>([]);
+  const [ranksLive, setRanksLive] = useState<boolean>(true);
   const [live, setLive] = useState(false);
   const [wallet, setWallet] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -141,7 +142,10 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
         if (t) setSelected(t);
       }
     });
-    fetchLeaderboard().then(({ data }) => setRanks(data));
+    fetchLeaderboard().then(({ data, live: isLive }) => {
+      setRanks(data);
+      setRanksLive(isLive);
+    });
     fetchProfile(identity, ref).then((p) => {
       if (p) setProfile(p);
       if (ref) toast.success(`🏴‍☠️ Boarded via referral — your referrer just got +750 XP`);
@@ -177,20 +181,31 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
   // TokenModal wire-up: like/comment state per token
   const likedByMe = (id: string) => allTokens.find((t) => t.id === id)?.liked;
   const selectedComments = (id: string) => allTokens.find((t) => t.id === id)?.comments ?? [];
-  const handleLike = useCallback((id: string) => {
+  const handleLike = useCallback(async (id: string) => {
+    const auth = wallet ? await signAuthChallenge(wallet) : null;
+    try {
+      await likeToken(id, auth ?? undefined);
+    } catch { /* silent */ }
     setAllTokens((prev) =>
       prev.map((t) => (t.id === id ? { ...t, liked: !t.liked } : t))
     );
-  }, []);
-  const handleComment = useCallback((text: string) => {
+  }, [wallet]);
+
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
+  const handleComment = useCallback(async (text: string) => {
+    if (!selected?.id) return;
+    const auth = wallet ? await signAuthChallenge(wallet) : null;
+    try {
+      await postComment(selected.id, wallet ?? '', text, auth ?? undefined);
+    } catch { /* silent */ }
     setAllTokens((prev) =>
       prev.map((t) =>
-        t.id === selected?.id
+        t.id === selected.id
           ? { ...t, comments: [...(t.comments ?? []), { wallet: identity, text, ts: Date.now() }] }
           : t
       )
     );
-  }, [selected?.id, identity]);
+  }, [selected?.id, wallet, identity]);
 
   const tokens = useMemo(() => {
     const matches = allTokens.filter(
@@ -341,7 +356,9 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
                   Full Ranks →
                 </button>
               </div>
-              {ranks.length > 0 ? (
+              {!ranksLive ? (
+                <p className="text-xs text-yellow-400 text-center py-1">⚠️ Could not load top traders</p>
+              ) : ranks.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {ranks.slice(0, 3).map((r) => (
                     <div key={r.rank} className="flex items-center gap-2 rounded-lg bg-white/[0.02] border border-white/5 px-2.5 py-1.5 text-xs">
@@ -702,17 +719,13 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
           onComment={handleComment}
           wallet={wallet}
           refCode={refStats?.code ?? profile?.ref_code ?? identity}
-          onTradeComplete={() => {
+          onTradeComplete={(result) => {
             fetchTokens().then(({ data }) => setAllTokens(data));
             refreshProfile();
-            // Quest progress micro-toast
-            fetchQuests(identity).then(({ data }) => {
-              setQuests(data);
-              const completed = data.find((q) => q.done);
-              if (completed) {
-                toast.success(`Quest: ${completed.title} ✅ +${completed.xp} XP`);
-              }
-            }).catch(() => {});
+            // Quest progress micro-toast — only if this trade completed a quest
+            if (result.questCompleted) {
+              toast.success(`Quest: ${result.questCompleted.title} ✅ +${result.questCompleted.xp} XP`);
+            }
           }}
         />
       )}

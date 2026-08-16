@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { FocusTrap } from 'focus-trap-react';
 import { Button } from '@/components/Button';
 import Badge from '@/components/Badge';
 import { Surface } from '@/components/Surface';
@@ -197,6 +198,7 @@ export default function CreateTokenModal({ onClose, onCreated }: Props) {
   );
 
   return (
+    <FocusTrap focusTrapOptions={{ initialFocus: false, allowOutsideClick: true }}>
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={onClose}
@@ -235,5 +237,6 @@ export default function CreateTokenModal({ onClose, onCreated }: Props) {
         {step === 3 && renderStep3()}
       </div>
     </div>
+    </FocusTrap>
   );
 }

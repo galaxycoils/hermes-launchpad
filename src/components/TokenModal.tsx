@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
+import { FocusTrap } from "focus-trap-react";
 import { Button } from "@/components/Button";
 import Badge from "@/components/Badge";
 import { confettiBurst } from "@/components/ConfettiBurst";
@@ -61,6 +62,7 @@ export default function TokenModal({ token, onClose, onLike, liked, comments, on
   const isDemo = token.provenance === "demo";
 
   return (
+    <FocusTrap focusTrapOptions={{ initialFocus: false, allowOutsideClick: true }}>
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={onClose}
@@ -96,6 +98,25 @@ export default function TokenModal({ token, onClose, onLike, liked, comments, on
           <Badge variant={verified ? "onchain" : "demo"} label={verified ? "verified" : "demo"} />
           {token.complete && <Badge variant="migration-ready" label="migration ready" />}
           {isDemo && <Badge variant="agents" label="AI simulated" />}
+        </div>
+
+        {/* Inline capability state tags */}
+        <div className="mb-3 flex flex-wrap gap-1.5">
+          {token.onchainMint ? (
+            <span className="rounded bg-green-500/10 border border-green-500/20 px-1.5 py-0.5 text-[10px] font-mono text-green-300">
+              Live · verified on-chain
+            </span>
+          ) : (
+            <span className="rounded bg-yellow-500/10 border border-yellow-500/20 px-1.5 py-0.5 text-[10px] font-mono text-yellow-300">
+              Unavailable · not deployed
+            </span>
+          )}
+          <span className="rounded bg-white/5 border border-white/10 px-1.5 py-0.5 text-[10px] font-mono text-white/50">
+            Unavailable · AI disabled
+          </span>
+          <span className="rounded bg-white/5 border border-white/10 px-1.5 py-0.5 text-[10px] font-mono text-white/50">
+            Unavailable · feature planned
+          </span>
         </div>
 
         <div className="mb-4 grid grid-cols-2 gap-3 rounded-lg border border-white/5 bg-black/20 p-3">
@@ -194,5 +215,6 @@ export default function TokenModal({ token, onClose, onLike, liked, comments, on
         </div>
       </div>
     </div>
+    </FocusTrap>
   );
 }

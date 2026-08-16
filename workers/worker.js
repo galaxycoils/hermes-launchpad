@@ -1,3 +1,4 @@
+import nacl from 'tweetnacl';
 import { verifyCreateTransaction, verifyTradeTransaction, fetchCurveState } from "./chain.js";
 
 // hermes-api v2 — Hermes Launchpad backend
@@ -7,11 +8,79 @@ import { verifyCreateTransaction, verifyTradeTransaction, fetchCurveState } from
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, Wallet-Signature, Wallet-Nonce",
 };
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json", ...cors } });
 const err = (msg, status = 400) => json({ error: msg }, status);
+
+// ---- Web3 signature auth ----
+// Challenges are single-use nonces stored for 5 min to prevent replay attacks.
+const challengeStore = new Map(); // nonce -> { wallet, expires }
+const CHALLENGE_TTL_MS = 5 * 60 * 1000;
+
+function generateNonce() {
+  const arr = new Uint8Array(32);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Minimal base58 decode for Solana pubkeys
+const B58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+function bs58Decode(str) {
+  let n = BigInt(0);
+  for (const ch of str) {
+    const idx = B58_ALPHABET.indexOf(ch);
+    if (idx < 0) throw new Error('invalid b58');
+    n = n * BigInt(58) + BigInt(idx);
+  }
+  const hex = n.toString(16);
+  const padded = hex.length % 2 ? '0' + hex : hex;
+  const bytes = new Uint8Array(padded.length / 2);
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(padded.substr(i * 2, 2), 16);
+  }
+  const out = new Uint8Array(32);
+  out.set(bytes, 32 - bytes.length);
+  return out;
+}
+
+/** Verify an Ed25519 detached signature over the challenge message. */
+function verifySignature(message, signatureB64, walletB58) {
+  try {
+    const msgBytes = new TextEncoder().encode(message);
+    const sigBytes = Uint8Array.from(atob(signatureB64), c => c.charCodeAt(0));
+    const pubkeyBytes = bs58Decode(walletB58);
+    if (pubkeyBytes.length !== 32) return false;
+    return nacl.sign.detached.verify(msgBytes, sigBytes, pubkeyBytes);
+  } catch {
+    return false;
+  }
+}
+
+/** Verify auth headers for protected mutations. Returns wallet or null. */
+function verifyAuth(request) {
+  const sig = request.headers.get('Wallet-Signature');
+  const nonce = request.headers.get('Wallet-Nonce');
+  if (!sig || !nonce) return null;
+  const entry = challengeStore.get(nonce);
+  if (!entry) return null;
+  if (Date.now() > entry.expires) {
+    challengeStore.delete(nonce);
+    return null;
+  }
+  challengeStore.delete(nonce); // single-use
+  const msg = `Hermes Launchpad auth challenge: ${nonce}`;
+  if (!verifySignature(msg, sig, entry.wallet)) return null;
+  return entry.wallet;
+}
+
+// Periodic cleanup of expired challenges
+setInterval(() => {
+  for (const [k, v] of challengeStore) {
+    if (Date.now() > v.expires) challengeStore.delete(k);
+  }
+}, 60 * 1000);
 
 // ---- Curve constants (mirror on-chain program) ----
 // eslint-disable-next-line no-unused-vars
@@ -185,6 +254,17 @@ export default {
       // ---------- health ----------
       if (path === "/api/health") return json({ ok: true, v: 2, ts: now() });
 
+      // ---------- wallet auth challenge ----------
+      // POST /api/auth/challenge { wallet } -> { nonce }
+      // Client signs `Hermes Launchpad auth challenge: <nonce>` and sends signature + nonce in headers
+      if (path === "/api/auth/challenge" && request.method === "POST") {
+        const b = await request.json().catch(() => ({}));
+        if (!validWallet(b.wallet)) return err("valid wallet required");
+        const nonce = generateNonce();
+        challengeStore.set(nonce, { wallet: b.wallet, expires: Date.now() + CHALLENGE_TTL_MS });
+        return json({ nonce, message: `Hermes Launchpad auth challenge: ${nonce}` });
+      }
+
       // ---------- tokens ----------
       if (path === "/api/tokens" && request.method === "GET") {
         const { results } = await db.prepare("SELECT * FROM tokens ORDER BY created_at ASC").all();
@@ -252,27 +332,30 @@ export default {
           return json(results);
         }
         const b = await request.json().catch(() => ({}));
-        if (!validWallet(b.wallet) || !b.text || !String(b.text).trim()) return err("wallet + text required");
+        const authWallet = verifyAuth(request);
+        const wallet = authWallet || b.wallet;
+        if (!validWallet(wallet) || !b.text || !String(b.text).trim()) return err("wallet + text required");
+        if (!authWallet) return err("sign the challenge to post (Wallet-Signature header)", 401);
         const text = String(b.text).slice(0, 280);
         await db.prepare("INSERT INTO comments (token_id, wallet, text, ts) VALUES (?, ?, ?, ?)")
-          .bind(id, b.wallet, text, now()).run();
+          .bind(id, wallet, text, now()).run();
         await db.prepare("UPDATE tokens SET replies = replies + 1 WHERE id = ?").bind(id).run();
-        await ensureProfile(db, b.wallet);
-        const xp = await awardXp(db, b.wallet, XP.comment, "q3");
+        await ensureProfile(db, wallet);
+        const xp = await awardXp(db, wallet, XP.comment, "q3");
         return json({ ok: true, ...xp }, 201);
       }
 
       // ---------- likes ----------
       if (tokenMatch && tokenMatch[3] === "like" && request.method === "POST") {
         const id = tokenMatch[1];
-        const b = await request.json().catch(() => ({}));
-        if (!validWallet(b.wallet)) return err("wallet required");
+        const authWallet = verifyAuth(request);
+        if (!authWallet) return err("sign the challenge to like (Wallet-Signature header)", 401);
         const ins = await db.prepare("INSERT OR IGNORE INTO likes (token_id, wallet, ts) VALUES (?, ?, ?)")
-          .bind(id, b.wallet, now()).run();
+          .bind(id, authWallet, now()).run();
         if (ins.meta.changes > 0) {
           await db.prepare("UPDATE tokens SET likes = likes + 1 WHERE id = ?").bind(id).run();
-          await ensureProfile(db, b.wallet);
-          const xp = await awardXp(db, b.wallet, XP.like, "q4");
+          await ensureProfile(db, authWallet);
+          const xp = await awardXp(db, authWallet, XP.like, "q4");
           return json({ ok: true, liked: true, ...xp });
         }
         return json({ ok: true, liked: false, xpGained: 0 });

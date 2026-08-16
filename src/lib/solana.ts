@@ -132,6 +132,7 @@ export interface WalletProvider {
   publicKey: PublicKey;
   connect(): Promise<{ publicKey: PublicKey }>;
   disconnect(): Promise<void>;
+  signMessage(message: Uint8Array): Promise<{ signature: Uint8Array }>;
   signAndSendTransaction(tx: Transaction): Promise<{ signature: string } | string>;
   signTransaction(tx: Transaction): Promise<Transaction>;
 }
@@ -139,6 +140,26 @@ export interface WalletProvider {
 export function getProvider(): WalletProvider | null {
   const w = window as unknown as { solana?: WalletProvider & { isPhantom?: boolean } };
   return w.solana ?? null;
+}
+
+/** Get an auth challenge nonce from the worker and sign it with the wallet. */
+export async function signAuthChallenge(wallet: string): Promise<{ signature: string; nonce: string } | null> {
+  try {
+    const provider = getProvider();
+    if (!provider || !provider.signMessage) return null;
+    const res = await fetch(`${API_BASE}/api/auth/challenge`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wallet }),
+    });
+    if (!res.ok) return null;
+    const { nonce, message } = await res.json();
+    const encoded = new TextEncoder().encode(message);
+    const { signature } = await provider.signMessage(encoded);
+    return { signature: btoa(String.fromCharCode(...signature)), nonce };
+  } catch {
+    return null;
+  }
 }
 
 export async function sendTx(
