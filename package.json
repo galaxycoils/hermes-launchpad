@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
+    "preview": "npm run build && wrangler dev",
     "test": "vitest run",
     "test:unit": "vitest run --project unit",
     "test:worker": "vitest run --project worker",
@@ -18,9 +18,11 @@
     "test:client": "vitest run --project client",
     "test:all": "npm run test:unit && npm run test:worker && npm run test:client && npm run test:integration && npm run test:program && npm run test:e2e",
     "program:deploy": "cd programs/hermes-curve && anchor build && anchor deploy --provider.cluster devnet",
-    "program:restore": "bash scripts/restore-keypair.sh"
+    "program:restore": "bash scripts/restore-keypair.sh",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
+    "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -56,6 +58,7 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
+    "gsap": "^3.15.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.562.0",
     "next-themes": "^0.4.6",
@@ -72,6 +75,7 @@
     "zod": "^4.3.5"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.52.1",
     "@coral-xyz/anchor": "^0.31.1",
     "@eslint/js": "^9.39.1",
     "@playwright/test": "^1.62.1",
@@ -97,9 +101,12 @@
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
     "vite": "^7.2.4",
-    "vitest": "^3.2.7"
+    "vitest": "^3.2.7",
+    "wrangler": "^4.123.0"
   },
   "allowScripts": {
-    "esbuild@0.28.1": true
+    "esbuild@0.28.1": true,
+    "wrangler": true,
+    "wrangler@*": true
   }
 }

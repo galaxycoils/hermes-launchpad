@@ -13,6 +13,8 @@ export interface Token {
   priceSol?: number;    // SOL per token
   riskFlag?: string;    // The Oracle's one-line verdict (persisted)
   likedByMe?: boolean;  // set when fetched with ?wallet=
+  liked?: boolean;      // local like toggle state
+  comments?: CommentItem[];
 }
 
 export interface ReferralStats {
@@ -57,6 +59,7 @@ export interface Profile {
   ref_code: string;
   trades: number;
   pnl: number;
+  daily_checked?: boolean;
 }
 
 export interface Trade {

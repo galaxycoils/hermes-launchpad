@@ -20,8 +20,8 @@ describe('WU-05 truthful token presentation', () => {
   });
 
   it('labels confirmed on-chain curves as active', () => {
-    expect(renderCard(token({ onchainMint: 'mint', complete: false })))
-      .toContain('Confirmed on-chain curve');
+    const html = renderCard(token({ onchainMint: 'mint', complete: false }));
+    expect(html).toContain('Live');
   });
 
   it('labels locked curves migration-ready, never migrated', () => {

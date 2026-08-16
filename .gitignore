@@ -18,3 +18,10 @@ test-ledger/
 .idea
 .DS_Store
 graphify-out/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
