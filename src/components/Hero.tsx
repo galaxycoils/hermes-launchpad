@@ -1,4 +1,5 @@
 "use client";
+import gsap from "gsap";
 import { useGsapContext } from "@/hooks/useGsapContext";
 
 export default function Hero({ onCreate, onRefCopy }: { onCreate: () => void; onRefCopy: () => void }) {

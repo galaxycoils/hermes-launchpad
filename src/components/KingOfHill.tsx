@@ -1,6 +1,5 @@
 import type { Token } from "@/lib/tokens";
 import { migrationProgress, remainingToMigration } from "@/lib/token-truth";
-import { Button } from "@/components/Button";
 import Progress from "@/components/Progress";
 
 export default function KingOfHill({ token, onSelect }: { token: Token; onSelect: (t: Token) => void }) {
@@ -8,12 +7,20 @@ export default function KingOfHill({ token, onSelect }: { token: Token; onSelect
   const remaining = remainingToMigration(token);
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => onSelect(token)}
-      className="group w-full rounded-xl border border-gold/30 bg-gradient-to-br from-yellow-400/5 via-purple-500/5 to-pump/5 p-4 text-left transition-all duration-300 hover:-translate-y-1 hover:border-gold/50 hover:bg-gradient-to-br hover:from-yellow-400/10 hover:via-purple-500/10 hover:to-pump/10 hover:shadow-[0_8px_32px_rgba(255,214,10,0.15)] active:scale-[0.99]"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(token);
+        }
+      }}
+      className="group relative w-full cursor-pointer rounded-xl border border-gold/30 bg-gradient-to-br from-yellow-400/5 via-purple-500/5 to-pump/5 p-4 text-left transition-all duration-300 hover:-translate-y-1 hover:border-gold/50 hover:bg-gradient-to-br hover:from-yellow-400/10 hover:via-purple-500/10 hover:to-pump/10 hover:shadow-[0_8px_32px_rgba(255,214,10,0.15)] active:scale-[0.99]"
     >
       {/* Glow accent */}
-      <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-gold/10 blur-xl opacity-50 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-gold/10 blur-xl opacity-50 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
       <div className="relative">
         {/* Header */}
@@ -52,18 +59,13 @@ export default function KingOfHill({ token, onSelect }: { token: Token; onSelect
           </div>
         </div>
 
-        {/* Ape In button */}
+        {/* Ape In callout */}
         <div className="mt-3">
-          <Button
-            variant="primary"
-            size="lg"
-            fullWidth
-            className="font-black text-lg tracking-wide"
-          >
+          <div className="w-full rounded-lg bg-pump py-3 text-center font-black text-lg text-black tracking-wide transition-all group-hover:bg-pump/90 group-hover:shadow-[0_0_20px_rgba(0,255,102,0.4)]">
             Ape In — ${token.ticker}
-          </Button>
+          </div>
         </div>
       </div>
-    </button>
+    </div>
   );
 }

@@ -13,6 +13,7 @@ import KingOfHill from "@/components/KingOfHill";
 import Hero from "@/components/Hero";
 import TopNav from "@/components/TopNav";
 import BottomTabBar from "@/components/BottomTabBar";
+import gsap from "gsap";
 import { useGsapContext } from "@/hooks/useGsapContext";
 
 type Filter = VerifiedTokenFilter;
@@ -132,18 +133,18 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
   };
 
   useGsapContext(() => {
-    const mm = window.gsap.matchMedia?.();
+    const mm = gsap.matchMedia?.();
     if (!mm) return;
     mm.add("(prefers-reduced-motion: reduce)", () => {
-      window.gsap.set("[data-animate]", { clearProps: "all" });
+      gsap.set("[data-animate]", { clearProps: "all" });
     });
     mm.add("(min-width: 768px)", () => {
-      const tl = window.gsap.timeline({ defaults: { ease: "power2.out" } });
+      const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
       tl.from(".hero-animate", { opacity: 0, y: 30, duration: 0.6 })
         .from(".feed-animate", { opacity: 0, y: 20, stagger: 0.1, duration: 0.4 }, "-=0.3");
     });
     mm.add("(max-width: 767px)", () => {
-      const tl = window.gsap.timeline({ defaults: { ease: "power2.out" } });
+      const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
       tl.from(".hero-animate", { opacity: 0, y: 20, duration: 0.4 })
         .from(".feed-animate", { opacity: 0, y: 15, stagger: 0.05, duration: 0.3 }, "-=0.2");
     });

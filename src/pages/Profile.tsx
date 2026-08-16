@@ -97,10 +97,15 @@ export default function Profile({ externalWallet, onBack }: { externalWallet?: s
 
         {profile && (
           <div className="grid grid-cols-2 gap-3">
-            <Stat value={profile.level} label="Level" size="md" />
-            <Stat value={profile.streak_days} label="Streak (days)" size="md" />
-            <Stat value={profile.trades} label="Total trades" size="md" />
-            <Stat value={profile.pnl >= 0 ? `+${profile.pnl.toFixed(2)}` : profile.pnl.toFixed(2)} label="P&L (SOL)" size="md" trend={profile.pnl >= 0 ? { value: 0, positive: true } : { value: 0, positive: false }} />
+            <Stat value={profile.level ?? 1} label="Level" size="md" />
+            <Stat value={profile.streak_days ?? 0} label="Streak (days)" size="md" />
+            <Stat value={profile.trades ?? 0} label="Total trades" size="md" />
+            <Stat
+              value={(profile.pnl ?? 0) >= 0 ? `+${(profile.pnl ?? 0).toFixed(2)}` : (profile.pnl ?? 0).toFixed(2)}
+              label="P&L (SOL)"
+              size="md"
+              trend={(profile.pnl ?? 0) >= 0 ? { value: 0, positive: true } : { value: 0, positive: false }}
+            />
           </div>
         )}
 
