@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/Button";
+import { FocusTrap } from "focus-trap-react";
 import { confettiBurst } from "@/components/ConfettiBurst";
 import { useTrade } from "@/hooks/useTrade";
 import { computeBuyQuote, computeSellQuote, FEE_BPS, BPS_DENOM } from "@/lib/solana";
@@ -13,19 +14,18 @@ interface Props {
 }
 
 const BUY_PRESETS = [0.1, 0.5, 1, 5];
-const SELL_PRESETS = [25, 50, 75, 100]; // percentages
+const SELL_PRESETS = [25, 50, 75, 100];
 
 export default function TradePanel({ token, wallet, onTradeComplete }: Props) {
   const [side, setSide] = useState<"buy" | "sell">("buy");
   const [amount, setAmount] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
   const { executeTrade, pending, error, curve, balance, refreshCurve } = useTrade(token, wallet);
 
-  // Load curve state on mount
   useEffect(() => {
     refreshCurve();
   }, [refreshCurve]);
 
-  // Compute quote
   const quote = useMemo(() => {
     const val = parseFloat(amount);
     if (!val || val <= 0 || !curve) return null;
@@ -36,11 +36,12 @@ export default function TradePanel({ token, wallet, onTradeComplete }: Props) {
         const price = val / (q.tokOut / 1_000_000);
         const impact = (val * 1_000_000_000) / curve.virtualSol * 100;
         return {
-          receive: q.tokOut / 1_000_000, // human-readable tokens
+          receive: q.tokOut / 1_000_000,
           minReceive: Number(q.minOut) / 1_000_000,
           fee,
           price,
           impact: Math.min(impact, 100),
+          solAmount: val,
         };
       } else {
         const q = computeSellQuote(val, curve.virtualSol, curve.virtualTokens);
@@ -52,6 +53,7 @@ export default function TradePanel({ token, wallet, onTradeComplete }: Props) {
           fee,
           price: q.solOut / val,
           impact: Math.min(impact, 100),
+          solAmount: q.solOut,
         };
       }
     } catch {
@@ -67,6 +69,12 @@ export default function TradePanel({ token, wallet, onTradeComplete }: Props) {
       return;
     }
 
+    setShowConfirm(true);
+  };
+
+  const confirmTrade = async () => {
+    const val = parseFloat(amount);
+    setShowConfirm(false);
     const result = await executeTrade(side, val);
     if (result) {
       confettiBurst(side);
@@ -79,7 +87,6 @@ export default function TradePanel({ token, wallet, onTradeComplete }: Props) {
     if (side === "buy") {
       setAmount(String(preset));
     } else {
-      // Sell percentage — would need token balance; use preset as raw amount for now
       setAmount(String(preset));
     }
   };
@@ -233,6 +240,84 @@ export default function TradePanel({ token, wallet, onTradeComplete }: Props) {
       <p className="mt-2 text-center text-[10px] text-white/25">
         Slippage tolerance: 1% · Devnet
       </p>
+
+      {/* Confirmation Modal */}
+      {showConfirm && quote && (
+        <FocusTrap focusTrapOptions={{ initialFocus: false, allowOutsideClick: false }}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-surface p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-lg font-black">Confirm {side === "buy" ? "Buy" : "Sell"}</h2>
+                <button
+                  onClick={() => setShowConfirm(false)}
+                  className="text-white/50 hover:text-white text-xl"
+                  aria-label="Cancel"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="mb-4 rounded-xl bg-white/5 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm text-white/60">You {side === "buy" ? "pay" : "sell"}</span>
+                  <span className="font-mono font-bold text-white">
+                    {fmtNum(parseFloat(amount), 4)} {side === "buy" ? "SOL" : `$${token.ticker}`}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm text-white/60">You receive</span>
+                  <span className="font-mono font-bold text-white">
+                    ≈ {fmtNum(quote.receive, side === "buy" ? 0 : 4)} {side === "buy" ? `$${token.ticker}` : "SOL"}
+                  </span>
+                </div>
+                <div className="h-px bg-white/10 my-3" />
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-white/40">Price impact</span>
+                  <span className={`text-xs font-mono ${quote.impact > 5 ? "text-red-400" : "text-white/60"}`}>
+                    {fmtNum(quote.impact, 2)}%
+                  </span>
+                </div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-white/40">Fee</span>
+                  <span className="text-xs font-mono text-white/60">{fmtNum(quote.fee)} SOL</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/40">Min received</span>
+                  <span className="text-xs font-mono text-white/60">
+                    {fmtNum(quote.minReceive, side === "buy" ? 0 : 4)} {side === "buy" ? `$${token.ticker}` : "SOL"}
+                  </span>
+                </div>
+              </div>
+
+              {quote.impact > 5 && (
+                <div className="mb-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20 p-3">
+                  <p className="text-xs text-yellow-300">⚠️ High price impact! You may receive significantly less than expected.</p>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  fullWidth
+                  onClick={() => setShowConfirm(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  onClick={confirmTrade}
+                  loading={pending}
+                >
+                  {pending ? "Confirming…" : "Confirm"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </FocusTrap>
+      )}
     </div>
   );
 }

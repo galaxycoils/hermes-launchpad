@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { fetchTokens, fetchQuests, fetchLeaderboard, fetchProfile, checkin, fetchReferrals, postComment, likeToken } from "@/lib/api";
 import { getAnonId, captureRef, shareLink } from "@/lib/identity";
-import { connectWallet } from "@/lib/wallet";
+import { connectWallet, isMobile, useWalletProvider } from "@/lib/wallet";
 import { signAuthChallenge } from "@/lib/solana";
 import type { Token, Quest, Trader, Profile, ReferralStats } from "@/lib/tokens";
 import { filterVerifiedTokens, formatUnixAge } from "@/lib/token-truth";
@@ -12,33 +12,48 @@ import TokenCard from "@/components/TokenCard";
 import TokenModal from "@/components/TokenModal";
 import CreateTokenModal from "@/components/CreateTokenModal";
 import GraduationModal from "@/components/GraduationModal";
+import WalletSelectorModal from "@/components/WalletSelectorModal";
 import KingOfHill from "@/components/KingOfHill";
 import Hero from "@/components/Hero";
 import TopNav from "@/components/TopNav";
 import BottomTabBar from "@/components/BottomTabBar";
+import { SkeletonCard } from "@/components/Skeleton";
 import gsap from "gsap";
 import { useGsapContext } from "@/hooks/useGsapContext";
 
 type Filter = VerifiedTokenFilter;
 
+/* eslint-disable react-hooks/set-state-in-effect */
 export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" | "profile" }) {
+  const { connecting: walletConnecting, providerDetected: walletDetected, retry: walletRetry } = useWalletProvider();
+
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Token | null>(null);
   const [tab, setTab] = useState<"tokens" | "profile">(initialTab);
   const [allTokens, setAllTokens] = useState<Token[]>([]);
+  const [tokensLoading, setTokensLoading] = useState(true);
+  const [tokensError, setTokensError] = useState<string | null>(null);
   const [quests, setQuests] = useState<Quest[]>([]);
   const [ranks, setRanks] = useState<Trader[]>([]);
   const [ranksLive, setRanksLive] = useState<boolean>(true);
   const [live, setLive] = useState(false);
   const [wallet, setWallet] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [showWalletSelector, setShowWalletSelector] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [refStats, setRefStats] = useState<ReferralStats | null>(null);
   const [graduatedToken, setGraduatedToken] = useState<Token | null>(null);
 
   const [anonId] = useState(getAnonId);
   const identity = wallet ?? anonId;
+
+  // Auto-connect when provider detected after deep-link return
+  useEffect(() => {
+    if (walletDetected) {
+      connectWallet(setWallet);
+    }
+  }, [walletDetected]);
 
   const checkGraduations = useCallback((tokens: Token[]) => {
     for (const t of tokens) {
@@ -132,8 +147,11 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
 
   useEffect(() => {
     const ref = captureRef();
+    setTokensLoading(true); // eslint-disable-line react-hooks/set-state-in-effect
+    setTokensError(null);
     fetchTokens().then(({ data, live: isLive }) => {
       setAllTokens(data);
+      setTokensLoading(false);
       setLive(isLive);
       checkGraduations(data);
       checkLikedGraduations(data);
@@ -142,6 +160,9 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
         const t = data.find((x) => x.id === tid);
         if (t) setSelected(t);
       }
+    }).catch((e) => {
+      setTokensLoading(false);
+      setTokensError(e instanceof Error ? e.message : "Failed to load tokens");
     });
     fetchLeaderboard().then(({ data, live: isLive }) => {
       setRanks(data);
@@ -399,16 +420,46 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {tokens.map((t) => (
-                <TokenCard key={t.id} token={t} onSelect={setSelected} />
-              ))}
-            </div>
+            {tokensError ? (
+              <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-6 text-center">
+                <div className="text-3xl mb-2">⚠️</div>
+                <p className="text-sm text-red-300">{tokensError}</p>
+                <button
+                  onClick={() => {
+                    setTokensError(null);
+                    setTokensLoading(true);
+                    fetchTokens().then(({ data, live: isLive }) => {
+                      setAllTokens(data);
+                      setTokensLoading(false);
+                      setLive(isLive);
+                    }).catch((e) => {
+                      setTokensLoading(false);
+                      setTokensError(e instanceof Error ? e.message : "Failed to load tokens");
+                    });
+                  }}
+                  className="mt-3 rounded-lg bg-white/10 px-4 py-2 text-sm font-bold text-white hover:bg-white/20 transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : tokensLoading ? (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <SkeletonCard key={i} />
+                ))}
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {tokens.map((t) => (
+                  <TokenCard key={t.id} token={t} onSelect={setSelected} />
+                ))}
+              </div>
+            )}
 
-            {tokens.length === 0 && (
+            {tokens.length === 0 && !tokensLoading && !tokensError && (
               <div className="rounded-xl border border-white/10 bg-surface p-8 text-center">
-                <div className="text-4xl mb-3">🌀</div>
-                <p className="text-white/40">No tokens match. The void stares back.</p>
+                <div className="text-5xl mb-3">🌀</div>
+                <p className="text-white/40 font-semibold">No tokens match. The void stares back.</p>
                 <p className="mt-1 text-xs text-white/30">Launch the first one and the void will fill.</p>
               </div>
             )}
@@ -448,6 +499,20 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
                       Disconnect
                     </button>
                   </div>
+                ) : walletConnecting ? (
+                  <button
+                    onClick={() => walletRetry()}
+                    className="rounded-lg bg-yellow-500/10 border border-yellow-500/30 px-3 py-1.5 text-xs font-bold text-yellow-300"
+                  >
+                    Still connecting… Retry
+                  </button>
+                ) : isMobile() ? (
+                  <button
+                    onClick={() => setShowWalletSelector(true)}
+                    className="rounded-lg bg-hermes px-3 py-1.5 text-xs font-black text-white hover:bg-hermes/90 transition-all active:scale-[0.98]"
+                  >
+                    Connect Wallet
+                  </button>
                 ) : (
                   <button
                     onClick={async () => {
@@ -730,6 +795,15 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
       {graduatedToken && (
         <GraduationModal token={graduatedToken} onClose={() => setGraduatedToken(null)} />
       )}
+
+      <WalletSelectorModal
+        open={showWalletSelector}
+        onClose={() => setShowWalletSelector(false)}
+        onSelect={(choice) => {
+          setShowWalletSelector(false);
+          connectWallet(setWallet, choice);
+        }}
+      />
     </div>
   );
 }
