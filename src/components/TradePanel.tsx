@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/Button";
 import { FocusTrap } from "focus-trap-react";
 import { confettiBurst } from "@/components/ConfettiBurst";
@@ -20,6 +20,8 @@ export default function TradePanel({ token, wallet, onTradeComplete }: Props) {
   const [side, setSide] = useState<"buy" | "sell">("buy");
   const [amount, setAmount] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
+  const [quoteAnimKey, setQuoteAnimKey] = useState(0);
+  const [prevQuote, setPrevQuote] = useState<boolean>(false);
   const { executeTrade, pending, error, curve, balance, refreshCurve } = useTrade(token, wallet);
 
   useEffect(() => {
@@ -61,6 +63,20 @@ export default function TradePanel({ token, wallet, onTradeComplete }: Props) {
     }
   }, [amount, side, curve]);
 
+  // Trigger quote animation when it first appears
+  const animTriggeredRef = useRef(false);
+
+  useEffect(() => {
+    if (quote && !prevQuote && !animTriggeredRef.current) {
+      animTriggeredRef.current = true;
+      setQuoteAnimKey((k) => k + 1);
+    }
+    // Defer setPrevQuote to avoid cascading renders lint
+    requestAnimationFrame(() => {
+      setPrevQuote(!!quote);
+    });
+  }, [quote, prevQuote]);
+
   const handleTrade = async () => {
     const val = parseFloat(amount);
     if (!val || val <= 0) return;
@@ -91,14 +107,44 @@ export default function TradePanel({ token, wallet, onTradeComplete }: Props) {
     }
   };
 
+  const handleMax = () => {
+    if (balance !== null && balance > 0) {
+      setAmount(String(Math.floor(balance * 10000) / 10000));
+    }
+  };
+
   const fmtNum = (n: number, decimals = 4) =>
     n < 0.0001 ? n.toExponential(2) : n.toLocaleString(undefined, { maximumFractionDigits: decimals });
+
+  const getPriceImpactColor = (impact: number) => {
+    if (impact < 3) return "text-green-400";
+    if (impact < 5) return "text-yellow-400";
+    return "text-red-400";
+  };
+
+  const getPriceImpactBg = (impact: number) => {
+    if (impact < 3) return "bg-green-400/5";
+    if (impact < 5) return "bg-yellow-400/5";
+    return "bg-red-400/5";
+  };
+
+  const isValidToTrade = amount !== "" && parseFloat(amount) > 0 && !pending && !(side === "buy" && balance !== null && parseFloat(amount) > balance);
 
   // No wallet connected
   if (!wallet) {
     return (
-      <div className="mb-4 rounded-lg border border-white/5 bg-black/20 p-4 text-center">
-        <p className="text-sm text-white/50">Connect wallet to trade</p>
+      <div className="mb-4 rounded-lg border border-white/5 bg-surface p-6 text-center">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10">
+          <svg className="h-6 w-6 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="2" y="6" width="20" height="12" rx="2"/>
+            <path d="M16 14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8z"/>
+            <line x1="2" y1="10" x2="22" y2="10"/>
+          </svg>
+        </div>
+        <p className="relative text-sm font-semibold text-white/60 after:absolute after:left-0 after:top-50% after:-translate-y-1/2 after:w-24 after:h-0.5 after:bg-pump/50 after:animate-scan">
+          Connect wallet to trade
+        </p>
+        <p className="mt-2 text-xs text-white/30">or browse tokens to discover</p>
       </div>
     );
   }
@@ -106,8 +152,13 @@ export default function TradePanel({ token, wallet, onTradeComplete }: Props) {
   // Curve not loaded yet
   if (!curve) {
     return (
-      <div className="mb-4 rounded-lg border border-white/5 bg-black/20 p-4">
-        <div className="h-32 animate-pulse rounded bg-white/5" />
+      <div className="mb-4 rounded-lg border border-white/5 bg-surface p-6 text-center">
+        <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center">
+          <svg className="h-6 w-6 text-white/40 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+          </svg>
+        </div>
+        <p className="text-sm text-white/40">Loading curve data...</p>
       </div>
     );
   }
@@ -127,22 +178,24 @@ export default function TradePanel({ token, wallet, onTradeComplete }: Props) {
       <div className="mb-3 flex gap-1 rounded-lg bg-black/30 p-1">
         <button
           onClick={() => { setSide("buy"); setAmount(""); }}
-          className={`flex-1 rounded-md py-2 text-sm font-bold transition-colors ${
+          className={`flex-1 flex items-center justify-center gap-1 rounded-md py-2 text-sm font-bold transition-all duration-200 ${
             side === "buy"
               ? "bg-[#00FF00]/15 text-[#00FF00]"
               : "text-white/40 hover:text-white/60"
           }`}
         >
+          <span className="text-base leading-none">↑</span>
           Buy
         </button>
         <button
           onClick={() => { setSide("sell"); setAmount(""); }}
-          className={`flex-1 rounded-md py-2 text-sm font-bold transition-colors ${
+          className={`flex-1 flex items-center justify-center gap-1 rounded-md py-2 text-sm font-bold transition-all duration-200 ${
             side === "sell"
               ? "bg-[#FF0000]/15 text-[#FF0000]"
               : "text-white/40 hover:text-white/60"
           }`}
         >
+          <span className="text-base leading-none">↓</span>
           Sell
         </button>
       </div>
@@ -159,7 +212,7 @@ export default function TradePanel({ token, wallet, onTradeComplete }: Props) {
           }}
           placeholder="0.00"
           disabled={pending}
-          className="w-full rounded-lg border border-white/10 bg-black/40 px-4 py-3 pr-16 font-mono text-lg text-white placeholder:text-white/20 outline-none transition-colors focus:border-pump disabled:opacity-50"
+          className="w-full h-12 rounded-lg border border-white/10 bg-black/40 px-4 pr-16 font-mono text-lg text-white placeholder:text-white/20 outline-none transition-colors focus:border-pump disabled:opacity-50"
         />
         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-white/40">
           {side === "buy" ? "SOL" : `$${token.ticker}`}
@@ -168,19 +221,28 @@ export default function TradePanel({ token, wallet, onTradeComplete }: Props) {
 
       {/* Balance display */}
       {side === "buy" && balance !== null && (
-        <p className="mb-2 text-right text-[11px] text-white/35">
-          Balance: <span className="font-mono tabular-nums">{fmtNum(balance)}</span> SOL
-        </p>
+        <div className="mb-2 flex items-center justify-between rounded-md bg-white/5 px-3 py-1.5">
+          <span className="text-[11px] text-white/50">
+            Balance: <span className="font-mono font-bold tabular-nums text-white/70">{fmtNum(balance)}</span> SOL
+          </span>
+          <button
+            onClick={handleMax}
+            disabled={pending}
+            className="rounded bg-pump/20 px-2 py-0.5 text-[10px] font-bold text-pump transition-colors hover:bg-pump/30 disabled:opacity-50"
+          >
+            Max
+          </button>
+        </div>
       )}
 
       {/* Preset buttons */}
-      <div className="mb-3 flex gap-1.5">
+      <div className="mb-3 grid grid-cols-2 gap-1.5">
         {(side === "buy" ? BUY_PRESETS : SELL_PRESETS).map((p) => (
           <button
             key={p}
             onClick={() => handlePreset(p)}
             disabled={pending}
-            className="flex-1 rounded-md border border-white/5 bg-white/5 py-1.5 text-xs font-bold text-white/50 transition-colors hover:bg-white/10 hover:text-white/80 disabled:opacity-50"
+            className="rounded-md border border-white/5 bg-white/5 py-2 text-xs font-bold text-white/50 transition-colors hover:bg-white/10 hover:text-white/80 disabled:opacity-50"
           >
             {side === "buy" ? `${p} SOL` : `${p}%`}
           </button>
@@ -189,16 +251,20 @@ export default function TradePanel({ token, wallet, onTradeComplete }: Props) {
 
       {/* Quote display */}
       {quote && (
-        <div className="mb-3 space-y-1 rounded-lg border border-white/5 bg-black/20 px-3 py-2">
+        <div
+          key={quoteAnimKey}
+          className="mb-3 space-y-1 rounded-lg border border-white/5 bg-black/20 px-3 py-2"
+          style={{ animation: "slideDown 0.2s ease" }}
+        >
           <div className="flex justify-between text-xs">
             <span className="text-white/40">You receive</span>
             <span className="font-mono tabular-nums text-white/80">
               ≈ {fmtNum(quote.receive, side === "buy" ? 0 : 4)} {side === "buy" ? `$${token.ticker}` : "SOL"}
             </span>
           </div>
-          <div className="flex justify-between text-xs">
+          <div className={`flex justify-between text-xs rounded px-1 py-0.5 ${getPriceImpactBg(quote.impact)}`}>
             <span className="text-white/40">Price impact</span>
-            <span className={`font-mono tabular-nums ${quote.impact > 5 ? "text-[#FF0000]" : "text-white/60"}`}>
+            <span className={`font-mono tabular-nums font-bold ${getPriceImpactColor(quote.impact)}`}>
               {fmtNum(quote.impact, 2)}%
             </span>
           </div>
@@ -227,7 +293,8 @@ export default function TradePanel({ token, wallet, onTradeComplete }: Props) {
         fullWidth
         onClick={handleTrade}
         loading={pending}
-        disabled={!amount || parseFloat(amount) <= 0 || pending || (side === "buy" && balance !== null && parseFloat(amount) > balance)}
+        disabled={!isValidToTrade}
+        className={isValidToTrade ? "animate-pulse" : ""}
       >
         {pending
           ? "Confirming…"
@@ -271,9 +338,9 @@ export default function TradePanel({ token, wallet, onTradeComplete }: Props) {
                   </span>
                 </div>
                 <div className="h-px bg-white/10 my-3" />
-                <div className="flex items-center justify-between mb-2">
+                <div className={`flex items-center justify-between mb-2 rounded px-1 py-0.5 ${getPriceImpactBg(quote.impact)}`}>
                   <span className="text-xs text-white/40">Price impact</span>
-                  <span className={`text-xs font-mono ${quote.impact > 5 ? "text-red-400" : "text-white/60"}`}>
+                  <span className={`text-xs font-mono font-bold ${getPriceImpactColor(quote.impact)}`}>
                     {fmtNum(quote.impact, 2)}%
                   </span>
                 </div>

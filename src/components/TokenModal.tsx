@@ -189,7 +189,10 @@ export default function TokenModal({ token, onClose, onLike, liked, comments, on
             )}
           </div>
           {comments.length === 0 ? (
-            <p className="mt-2 text-xs text-white/35">No comments yet.</p>
+            <div className="mt-4 text-center py-3">
+              <div className="text-[32px] mb-2 animate-float-bob" aria-hidden="true">💬</div>
+              <p className="text-xs text-white/35">No comments yet — be the first to share alpha</p>
+            </div>
           ) : (
             <ul className="mt-2 space-y-2">
               {comments.map((c) => (

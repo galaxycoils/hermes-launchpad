@@ -2,7 +2,7 @@
 import gsap from "gsap";
 import { useGsapContext } from "@/hooks/useGsapContext";
 
-export default function Hero({ onCreate, onRefCopy }: { onCreate: () => void; onRefCopy: () => void }) {
+export default function Hero({ onCreate, onRefCopy, live }: { onCreate: () => void; onRefCopy: () => void; live: boolean }) {
   useGsapContext(() => {
     const mm = gsap.matchMedia();
     mm.add("(prefers-reduced-motion: reduce)", () => {
@@ -35,7 +35,7 @@ export default function Hero({ onCreate, onRefCopy }: { onCreate: () => void; on
         </div>
 
         {/* Headline */}
-        <h1 className="hero-title mt-3 max-w-3xl text-balance text-5xl font-black tracking-[-0.06em] sm:text-7xl leading-[0.95]">
+        <h1 className="hero-title mt-3 max-w-3xl text-balance text-4xl font-black tracking-[-0.06em] sm:text-5xl lg:text-7xl leading-[0.95]">
           Bonding curves
           <br />
           <span className="hero-title-accent text-pump">
@@ -44,13 +44,13 @@ export default function Hero({ onCreate, onRefCopy }: { onCreate: () => void; on
         </h1>
 
         {/* Subtitle */}
-        <p className="hero-subtitle mt-4 max-w-xl text-pretty text-sm leading-6 text-white/60 sm:text-base">
+        <p className="hero-subtitle mt-4 max-w-xl text-pretty text-xs leading-5 text-white/60 sm:text-sm lg:text-base lg:leading-6">
           Lore and risk from agents — not influencers. Default curve threshold: 85 SOL.
           Locked curves become migration-ready.
         </p>
 
         {/* CTAs */}
-        <div className="hero-cta mt-7 flex flex-wrap gap-2">
+        <div className="hero-cta mt-7 flex flex-col sm:flex-row gap-2">
           <button
             onClick={onCreate}
             className="rounded-lg bg-pump px-6 py-3 font-black text-black transition-all hover:bg-pump/90 hover:shadow-[0_0_30px_rgba(0,255,102,0.3)] active:scale-[0.97]"
@@ -67,8 +67,13 @@ export default function Hero({ onCreate, onRefCopy }: { onCreate: () => void; on
       </div>
 
       {/* Status pill */}
-      <div className="hero-status absolute right-4 top-4 sm:top-6 sm:right-auto sm:ml-auto sm:flex sm:items-center rounded-full border border-green-400/30 bg-green-400/10 px-3 py-1 text-xs font-mono font-semibold text-green-300">
-        ● INDEX API REACHABLE
+      <div className={`hero-status absolute right-4 top-4 sm:top-6 sm:right-auto sm:ml-auto sm:flex sm:items-center rounded-full border px-3 py-1 text-xs font-mono font-semibold ${
+        live
+          ? "border-green-400/30 bg-green-400/10 text-green-300"
+          : "border-red-400/30 bg-red-400/10 text-red-300"
+      }`}>
+        <span className={`mr-1 inline-block h-2 w-2 rounded-full ${live ? "bg-green-400 animate-pulse" : "bg-red-400"}`} />
+        {live ? "Live — Indexed" : "Offline"}
       </div>
     </header>
   );

@@ -333,7 +333,7 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
       <main id="main-content" className="mx-auto max-w-6xl px-3 sm:px-4">
         {/* Hero */}
         <section className="hero-animate pt-6 sm:pt-10">
-          <Hero onCreate={() => setShowCreate(true)} onRefCopy={copyRefLink} />
+          <Hero onCreate={() => setShowCreate(true)} onRefCopy={copyRefLink} live={live} />
         </section>
 
         {/* King of Hill */}
@@ -391,7 +391,11 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-white/40 text-center py-1">No trades yet</p>
+                <div className="text-center py-4">
+                  <div className="text-[40px] mb-2 animate-float-bob" aria-hidden="true">🏆</div>
+                  <p className="text-xs text-white/40">No trades yet</p>
+                  <p className="text-[10px] text-white/20 mt-1">Be the first degen</p>
+                </div>
               )}
             </div>
 
@@ -401,14 +405,14 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search tokens…"
                 aria-label="Search tokens"
-                className="flex-1 rounded-xl border border-white/10 bg-surface px-4 py-3 text-white placeholder:text-white/30 focus:border-pump focus:outline-none transition-colors"
+                className="flex-1 h-12 rounded-xl border border-white/10 bg-surface px-4 text-white placeholder:text-white/30 focus:border-pump focus:outline-none transition-colors"
               />
-              <div className="flex gap-2">
+              <div className="flex gap-2 overflow-x-auto pb-1">
                 {(["all", "curve-progress", "migration-ready"] as Filter[]).map((f) => (
                   <button
                     key={f}
                     onClick={() => setFilter(f)}
-                    className={`rounded-xl border px-4 py-2 text-sm capitalize transition-colors ${
+                    className={`shrink-0 rounded-xl border px-4 py-2.5 text-sm capitalize transition-colors ${
                       filter === f
                         ? "border-pump bg-pump/10 text-pump"
                         : "border-white/10 bg-surface text-white/60 hover:border-white/20 hover:text-white"
@@ -443,13 +447,13 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
                 </button>
               </div>
             ) : tokensLoading ? (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <SkeletonCard key={i} />
                 ))}
               </div>
             ) : (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                 {tokens.map((t) => (
                   <TokenCard key={t.id} token={t} onSelect={setSelected} />
                 ))}
@@ -458,9 +462,15 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
 
             {tokens.length === 0 && !tokensLoading && !tokensError && (
               <div className="rounded-xl border border-white/10 bg-surface p-8 text-center">
-                <div className="text-5xl mb-3">🌀</div>
-                <p className="text-white/40 font-semibold">No tokens match. The void stares back.</p>
-                <p className="mt-1 text-xs text-white/30">Launch the first one and the void will fill.</p>
+                <div className="text-[64px] mb-4 animate-float-bob" aria-hidden="true">🌀</div>
+                <p className="text-white/80 font-semibold text-base mb-2">No tokens match. The void stares back.</p>
+                <p className="text-xs text-white/30 mb-4">Launch the first one and the void fills.</p>
+                <button
+                  onClick={() => setShowCreate(true)}
+                  className="rounded-lg bg-pump/10 border border-pump/20 px-5 py-2.5 text-sm font-bold text-pump hover:bg-pump/20 transition-colors"
+                >
+                  Launch Token
+                </button>
               </div>
             )}
           </section>
