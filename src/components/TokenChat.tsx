@@ -22,7 +22,7 @@ interface TokenChatProps {
 }
 
 const shortWallet = (w: string) =>
-  w.length > 10 ? w.slice(0, 4) + "\u2026" + w.slice(-4) : w;
+  w.length > 10 ? `${w.slice(0, 4)}…${w.slice(-4)}` : w;
 
 const formatTime = (ts: number): string => {
   const d = new Date(ts);
@@ -39,7 +39,7 @@ export default function TokenChat({ tokenId, wallet }: TokenChatProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Subscribe to this token\'s chat channel
+  // Subscribe to this token's chat channel
   useEffect(() => {
     subscribe(`chat:${tokenId}`);
     return () => unsubscribe(`chat:${tokenId}`);
@@ -124,7 +124,7 @@ export default function TokenChat({ tokenId, wallet }: TokenChatProps) {
       >
         {chatMessages.length === 0 ? (
           <div className="flex h-full items-center justify-center text-sm text-white/30">
-            {connected ? "No messages yet. Be the first to say something!" : "Connecting\u2026"}
+            {connected ? "No messages yet. Be the first to say something!" : "Connecting…"}
           </div>
         ) : (
           chatMessages.map((msg) => {
@@ -153,7 +153,7 @@ export default function TokenChat({ tokenId, wallet }: TokenChatProps) {
                   {repliedMsg && (
                     <div className="mb-1 rounded border-l-2 border-white/20 bg-white/5 px-2 py-1">
                       <div className="text-[10px] text-white/40">
-                        {shortWallet(repliedMsg.data.wallet)}
+                        ↩ {shortWallet(repliedMsg.data.wallet)}
                       </div>
                       <div className="text-[11px] text-white/50 truncate">
                         {repliedMsg.data.message}
@@ -192,13 +192,13 @@ export default function TokenChat({ tokenId, wallet }: TokenChatProps) {
       {quoted && (
         <div className="flex items-center justify-between border-t border-white/10 bg-white/5 px-3 py-1.5">
           <span className="text-[11px] text-white/40 truncate">
-            replying to {shortWallet(quoted.data.wallet)}: {quoted.data.message}
+            ↩ replying to {shortWallet(quoted.data.wallet)}: {quoted.data.message}
           </span>
           <button
             onClick={() => setReplyingTo(null)}
             className="text-white/40 hover:text-white/70 text-xs ml-2"
           >
-            x
+            ✕
           </button>
         </div>
       )}
@@ -213,7 +213,7 @@ export default function TokenChat({ tokenId, wallet }: TokenChatProps) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Say something\u2026"
+              placeholder="Say something…"
               maxLength={500}
               className="flex-1 rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-white/20 transition-colors"
             />
