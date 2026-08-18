@@ -23,6 +23,8 @@ import { useGsapContext } from "@/hooks/useGsapContext";
 import LiveTradeFeed from "@/components/LiveTradeFeed";
 import KingOfHill2 from "@/components/KingOfHill2";
 import SocialFeed from "@/components/SocialFeed";
+import BottomNav from "@/components/BottomNav";
+import PriceChart from "@/components/PriceChart";
 
 
 type Filter = VerifiedTokenFilter;
@@ -462,7 +464,11 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
             ) : (
               <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                 {tokens.map((t) => (
-                  <TokenCard key={t.id} token={t} onSelect={setSelected} />
+                  <PriceChart
+      token={allTokens[0] ?? null}
+      className="max-w-4xl mx-auto px-4 mb-4"
+    />
+    <TokenCard key={t.id} token={t} onSelect={setSelected} />
                 ))}
               </div>
             )}
@@ -781,6 +787,11 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
       {/* Social Feed - v2 followed traders activity */}
       <div className="max-w-4xl mx-auto px-4 pb-4">
         <SocialFeed wallet={wallet} />
+      </div>
+
+      {/* BottomNav - v2 mobile navigation */}
+      <div className="md:hidden">
+        <BottomNav activeTab="trade" />
       </div>
 
       {/* Mobile bottom tab bar */}
