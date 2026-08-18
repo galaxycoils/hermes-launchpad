@@ -6,6 +6,8 @@ import Badge from "@/components/Badge";
 import { confettiBurst } from "@/components/ConfettiBurst";
 import TradePanel from "@/components/TradePanel";
 import TradeReceiptCard from "@/components/TradeReceiptCard";
+import ShareTradeCard from "@/components/ShareTradeCard";
+import TokenChat from "@/components/TokenChat";
 import { fmtUsd } from "@/lib/tokens";
 import { formatUnixAge } from "@/lib/token-truth";
 import type { Token, CommentItem } from "@/lib/tokens";
@@ -137,12 +139,31 @@ export default function TokenModal({ token, onClose, onLike, liked, comments, on
 
         {/* Trade Receipt Share Card */}
         {tradeReceipt && (
-          <TradeReceiptCard
-            result={tradeReceipt}
-            token={token}
-            refCode={refCode}
-            onClose={() => setTradeReceipt(null)}
-          />
+          <>
+            <TradeReceiptCard
+              result={tradeReceipt}
+              token={token}
+              refCode={refCode}
+              onClose={() => setTradeReceipt(null)}
+            />
+            <ShareTradeCard
+              trade={{
+                id: Date.now(),
+                token_id: token.id,
+                wallet: wallet ?? "",
+                tokenTicker: token.ticker,
+                tokenEmoji: token.emoji,
+                side: tradeReceipt.side,
+                price: tradeReceipt.price,
+                sol_amount: tradeReceipt.solAmount,
+                token_amount: tradeReceipt.tokenAmount,
+                ts: Date.now() / 1000,
+                pnl: tradeReceipt.pnl,
+              }}
+              refCode={refCode}
+            />
+            {wallet && <TokenChat tokenId={token.id} wallet={wallet} />}
+          </>
         )}
 
         {/* Trade Panel — only for on-chain tokens */}

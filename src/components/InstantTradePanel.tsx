@@ -7,8 +7,9 @@ import type { Token } from "@/lib/tokens";
 
 interface Props {
   token: Token | null;
-  wallet: string | null;
+  wallet: string;
   onClose: () => void;
+  className?: string;
 }
 
 type TradeSide = "buy" | "sell";

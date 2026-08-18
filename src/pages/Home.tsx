@@ -25,6 +25,11 @@ import KingOfHill2 from "@/components/KingOfHill2";
 import SocialFeed from "@/components/SocialFeed";
 import BottomNav from "@/components/BottomNav";
 import PriceChart from "@/components/PriceChart";
+import InstantTradePanel from "@/components/InstantTradePanel";
+import TraderProfile from "@/components/TraderProfile";
+import AchievementBadges from "@/components/AchievementBadges";
+import StreakCounter from "@/components/StreakCounter";
+import QuestCard from "@/components/QuestCard";
 
 
 type Filter = VerifiedTokenFilter;
@@ -468,6 +473,12 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
                   tokenName={allTokens[0]?.name ?? ''}
                   tokenTicker={allTokens[0]?.ticker ?? ''}
                 />
+                <InstantTradePanel
+                  token={allTokens[0] ?? null}
+                  wallet={wallet ?? ""}
+                  onClose={() => {}}
+                  className="max-w-4xl mx-auto mb-4"
+                />
                 <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                   {tokens.map((t) => (
                     <TokenCard key={t.id} token={t} onSelect={setSelected} />
@@ -557,78 +568,19 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
               </div>
             </div>
 
-            {/* Level + XP */}
-            <div className="rounded-xl border border-white/10 bg-surface p-5">
-              <div className="flex items-center gap-4">
-                <div className={`rounded-full p-2.5 ${
-                  profile?.level ? "bg-gradient-to-br from-purple-500 to-hermes" : "bg-white/10"
-                }`}>
-                  <div className="text-center">
-                    <div className="text-2xl font-black text-white">{profile?.level ?? "—"}</div>
-                    <div className="text-[10px] uppercase tracking-wide text-white/40">Level</div>
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold font-mono text-white">
-                      {profile?.xp?.toLocaleString() ?? "—"}
-                    </span>
-                    <span className="text-sm text-white/40">XP</span>
-                  </div>
-                  <div className="mt-1 flex items-center gap-2">
-                    <div className="h-1.5 flex-1 rounded-full bg-white/10 overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-purple-500 to-pump rounded-full transition-all duration-500"
-                        style={{ width: `${(profile?.xp ?? 0) % 100}%` }}
-                      />
-                    </div>
-                    <span className="text-xs font-mono text-white/30">
-                      {((profile?.xp ?? 0) % 100).toFixed(0)}% to next level
-                    </span>
-                  </div>
-                  {profile?.streak_days ? (
-                    <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-oracle/10 border border-oracle/20 px-2.5 py-1">
-                      <span className="text-sm">🔥</span>
-                      <span className="text-xs font-bold text-oracle">{profile.streak_days}-day streak</span>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
+            {/* Level + XP - Enhanced with Gamification Components */}
+            <TraderProfile wallet={wallet ?? ""} />
+            <div className="grid gap-4 md:grid-cols-2">
+              <AchievementBadges profile={profile} />
+              <StreakCounter streak={Number(profile?.streak_days ?? 0)} />
             </div>
 
-            {/* Quests */}
+            {/* Quests - Enhanced with QuestCard Component */}
             <div className="rounded-xl border border-white/10 bg-surface p-5">
               <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-white/60">Daily Quests</h2>
               <div className="grid gap-3 sm:grid-cols-2">
                 {quests.map((q) => (
-                  <div
-                    key={q.id}
-                    className={`rounded-xl border p-4 ${
-                      q.done
-                        ? "border-green-400/30 bg-green-400/5"
-                        : "border-white/10 bg-white/5"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-white">
-                        {q.done ? "✅ " : ""}{q.title}
-                      </span>
-                      <span className="rounded bg-yellow-400/10 px-2 py-0.5 text-xs font-mono font-bold text-yellow-300 border border-yellow-400/20">
-                        +{q.xp} XP
-                      </span>
-                    </div>
-                    <div className="mt-3 h-2 rounded-full bg-white/10 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          q.done ? "bg-green-400" : "bg-yellow-400"
-                        }`}
-                        style={{ width: `${Math.min(100, (q.progress / q.total) * 100)}%` }}
-                      />
-                    </div>
-                    <div className="text-xs text-white/40 mt-1">
-                      {q.progress}/{q.total} complete{q.done ? " — paid out" : ""}
-                    </div>
-                  </div>
+                  <QuestCard key={q.id} quest={q} onClaim={() => {}} />
                 ))}
                 {quests.length === 0 && (
                   <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center sm:col-span-2">

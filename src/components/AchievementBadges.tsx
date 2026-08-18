@@ -243,3 +243,26 @@ export function AchievementGrid({ wallet }: AchievementGridProps) {
     </Surface>
   );
 }
+
+
+export default function AchievementBadges({ profile }: { profile: any }) {
+  const earnedIds = profile?.achievements ?? [];
+  return (
+    <div className="space-y-2">
+      <h3 className="text-sm font-bold text-white/60">Achievements</h3>
+      <div className="flex flex-wrap gap-2">
+        {ACHIEVEMENTS.map((a) => {
+          const earned = earnedIds.includes(a.id);
+          const className = earned
+            ? "rounded-full px-2 py-1 text-xs bg-gradient-to-r from-purple-500 to-hermes text-white border border-purple-400/30"
+            : "rounded-full px-2 py-1 text-xs bg-white/5 border border-white/10 text-white/60";
+          return (
+            <span key={a.id} className={className}>
+              {a.icon} {a.name}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
