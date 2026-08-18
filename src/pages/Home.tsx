@@ -20,6 +20,8 @@ import BottomTabBar from "@/components/BottomTabBar";
 import { SkeletonCard } from "@/components/Skeleton";
 import gsap from "gsap";
 import { useGsapContext } from "@/hooks/useGsapContext";
+import LiveTradeFeed from "@/components/LiveTradeFeed";
+import KingOfHill2 from "@/components/KingOfHill2";
 
 
 type Filter = VerifiedTokenFilter;
@@ -330,6 +332,9 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
         refCode={refStats?.code ?? profile?.ref_code ?? identity}
         streak={profile?.streak_days}
       />
+
+      {/* King of the Hill 2.0 - v2 hero banner */}
+      <KingOfHill2 token={allTokens[0] ?? null} />
 
       <main id="main-content" className="mx-auto max-w-6xl px-3 sm:px-4">
         {/* Hero */}
@@ -766,6 +771,11 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
           </section>
         )}
       </main>
+
+      {/* Live Trade Feed - v2 real-time trading */}
+      <div className="max-w-4xl mx-auto px-4 pb-4">
+        <LiveTradeFeed />
+      </div>
 
       {/* Mobile bottom tab bar */}
       <BottomTabBar tab={tab} onTabChange={setTab} onCreatePress={() => setShowCreate(true)} />

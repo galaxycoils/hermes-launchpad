@@ -2,14 +2,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import Avatar from "@/components/Avatar";
 
+interface ChatData {
+  wallet: string;
+  message: string;
+  ts: number;
+  replyTo?: string;
+}
+
 interface ChatMessage {
   type: "chat";
-  data: {
-    wallet: string;
-    message: string;
-    ts: number;
-    replyTo?: string;
-  };
+  data: ChatData;
 }
 
 interface Message extends ChatMessage {
@@ -29,8 +31,9 @@ const formatTime = (ts: number): string => {
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 };
 
-const isChatMessage = (msg: { type: string; data: unknown }): msg is ChatMessage =>
-  msg.type === "chat";
+function isChatMessage(msg: { type: string; data: unknown }): msg is ChatMessage {
+  return msg.type === "chat";
+}
 
 export default function TokenChat({ tokenId, wallet }: TokenChatProps) {
   const { connected, messages, send, subscribe, unsubscribe } = useWebSocket();
@@ -49,9 +52,9 @@ export default function TokenChat({ tokenId, wallet }: TokenChatProps) {
   const chatMessages = useMemo<Message[]>(() => {
     return messages
       .filter(isChatMessage)
-      .map((msg, i) => ({
+      .map((msg) => ({
         ...msg,
-        id: `${msg.ts}-${(msg.data as ChatMessage["data"]).wallet}-${i}`,
+        id: `${msg.data.ts}-${msg.data.wallet}`,
       }));
   }, [messages]);
 
@@ -145,7 +148,7 @@ export default function TokenChat({ tokenId, wallet }: TokenChatProps) {
                       {shortWallet(msg.data.wallet)}
                     </span>
                     <span className="text-[10px] font-mono text-white/30">
-                      {formatTime(msg.ts)}
+                      {formatTime(msg.data.ts)}
                     </span>
                   </div>
 
@@ -215,7 +218,7 @@ export default function TokenChat({ tokenId, wallet }: TokenChatProps) {
               onKeyDown={handleKeyDown}
               placeholder="Say something…"
               maxLength={500}
-              className="flex-1 rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-white/20 transition-colors"
+              className="flex-1 rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white text-white/30 outline-none focus:border-white/20 transition-colors"
             />
             <button
               onClick={handleSend}
