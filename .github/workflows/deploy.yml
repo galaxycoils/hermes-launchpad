@@ -57,4 +57,3 @@ jobs:
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           workingDirectory: workers
           command: deploy
-          wranglerVersion: 4.123.0
