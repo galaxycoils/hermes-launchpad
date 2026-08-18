@@ -258,7 +258,6 @@ export default function TraderProfile({ wallet }: TraderProfileProps) {
                   "p-2 text-center transition-opacity",
                   earned ? "opacity-100" : "opacity-30 grayscale",
                 ].join(" ")}
-                title={a.desc}
               >
                 <div className="text-xl">{a.icon}</div>
                 <div className="text-[10px] font-mono text-white/60 mt-0.5 truncate">

@@ -52,10 +52,14 @@ export default function TokenChat({ tokenId, wallet }: TokenChatProps) {
   const chatMessages = useMemo<Message[]>(() => {
     return messages
       .filter(isChatMessage)
-      .map((msg) => ({
-        ...msg,
-        id: `${msg.data.ts}-${msg.data.wallet}`,
-      }));
+      .map((msg) => {
+        const data = msg.data as ChatData;
+        return {
+          id: `${data.ts}-${data.wallet}`,
+          type: 'chat' as const,
+          data: data,
+        } as Message;
+      });
   }, [messages]);
 
   // Auto-scroll to bottom on new messages

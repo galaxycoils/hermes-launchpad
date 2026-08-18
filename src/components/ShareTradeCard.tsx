@@ -28,10 +28,7 @@ interface ShareTradeCardProps {
 const CARD_WIDTH = 600;
 const CARD_HEIGHT = 800;
 
-function drawShareCard(
-  trade: ShareTradeData,
-  dataUrl: string | null
-): HTMLCanvasElement {
+function drawShareCard(trade: ShareTradeData): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = CARD_WIDTH;
   canvas.height = CARD_HEIGHT;
@@ -202,7 +199,7 @@ export default function ShareTradeCard({ trade, refCode }: ShareTradeCardProps) 
     if (!trade) return;
     setGenerating(true);
     try {
-      const canvas = drawShareCard(trade, null);
+      const canvas = drawShareCard(trade);
       const url = canvas.toDataURL("image/png");
       setPreviewUrl(url);
       toast.success("Card ready to share!");
@@ -217,7 +214,7 @@ export default function ShareTradeCard({ trade, refCode }: ShareTradeCardProps) 
     if (!trade) return;
     setGenerating(true);
     try {
-      const canvas = drawShareCard(trade, null);
+      const canvas = drawShareCard(trade);
       const blob = await canvasToBlob(canvas);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
