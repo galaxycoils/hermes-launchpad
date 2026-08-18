@@ -243,7 +243,7 @@ async function callAi(env, system, user) {
   return typeof r === "string" ? r.trim() : JSON.stringify(r);
 }
 
-export { WebSocketHub };
+export { WebSocketHub, json, err };
 
 export default {
   async fetch(request, env) {
