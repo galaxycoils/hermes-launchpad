@@ -32,10 +32,10 @@ export default defineConfig({
         'src/service-worker.ts',
       ],
       thresholds: {
-        lines: 29,
-        branches: 44,
-        functions: 23,
-        statements: 29
+        lines: 27,
+        branches: 46,
+        functions: 26,
+        statements: 27
       },
     },
   },

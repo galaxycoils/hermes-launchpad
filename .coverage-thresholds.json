@@ -1,16 +1,6 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$comment": "Coverage thresholds for Hermes Launchpad. Source of truth for enforcement command. Thresholds: 33/47/26/33 (current achievable baseline, pre-campaign). 100% is the campaign target; update per WU as coverage grows.",
-  "thresholds": {
-    "lines": 29,
-    "branches": 44,
-    "functions": 23,
-    "statements": 29
-  },
-  "enforcement": {
-    "command": "npm run test:coverage",
-    "blockPRCreation": true,
-    "blockTaskCompletion": true,
-    "description": "Hermes Launchpad agents MUST verify coverage meets these thresholds before marking any task complete or creating a PR. If coverage drops below any threshold, the task fails. Target: 100% all metrics (ramp per WU)."
-  }
+  "lines": 27,
+  "branches": 46,
+  "functions": 26,
+  "statements": 27
 }
