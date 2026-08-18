@@ -462,17 +462,18 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
                 ))}
               </div>
             ) : (
-              <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                {tokens.map((t) => (
-                  <div key={t.id}>
-                    <PriceChart
-                      token={allTokens[0] ?? null}
-                      className="max-w-4xl mx-auto px-4 mb-4"
-                    />
-                    <TokenCard token={t} onSelect={setSelected} />
-                  </div>
-                ))}
-              </div>
+              <>
+                <PriceChart
+                  tokenId={allTokens[0]?.id ?? ''}
+                  tokenName={allTokens[0]?.name ?? ''}
+                  tokenTicker={allTokens[0]?.ticker ?? ''}
+                />
+                <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                  {tokens.map((t) => (
+                    <TokenCard key={t.id} token={t} onSelect={setSelected} />
+                  ))}
+                </div>
+              </>
             )}
 
             {tokens.length === 0 && !tokensLoading && !tokensError && (
@@ -792,9 +793,7 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
       </div>
 
       {/* BottomNav - v2 mobile navigation */}
-      <div className="md:hidden">
-        <BottomNav activeTab="trade" />
-      </div>
+      <BottomNav activeTab="trade" onTabChange={() => {}} unreadCount={0} />
 
       {/* Mobile bottom tab bar */}
       <BottomTabBar tab={tab} onTabChange={setTab} onCreatePress={() => setShowCreate(true)} />
