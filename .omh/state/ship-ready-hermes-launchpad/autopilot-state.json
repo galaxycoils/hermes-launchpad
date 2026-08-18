@@ -1,0 +1,19 @@
+{
+  "instance_id": "ship-ready-hermes-launchpad",
+  "goal": "Finish remaining P0/P1 blockers and ship production-ready UI with clean UX",
+  "phase": "execution",
+  "spec_file": ".omh/specs/ship-ready-hermes-launchpad-spec.md",
+  "plan_file": null,
+  "ralph_iteration": 0,
+  "qa_cycle": 0,
+  "max_qa_cycles": 5,
+  "validation_round": 0,
+  "max_validation_rounds": 3,
+  "validation_verdicts": {},
+  "skip_qa": false,
+  "skip_validation": false,
+  "pause_after_phase": null,
+  "context_checkpoint": false,
+  "created_at": "2026-08-16T22:30:00Z",
+  "updated_at": "2026-08-16T22:30:00Z"
+}

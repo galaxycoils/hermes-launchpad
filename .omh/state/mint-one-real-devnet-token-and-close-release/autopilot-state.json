@@ -1,0 +1,29 @@
+{
+  "instance_id": "mint-one-real-devnet-token-and-close-release",
+  "session_id": "20260812_111854_0fb8e6",
+  "phase": "blocked",
+  "goal": "Mint exactly one real token through Hermes Launchpad on Solana devnet, verify provenance, close release.",
+  "spec_file": ".omh/specs/mint-one-real-devnet-token-and-close-release-spec.md",
+  "approved_plan": ".hermes/plans/2026-08-12_111414-mint-one-devnet-token.md",
+  "ralph_iteration": 0,
+  "qa_cycle": 0,
+  "max_qa_cycles": 5,
+  "validation_round": 0,
+  "max_validation_rounds": 3,
+  "validation_verdicts": {},
+  "skip_qa": false,
+  "skip_validation": false,
+  "pause_after_phase": null,
+  "context_checkpoint": false,
+  "updated_at": "2026-08-12T16:06:13.321509+00:00",
+  "plan_file": ".omh/plans/ralplan-mint-one-real-devnet-token-and-close-release.md",
+  "consensus_rounds": 3,
+  "consensus_verdicts": {
+    "planner": "APPROVE",
+    "architect": "APPROVE",
+    "critic": "APPROVE"
+  },
+  "phase_step": "WU-0 blocked: E2E_BLOCKED_WALLET_UNAVAILABLE",
+  "blocker_code": "E2E_BLOCKED_WALLET_UNAVAILABLE",
+  "blocker_reason": "No running Brave/browser with connected injectable Solana wallet. All other WU-0 prerequisites passed."
+}

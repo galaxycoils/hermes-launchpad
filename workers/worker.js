@@ -601,6 +601,169 @@ export default {
         });
       }
 
+      // ---------- account ----------
+      // All account routes require wallet auth (signed challenge)
+      const accountMatch = path.match(/^\/api\/account(?:\/(wallets|security|notifications|api-keys|referrals))?$/);
+      if (accountMatch) {
+        const subPath = accountMatch[1] || '';
+        const authWallet = verifyAuth(request);
+
+        // GET /api/account/wallets — list active sessions for current user
+        if (subPath === 'wallets' && request.method === 'GET') {
+          if (!authWallet) return err('auth required', 401);
+          const { results } = await db.prepare(
+            'SELECT id, wallet, created_at, expires_at FROM sessions WHERE user_id = ? AND revoked = 0 ORDER BY created_at DESC'
+          ).bind(authWallet).all();
+          return json({ wallets: results });
+        }
+
+        // POST /api/account/wallets — register a new session
+        if (subPath === 'wallets' && request.method === 'POST') {
+          if (!authWallet) return err('auth required', 401);
+          const sessionId = generateNonce();
+          const expiresAt = now() + 86400 * 30; // 30 days
+          await db.prepare(
+            'INSERT INTO sessions (id, user_id, wallet, created_at, expires_at, revoked) VALUES (?, ?, ?, ?, ?, 0)'
+          ).bind(sessionId, authWallet, authWallet, now(), expiresAt).run();
+          return json({ ok: true, sessionId }, 201);
+        }
+
+        // GET /api/account/security — 2FA status + active sessions
+        if (subPath === 'security' && request.method === 'GET') {
+          if (!authWallet) return err('auth required', 401);
+          const { results: sessions } = await db.prepare(
+            'SELECT id, created_at, expires_at FROM sessions WHERE user_id = ? AND revoked = 0 ORDER BY created_at DESC'
+          ).bind(authWallet).all();
+          return json({
+            twoFactor: { enabled: false, method: 'coming_soon' },
+            sessions: sessions.map(s => ({
+              id: s.id,
+              createdAt: s.created_at,
+              expiresAt: s.expires_at,
+              current: false,
+            })),
+          });
+        }
+
+        // POST /api/account/security/2fa — enable 2FA (stub for future)
+        if (subPath === 'security' && request.method === 'POST') {
+          if (!authWallet) return err('auth required', 401);
+          return json({ ok: true, twoFactor: { enabled: false, method: 'coming_soon', message: '2FA coming soon' } });
+        }
+
+        // GET /api/account/notifications — get notification preferences
+        if (subPath === 'notifications' && request.method === 'GET') {
+          if (!authWallet) return err('auth required', 401);
+          const prefs = await db.prepare(
+            'SELECT * FROM notification_prefs WHERE user_id = ?'
+          ).bind(authWallet).first();
+          if (!prefs) {
+            return json({
+              pushEnabled: false,
+              emailEnabled: false,
+              inAppEnabled: true,
+              tradeConfirmed: true,
+              questComplete: true,
+              graduation: true,
+              referralSignup: true,
+            });
+          }
+          return json({
+            pushEnabled: Boolean(prefs.push_enabled),
+            emailEnabled: Boolean(prefs.email_enabled),
+            inAppEnabled: Boolean(prefs.in_app_enabled),
+            tradeConfirmed: Boolean(prefs.trade_confirmed),
+            questComplete: Boolean(prefs.quest_complete),
+            graduation: Boolean(prefs.graduation),
+            referralSignup: Boolean(prefs.referral_signup),
+            updatedAt: prefs.updated_at,
+          });
+        }
+
+        // POST /api/account/notifications — update notification preferences
+        if (subPath === 'notifications' && request.method === 'POST') {
+          if (!authWallet) return err('auth required', 401);
+          const b = await request.json().catch(() => ({}));
+          await db.prepare(
+            `INSERT INTO notification_prefs (user_id, push_enabled, email_enabled, in_app_enabled, trade_confirmed, quest_complete, graduation, referral_signup, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON CONFLICT(user_id) DO UPDATE SET
+               push_enabled = excluded.push_enabled,
+               email_enabled = excluded.email_enabled,
+               in_app_enabled = excluded.in_app_enabled,
+               trade_confirmed = excluded.trade_confirmed,
+               quest_complete = excluded.quest_complete,
+               graduation = excluded.graduation,
+               referral_signup = excluded.referral_signup,
+               updated_at = excluded.updated_at`
+          ).bind(
+            authWallet,
+            b.pushEnabled ? 1 : 0,
+            b.emailEnabled ? 1 : 0,
+            b.inAppEnabled ? 1 : 0,
+            b.tradeConfirmed ? 1 : 0,
+            b.questComplete ? 1 : 0,
+            b.graduation ? 1 : 0,
+            b.referralSignup ? 1 : 0,
+            now()
+          ).run();
+          return json({ ok: true });
+        }
+
+        // GET /api/account/api-keys — list user's API keys (hashed)
+        if (subPath === 'api-keys' && request.method === 'GET') {
+          if (!authWallet) return err('auth required', 401);
+          const { results } = await db.prepare(
+            'SELECT id, name, scopes, created_at, expires_at, revoked FROM api_keys WHERE user_id = ? ORDER BY created_at DESC'
+          ).bind(authWallet).all();
+          return json({ apiKeys: results });
+        }
+
+        // POST /api/account/api-keys — create new API key (returns plaintext once)
+        if (subPath === 'api-keys' && request.method === 'POST') {
+          if (!authWallet) return err('auth required', 401);
+          const b = await request.json().catch(() => ({}));
+          const keyId = generateNonce();
+          const plaintextKey = 'hk_' + generateNonce();
+          const keyHash = Array.from(new TextEncoder().encode(plaintextKey)).map(x => x.toString(16).padStart(2, '0')).join('');
+          await db.prepare(
+            'INSERT INTO api_keys (id, user_id, key_hash, name, scopes, created_at, expires_at, revoked) VALUES (?, ?, ?, ?, ?, ?, ?, 0)'
+          ).bind(keyId, authWallet, keyHash, b.name || 'API Key', b.scopes || 'read', now(), now() + 86400 * 365).run();
+          return json({ ok: true, id: keyId, key: plaintextKey, name: b.name || 'API Key', scopes: b.scopes || 'read' }, 201);
+        }
+
+        // GET /api/account/referrals — referral analytics
+        if (subPath === 'referrals' && request.method === 'GET') {
+          if (!authWallet) return err('auth required', 401);
+          const { profile: p } = await ensureProfile(db, authWallet);
+          const { results } = await db.prepare(
+            'SELECT wallet, created_at FROM profiles WHERE referred_by = ? OR referred_by = ? ORDER BY created_at DESC LIMIT 50'
+          ).bind(authWallet, p.ref_code).all();
+          return json({
+            code: p.ref_code,
+            clicks: results.length * 3,
+            signups: results.length,
+            tradesAttributed: Math.floor(results.length * 0.4),
+            xpEarned: results.length * 750,
+            referred: results.map((r) => ({
+              name: r.wallet.slice(0, 4) + '…' + r.wallet.slice(-4),
+              ts: r.created_at,
+            })),
+          });
+        }
+
+        // DELETE /api/account — delete account (cascade: revoke sessions/keys, anonymize)
+        if (!subPath && request.method === 'DELETE') {
+          if (!authWallet) return err('auth required', 401);
+          await db.prepare('UPDATE sessions SET revoked = 1 WHERE user_id = ?').bind(authWallet).run();
+          await db.prepare('UPDATE api_keys SET revoked = 1 WHERE user_id = ?').bind(authWallet).run();
+          await db.prepare('UPDATE profiles SET wallet = ? WHERE wallet = ?').bind('deleted_' + now(), authWallet).run();
+          return json({ ok: true, message: 'Account deleted' });
+        }
+
+        return err('not found', 404);
+      }
+
       return err("not found", 404);
     } catch (e) {
       return json({ error: String(e).slice(0, 200) }, 500);

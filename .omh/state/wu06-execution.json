@@ -1,0 +1,12 @@
+{
+  "work_unit": "WU-06",
+  "phase": "Phase 5 \u2014 Validation & Deploy",
+  "status": "dispatched",
+  "started_at": "2026-08-17T23:13:36.060519",
+  "tasks": [
+    "Run full CI gate (build, lint, test, test:coverage, test:e2e)",
+    "Verify source truth grep (no demo/mock/fake)",
+    "Lighthouse CI verification",
+    "Deploy preparation"
+  ]
+}

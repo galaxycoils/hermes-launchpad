@@ -1,0 +1,15 @@
+{
+  "work_unit": "WU-05",
+  "phase": "Phase 4 \u2014 Retention Loops",
+  "status": "dispatched",
+  "started_at": "2026-08-17T23:10:48.657386",
+  "tasks": [
+    "Daily streak badge in feed header",
+    "Quest progress micro-toast on trade",
+    "Leaderboard snippet in feed",
+    "Push notification permission prompt (stub)",
+    "Re-engagement toast",
+    "Create useRetention.ts hook",
+    "Write tests"
+  ]
+}

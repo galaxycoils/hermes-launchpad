@@ -1,0 +1,18 @@
+{
+  "instance_id": "design-hermes-launchpad",
+  "session_id": "design-hermes-launchpad-20260817",
+  "plan_file": ".omh/plans/ralplan-design-hermes-launchpad.md",
+  "phase": "execution",
+  "current_task_index": 7,
+  "completed_tasks": [],
+  "blocked_tasks": [],
+  "iteration": 7,
+  "active_delegations": [
+    "deleg_1ce4f9b1",
+    "deleg_973f883a",
+    "deleg_fd2d4818",
+    "deleg_0ba0dbfe",
+    "deleg_4d01678d",
+    "deleg_718dba9b"
+  ]
+}

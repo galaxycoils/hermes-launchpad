@@ -7,7 +7,7 @@ export type { Token } from './tokens';
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? 'https://hermes-api.tahamtandariush.workers.dev';
 
-async function req<T>(path: string, method: 'GET' | 'POST' = 'GET', body?: unknown, timeoutMs = 8000, auth?: { signature: string; nonce: string }): Promise<T> {
+async function req<T>(path: string, method: 'GET' | 'POST' | 'DELETE' = 'GET', body?: unknown, timeoutMs = 8000, auth?: { signature: string; nonce: string }): Promise<T> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
@@ -145,5 +145,127 @@ export async function fetchLeaderboard(): Promise<{ data: Trader[]; live: boolea
     return { data: await req<Trader[]>('/api/leaderboard'), live: true };
   } catch {
     return { data: LEADERBOARD, live: false };
+  }
+}
+
+// ---- Account ----
+export interface WalletSession {
+  id: string;
+  wallet: string;
+  created_at: number;
+  expires_at: number;
+}
+
+export interface SecurityInfo {
+  twoFactor: { enabled: boolean; method: string; message?: string };
+  sessions: { id: string; createdAt: number; expiresAt: number; current: boolean }[];
+}
+
+export interface NotificationPrefs {
+  pushEnabled: boolean;
+  emailEnabled: boolean;
+  inAppEnabled: boolean;
+  tradeConfirmed: boolean;
+  questComplete: boolean;
+  graduation: boolean;
+  referralSignup: boolean;
+  updatedAt?: number;
+}
+
+export interface ApiKey {
+  id: string;
+  name: string;
+  scopes: string;
+  created_at: number;
+  expires_at: number;
+  revoked: number;
+}
+
+export interface CreateApiKeyResult {
+  ok: boolean;
+  id: string;
+  key: string;
+  name: string;
+  scopes: string;
+}
+
+export interface AccountReferrals {
+  code: string;
+  clicks: number;
+  signups: number;
+  tradesAttributed: number;
+  xpEarned: number;
+  referred: { name: string; ts: number }[];
+}
+
+export async function fetchWallets(auth: { signature: string; nonce: string }): Promise<{ wallets: WalletSession[] } | null> {
+  try {
+    return await req<{ wallets: WalletSession[] }>('/api/account/wallets', 'GET', undefined, 8000, auth);
+  } catch {
+    return null;
+  }
+}
+
+export async function registerWalletSession(auth: { signature: string; nonce: string }): Promise<{ ok: boolean; sessionId: string } | null> {
+  try {
+    return await req<{ ok: boolean; sessionId: string }>('/api/account/wallets', 'POST', {}, 8000, auth);
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchSecurity(auth: { signature: string; nonce: string }): Promise<SecurityInfo | null> {
+  try {
+    return await req<SecurityInfo>('/api/account/security', 'GET', undefined, 8000, auth);
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchNotificationPrefs(auth: { signature: string; nonce: string }): Promise<NotificationPrefs | null> {
+  try {
+    return await req<NotificationPrefs>('/api/account/notifications', 'GET', undefined, 8000, auth);
+  } catch {
+    return null;
+  }
+}
+
+export async function updateNotificationPrefs(prefs: Partial<NotificationPrefs>, auth: { signature: string; nonce: string }): Promise<{ ok: boolean } | null> {
+  try {
+    return await req<{ ok: boolean }>('/api/account/notifications', 'POST', prefs, 8000, auth);
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchApiKeys(auth: { signature: string; nonce: string }): Promise<{ apiKeys: ApiKey[] } | null> {
+  try {
+    return await req<{ apiKeys: ApiKey[] }>('/api/account/api-keys', 'GET', undefined, 8000, auth);
+  } catch {
+    return null;
+  }
+}
+
+export async function createApiKey(name: string, scopes: string, auth: { signature: string; nonce: string }): Promise<CreateApiKeyResult | null> {
+  try {
+    return await req<CreateApiKeyResult>('/api/account/api-keys', 'POST', { name, scopes }, 8000, auth);
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchAccountReferrals(auth: { signature: string; nonce: string }): Promise<AccountReferrals | null> {
+  try {
+    return await req<AccountReferrals>('/api/account/referrals', 'GET', undefined, 8000, auth);
+  } catch {
+    return null;
+  }
+}
+
+export async function deleteAccount(auth: { signature: string; nonce: string }): Promise<{ ok: boolean; message: string } | null> {
+  try {
+    return await req<{ ok: boolean; message: string }>('/api/account', 'DELETE', undefined, 8000, auth);
+  } catch {
+    return null;
   }
 }

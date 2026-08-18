@@ -3,7 +3,7 @@ import { toast, Toaster } from "sonner";
 import Avatar from "@/components/Avatar";
 import { connectWallet } from "@/lib/wallet";
 import { useInterval } from "@/hooks/useInterval";
-import { shareLink } from "@/lib/identity";
+import ReferralBanner from "@/components/ReferralBanner";
 
 interface TopNavProps {
   wallet: string | null;
@@ -44,36 +44,12 @@ function isDevnet(): boolean {
 export default function TopNav({ wallet, onWalletChange, live, refCode, streak }: TopNavProps) {
   const [scrolled, setScrolled] = useState(false);
   const [showWalletMenu, setShowWalletMenu] = useState(false);
-  const [bannerDismissed, setBannerDismissed] = useState(() => {
-    try {
-      return Boolean(localStorage.getItem("referral_banner_dismissed"));
-    } catch {
-      return false;
-    }
-  });
   const [balance, setBalance] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
 
   const devnet = isDevnet();
 
-  const handleDismissBanner = () => {
-    setBannerDismissed(true);
-    try {
-      localStorage.setItem("referral_banner_dismissed", "1");
-    } catch {
-      // ignore
-    }
-  };
 
-  const handleCopyRef = async () => {
-    const link = shareLink(refCode ?? "");
-    try {
-      await navigator.clipboard.writeText(link);
-      toast.success("Referral link copied!");
-    } catch {
-      toast.error("Could not copy link");
-    }
-  };
 
   const handleCopyAddress = useCallback(async () => {
     if (!wallet) return;
@@ -120,26 +96,7 @@ export default function TopNav({ wallet, onWalletChange, live, refCode, streak }
 
   return (
     <>
-      {!bannerDismissed && (
-        <div className="relative z-50 flex items-center justify-between border-b border-hermes/30 bg-gradient-to-r from-hermes/20 via-pump/10 to-hermes/20 px-3 py-1.5 text-xs text-white">
-          <div className="mx-auto flex items-center gap-2">
-            <span>🎁 <strong>Invite friends</strong> → earn XP on every trade</span>
-            <button
-              onClick={handleCopyRef}
-              className="rounded bg-white/10 px-2 py-0.5 font-mono text-[11px] font-bold text-pump hover:bg-white/20 transition-colors"
-            >
-              Copy Link
-            </button>
-          </div>
-          <button
-            onClick={handleDismissBanner}
-            aria-label="Dismiss banner"
-            className="text-white/40 hover:text-white text-sm px-1.5"
-          >
-            ×
-          </button>
-        </div>
-      )}
+      <ReferralBanner code={refCode} />
       <nav
         className={`sticky top-0 z-40 border-b transition-all duration-300 ${
           scrolled

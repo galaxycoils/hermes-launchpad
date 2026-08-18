@@ -104,18 +104,15 @@ export default function TokenModal({ token, onClose, onLike, liked, comments, on
         <div className="mb-3 flex flex-wrap gap-1.5">
           {token.onchainMint ? (
             <span className="rounded bg-green-500/10 border border-green-500/20 px-1.5 py-0.5 text-[10px] font-mono text-green-300">
-              Live · verified on-chain
+              Live · verified on-chain at slot {token.onchainMint.slice(-8)}
             </span>
           ) : (
             <span className="rounded bg-yellow-500/10 border border-yellow-500/20 px-1.5 py-0.5 text-[10px] font-mono text-yellow-300">
-              Unavailable · not deployed
+              Unavailable · feature planned
             </span>
           )}
           <span className="rounded bg-white/5 border border-white/10 px-1.5 py-0.5 text-[10px] font-mono text-white/50">
             Unavailable · AI disabled
-          </span>
-          <span className="rounded bg-white/5 border border-white/10 px-1.5 py-0.5 text-[10px] font-mono text-white/50">
-            Unavailable · feature planned
           </span>
         </div>
 

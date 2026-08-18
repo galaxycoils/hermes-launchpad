@@ -1,0 +1,168 @@
+{
+  "instance_id": "mint-one-real-devnet-token-and-close-release",
+  "session_id": "20260812_111854_0fb8e6",
+  "phase": "blocked",
+  "plan_file": ".omh/plans/ralplan-mint-one-real-devnet-token-and-close-release.md",
+  "current_task_index": 0,
+  "completed_tasks": [],
+  "blocked_tasks": [
+    "WU-0"
+  ],
+  "iteration": 1,
+  "updated_at": "2026-08-12T16:04:16Z",
+  "current_task_id": "WU-0",
+  "last_result": "BLOCKED",
+  "blocker_code": "E2E_BLOCKED_WALLET_UNAVAILABLE",
+  "evidence": {
+    "captured_at": "2026-08-12T16:04:16Z",
+    "outcome": "BLOCKED",
+    "blocker_code": "E2E_BLOCKED_WALLET_UNAVAILABLE",
+    "blocker_reason": "No browser with a connected injectable Solana wallet was available for safe inspection; isolated browser automation was unavailable and native app inspection found no running browser. The local Solana CLI wallet is informational only and cannot substitute for the required connected browser wallet identity.",
+    "baseline": {
+      "sha": "b20f0a90c6c313514acaff9ad3addbc107ed4709",
+      "branch": "main",
+      "tracking": "origin/main",
+      "dirty": true,
+      "tracked_modified": [
+        "skills-lock.json"
+      ],
+      "status_porcelain_v1": [
+        "## main...origin/main",
+        " M skills-lock.json",
+        "?? .agents/skills/cloudflare-d1/",
+        "?? .agents/skills/find-skills/",
+        "?? .agents/skills/obsidian-markdown/",
+        "?? .agents/skills/workers-best-practices/",
+        "?? .agents/skills/wrangler/",
+        "?? .beads/",
+        "?? .claude/commands/",
+        "?? .claude/guides/",
+        "?? .claude/plugins/",
+        "?? .claude/rubrics/",
+        "?? .claude/templates/",
+        "?? .coverage-thresholds.json",
+        "?? .hermes/plans/2026-08-08_GOAP-release-readiness.md",
+        "?? .hermes/plans/2026-08-12_111414-mint-one-devnet-token.md",
+        "?? .hermes/skills/cloudflare-d1",
+        "?? .hermes/skills/find-skills",
+        "?? .hermes/skills/obsidian-markdown",
+        "?? .hermes/skills/workers-best-practices",
+        "?? .hermes/skills/wrangler",
+        "?? .metaswarm/",
+        "?? .omh/plans/",
+        "?? .omh/specs/",
+        "?? .omh/state/mint-one-real-devnet-token-and-close-release/",
+        "?? CLAUDE.md",
+        "?? SERVICE-INVENTORY.md",
+        "?? bin/",
+        "?? scripts/beads-fetch-conversation-history.ts",
+        "?? scripts/beads-fetch-pr-comments.ts",
+        "?? scripts/beads-self-reflect.ts",
+        "?? tests/unit/api-index-token.test.ts",
+        "?? tests/unit/solana-sendtx-heap.test.ts",
+        "?? tests/worker/token-index.test.ts"
+      ],
+      "post_probe_product_diff_unchanged": true,
+      "preservation_rule": "Preserve all unrelated dirty/untracked files; later staging must be path-scoped."
+    },
+    "deployment": {
+      "pages_url": "https://hermes-launchpad.pages.dev",
+      "pages_http_status": 200,
+      "worker_url": "https://hermes-api.tahamtandariush.workers.dev",
+      "worker_health_url": "https://hermes-api.tahamtandariush.workers.dev/api/health",
+      "worker_health_http_status": 200,
+      "worker_health_ok": true
+    },
+    "cloudflare_d1": {
+      "authenticated": true,
+      "error_7403": false,
+      "account_id": "a55a43856c7029505b79300ec82f1629",
+      "database_name": "hermes-launchpad-db",
+      "database_id": "afa984c4-30e5-4f47-afce-a401ee2df098",
+      "remote_read_only_queries_succeeded": true,
+      "total_tokens": 9,
+      "onchain_tokens": 0,
+      "query_changed_db": false,
+      "rows_written": 0,
+      "unique_partial_index": {
+        "name": "idx_tokens_onchain_mint",
+        "exists": true,
+        "unique": true,
+        "partial": true,
+        "sql": "CREATE UNIQUE INDEX idx_tokens_onchain_mint ON tokens(onchain_mint) WHERE onchain_mint IS NOT NULL"
+      }
+    },
+    "github": {
+      "repository": "galaxycoils/hermes-launchpad",
+      "viewer_permission": "ADMIN",
+      "actions_enabled": true,
+      "actions_read_succeeded": true,
+      "workflow_dispatch_declared": true,
+      "deploy_workflow_active": true,
+      "dispatch_capability_basis": "Authenticated gh token has repo/workflow scopes; viewer permission ADMIN; active deploy workflow declares workflow_dispatch. No dispatch was performed.",
+      "required_secret_names": {
+        "CF_API_TOKEN": true,
+        "CF_ACCOUNT_ID": true
+      },
+      "production_environment_exists": true,
+      "production_environment_protection_rules": [],
+      "production_required_approvals": "none configured",
+      "latest_deploy_run": {
+        "database_id": 31531316729,
+        "head_sha": "b20f0a90c6c313514acaff9ad3addbc107ed4709",
+        "conclusion": "success"
+      }
+    },
+    "solana": {
+      "required_devnet_genesis": "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG",
+      "direct_rpc_genesis": "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG",
+      "worker_configured_rpc": "https://api.devnet.solana.com",
+      "worker_rpc_genesis": "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG",
+      "browser_configured_rpc": "https://api.devnet.solana.com",
+      "browser_rpc_genesis": "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG",
+      "all_genesis_match_devnet": true,
+      "program_id": "9K5eAWBkrUJbUiUC8aM6xeuXM2ACj9XNHfbC1X6Scjgz",
+      "program_executable": true,
+      "program_owner": "BPFLoaderUpgradeab1e11111111111111111111111",
+      "config_pda": "9Sv1kApQK428EUueU7dR9mTPqKqNR7dxkBmwtZuHDTkr",
+      "config_pda_derived_bump": 254,
+      "config_owner_matches_program": true,
+      "config_space": 113,
+      "config_discriminator_hex": "9b0caae01efacc82",
+      "config_initialized": true
+    },
+    "wallet": {
+      "browser_wallet_available": false,
+      "browser_wallet_connected": false,
+      "browser_wallet_identity": null,
+      "browser_wallet_balance_verified": false,
+      "native_inspection": "No running Safari, Chrome, Brave, or other browser process was present.",
+      "isolated_browser_inspection": "Blocked: Camofox browser service unavailable.",
+      "local_cli_wallet_informational_only": {
+        "address": "GkHE2vb8j3PGyjMvCmWJMffiKb2QwVye5TfuUPG1NK5a",
+        "devnet_balance_lamports": 17712710498,
+        "devnet_balance_sol": 17.712710498,
+        "matches_program_authority": true,
+        "cannot_substitute_for_browser_wallet": true
+      },
+      "debit_estimate_informational_only": {
+        "rent_360_lamports": 3396480,
+        "rent_82_lamports": 1461600,
+        "rent_165_lamports": 2039280,
+        "rent_sum_lamports": 6897360,
+        "rent_plus_10pct_and_20000_fee_cushion_lamports": 7607097,
+        "required_post_create_reserve_lamports": 10000000,
+        "minimum_before_current_network_fee_lamports": 17607097
+      }
+    },
+    "immutability": {
+      "candidate_mint_generated": false,
+      "wallet_signature_requested": false,
+      "transaction_broadcast": false,
+      "deployment_performed": false,
+      "d1_mutation_performed": false,
+      "credentials_modified": false,
+      "product_source_modified": false
+    }
+  }
+}

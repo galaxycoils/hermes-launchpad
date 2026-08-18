@@ -1,0 +1,9 @@
+{
+  "session_id": "design-hermes-launchpad-20260817",
+  "instance_id": "design-hermes-launchpad",
+  "started_at": "2026-08-17T02:30:00Z",
+  "phase": "execution",
+  "phase_step": "ralph iteration 1 - WU-A1 TokenCard redesign",
+  "plan_file": ".omh/plans/ralplan-design-hermes-launchpad.md",
+  "ralph_iteration": 0
+}

@@ -1,0 +1,12 @@
+{
+  "work_unit": "WU-04",
+  "phase": "Phase 3 \u2014 Professional Polish",
+  "status": "dispatched",
+  "started_at": "2026-08-17T23:07:17.593074",
+  "tasks": [
+    "Lighthouse PWA audit \u226590",
+    "axe-core 0 AA (skip link, focus-visible, ARIA, reduced-motion, touch targets, color-scheme)",
+    "Visual regression baseline (Playwright)",
+    "Polish (density, tabular-nums, truncated addresses, skeletons, error boundaries)"
+  ]
+}

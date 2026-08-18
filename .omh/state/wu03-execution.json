@@ -1,0 +1,21 @@
+{
+  "work_unit": "WU-03",
+  "phase": "Phase 2 \u2014 Viral Hooks",
+  "status": "dispatched",
+  "started_at": "2026-08-17T22:43:13.313435",
+  "tasks": [
+    "Create ReferralBanner.tsx",
+    "Enhance TradeReceiptCard.tsx",
+    "Enhance GraduationModal.tsx",
+    "Create useViral.ts",
+    "Wire integrations (TopNav, TokenModal, Ticker, TokenCard, Home)",
+    "Write tests (useViral.test.ts, viral-hooks.test.tsx)",
+    "Run CI gates (test:coverage, test:e2e)"
+  ],
+  "acceptance": [
+    "npm run test:coverage passes",
+    "Viral E2E tests pass",
+    "ReferralBanner dismissible + persists",
+    "Share works (native + fallback)"
+  ]
+}

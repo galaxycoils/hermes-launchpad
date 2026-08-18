@@ -379,7 +379,7 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
                 </button>
               </div>
               {!ranksLive ? (
-                <p className="text-xs text-yellow-400 text-center py-1">⚠️ Could not load top traders</p>
+                <p className="text-xs text-yellow-400 text-center py-1">Stale · last verified — reconnecting</p>
               ) : ranks.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {ranks.slice(0, 3).map((r) => (

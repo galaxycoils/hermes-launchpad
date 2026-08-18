@@ -38,3 +38,57 @@ export function xpFlyIn() {
     confetti(raw);
   } catch { /* silent */ }
 }
+
+// React component wrapper
+import { useEffect } from "react";
+
+interface ConfettiBurstProps {
+  colors?: string[];
+  particleCount?: number;
+  spread?: number;
+  origin?: { y: number };
+  startVelocity?: number;
+  ticks?: number;
+  drift?: number;
+}
+
+export function ConfettiBurst({
+  colors = ["#00ff66", "#a855f7", "#ffd60a", "#fff"],
+  particleCount = 100,
+  spread = 80,
+  origin = { y: 0.5 },
+  startVelocity = 30,
+  ticks = 200,
+  drift = 0,
+}: ConfettiBurstProps) {
+  useEffect(() => {
+    try {
+      confetti({
+        particleCount,
+        spread,
+        origin,
+        startVelocity,
+        colors,
+        ticks,
+        drift,
+      });
+    } catch {
+      // Silent fail
+    }
+  }, [colors, particleCount, spread, origin, startVelocity, ticks, drift]);
+
+  return null;
+}
+
+export function ConfettiPreset({ preset }: { preset: Preset }) {
+  const opts = presets[preset];
+  useEffect(() => {
+    try {
+      confetti(opts as confetti.Options);
+    } catch {
+      // Silent fail
+    }
+  }, [preset]);
+
+  return null;
+}

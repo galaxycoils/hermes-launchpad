@@ -13,6 +13,13 @@
   ::selection { background: #00ff66; color: #000; }
 }
 
+
+.touch-target { min-height: 44px; min-width: 44px; }
+@layer utilities {
+  .tabular-nums { font-variant-numeric: tabular-nums; }
+  .truncate-address { font-family: ui-monospace, SFMono-Regular, monospace; }
+}
+
 .skip-link { @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-[#00ff66] focus:px-4 focus:py-2 focus:text-black focus:shadow-lg; }
 
 @keyframes heart-pop { 0%, 100% { transform: scale(1); } 40% { transform: scale(1.35); } 70% { transform: scale(.9); } }

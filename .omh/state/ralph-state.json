@@ -1,0 +1,21 @@
+{
+  "instance_id": "hermes-launchpad-viral-polish",
+  "session_id": "autopilot-hermes-launchpad-2026-08-17",
+  "plan_file": ".omh/plans/2026-08-17-hermes-launchpad-viral-polish-account-demo-purge-design.md",
+  "phase": "execution",
+  "current_task_index": 11,
+  "completed_tasks": [
+    "WU-00",
+    "WU-01",
+    "WU-02",
+    "WU-03",
+    "WU-04",
+    "WU-05",
+    "WU-06"
+  ],
+  "blocked_tasks": [],
+  "iteration": 3,
+  "last_updated": "2026-08-17T23:14:45.571836",
+  "current_task": "WU-06",
+  "status": "complete"
+}

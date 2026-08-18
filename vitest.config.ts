@@ -21,5 +21,22 @@ export default defineConfig({
       project('integration', 'jsdom', ['tests/integration/**/*.test.{ts,tsx}']),
       project('worker', 'node', ['tests/worker/**/*.test.{ts,js}']),
     ],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/**/*.test.{ts,tsx}',
+        'src/test/**',
+        'src/main.tsx',
+        'src/service-worker.ts',
+      ],
+      thresholds: {
+        lines: 29,
+        branches: 44,
+        functions: 23,
+        statements: 29
+      },
+    },
   },
 })

@@ -1,0 +1,10 @@
+{
+  "session_id": "autopilot-hermes-launchpad-2026-08-17",
+  "instance_id": "hermes-launchpad-viral-polish",
+  "started_at": "2026-08-17T17:00:00-04:00",
+  "last_updated_at": "2026-08-18T00:45:00-04:00",
+  "phase": "execution",
+  "phase_step": "ralph iteration 3 - WU-02",
+  "ralph_iteration": 2,
+  "evidence_summary": "WU-00: Demo purge + coverage infra (PASS). WU-01: PWA infrastructure with manifest, SW, icons, installability, Workbox runtime caching (NetworkOnly for /api/trades|tokens/index|profile). All CI gates green."
+}
