@@ -6,9 +6,18 @@ compatibility_date = "2025-01-01"
 binding = "DB"
 database_name = "hermes-launchpad-db"
 database_id = "afa984c4-30e5-4f47-afce-a401ee2df098"
+migrations_dir = "./migrations"
 
 [ai]
 binding = "AI"
+
+[[durable_objects.bindings]]
+name = "WEBSOCKET_HUB"
+class_name = "WebSocketHub"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["WebSocketHub"]
 
 [vars]
 PROGRAM_ID = "9K5eAWBkrUJbUiUC8aM6xeuXM2ACj9XNHfbC1X6Scjgz"
