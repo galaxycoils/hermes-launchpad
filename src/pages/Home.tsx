@@ -22,6 +22,7 @@ import gsap from "gsap";
 import { useGsapContext } from "@/hooks/useGsapContext";
 import LiveTradeFeed from "@/components/LiveTradeFeed";
 import KingOfHill2 from "@/components/KingOfHill2";
+import SocialFeed from "@/components/SocialFeed";
 
 
 type Filter = VerifiedTokenFilter;
@@ -775,6 +776,11 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
       {/* Live Trade Feed - v2 real-time trading */}
       <div className="max-w-4xl mx-auto px-4 pb-4">
         <LiveTradeFeed />
+      </div>
+
+      {/* Social Feed - v2 followed traders activity */}
+      <div className="max-w-4xl mx-auto px-4 pb-4">
+        <SocialFeed wallet={wallet} />
       </div>
 
       {/* Mobile bottom tab bar */}
