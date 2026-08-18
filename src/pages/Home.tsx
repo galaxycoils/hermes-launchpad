@@ -464,11 +464,13 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
             ) : (
               <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                 {tokens.map((t) => (
-                  <PriceChart
-      token={allTokens[0] ?? null}
-      className="max-w-4xl mx-auto px-4 mb-4"
-    />
-    <TokenCard key={t.id} token={t} onSelect={setSelected} />
+                  <div key={t.id}>
+                    <PriceChart
+                      token={allTokens[0] ?? null}
+                      className="max-w-4xl mx-auto px-4 mb-4"
+                    />
+                    <TokenCard token={t} onSelect={setSelected} />
+                  </div>
                 ))}
               </div>
             )}

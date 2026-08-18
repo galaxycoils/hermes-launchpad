@@ -2,5 +2,8 @@
   "lines": 27,
   "branches": 46,
   "functions": 26,
-  "statements": 27
+  "statements": 27,
+  "enforcement": {
+    "command": "npm run test:coverage"
+  }
 }
