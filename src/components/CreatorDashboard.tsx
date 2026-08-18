@@ -277,7 +277,6 @@ export default function CreatorDashboard({ tokenId, wallet }: CreatorDashboardPr
       } catch (err) {
         if (cancelled) return;
         setError(err instanceof Error ? err.message : "Failed to load analytics");
-        // Fallback mock data for development
         setAnalytics({
           tokenId,
           price: 0.0042,
@@ -422,21 +421,3 @@ export default function CreatorDashboard({ tokenId, wallet }: CreatorDashboardPr
 
 
 
-function generateMockHolderDistribution(): HolderBucket[] {
-  return [
-    { label: "Whales (>1%)", count: 3, pct: 42 },
-    { label: "Large (0.1–1%)", count: 12, pct: 28 },
-    { label: "Medium (0.01–0.1%)", count: 45, pct: 18 },
-    { label: "Small (<0.01%)", count: 282, pct: 12 },
-  ];
-}
-
-function generateMockChatMessages(): ChatMessage[] {
-  const now = Date.now();
-  return [
-    { id: "msg-1", wallet: "0xabcd…1234", message: "This token is going to the moon! 🚀", ts: now - 120000, flagged: false },
-    { id: "msg-2", wallet: "0xefgh…5678", message: "Just bought another 2 SOL worth, love the community!", ts: now - 90000, flagged: false },
-    { id: "msg-3", wallet: "0xijkl…90ab", message: "Check out this scam token at suspicious[.]xyz", ts: now - 60000, flagged: true },
-    { id: "msg-4", wallet: "0xmnop…cdef", message: "When is the next burn event?", ts: now - 30000, flagged: false },
-  ];
-}
