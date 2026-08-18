@@ -277,3 +277,17 @@ After all gates pass, dispatch WU-03 via delegate_task.
 - Ready for Cloudflare Pages deployment
 
 **All work units complete!**
+
+
+---
+
+## v2 Plan: Better Than Pump.fun (COMPLETE)
+
+A comprehensive plan for Hermes Launchpad v2 has been completed with all 18 sections:
+- Database Schema (7 new tables)
+- API Schema (30+ endpoints)  
+- Component Breakdown (20+ components)
+- Wireframes, Timeline, Budget, Team, Launch Strategy, A/B Testing
+
+**Plan location:** `.omh/plans/2026-08-18-hermes-launchpad-v2-better-than-pumpfun.md`
+**Status:** Plan complete, awaiting user approval before execution.

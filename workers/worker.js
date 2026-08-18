@@ -1,5 +1,10 @@
 import nacl from 'tweetnacl';
 import { verifyCreateTransaction, verifyTradeTransaction, fetchCurveState } from "./chain.js";
+import { WebSocketHub } from "./src/do/websocket.js";
+import { handleGetProfile, handleUpdateProfile, handleGetPortfolio, handleGetTradeHistory, handleGetAchievements } from "./src/routes/profile.js";
+import { handleFollow, handleUnfollow, handleGetFeed, handleGetLeaderboard, handleGetFollowers, handleGetFollowing } from "./src/routes/social.js";
+import { handleCheckin, handleGetQuests, handleClaimQuest } from "./src/routes/quests.js";
+import { handleGetReferrals, handleValidateReferral, handleApplyReferral, handleGetReferralLeaderboard } from "./src/routes/referrals.js";
 
 // hermes-api v2 — Hermes Launchpad backend
 // Shared bonding-curve engine (mirrors programs/hermes-curve math) + trades,
@@ -237,6 +242,8 @@ async function callAi(env, system, user) {
   if (!r) return "";
   return typeof r === "string" ? r.trim() : JSON.stringify(r);
 }
+
+export { WebSocketHub };
 
 export default {
   async fetch(request, env) {
@@ -577,17 +584,7 @@ export default {
         })));
       }
 
-      if (path === "/api/leaderboard" && request.method === "GET") {
-        const { results } = await db.prepare(
-          "SELECT wallet, xp, level, trades, wins, pnl, streak_days FROM profiles ORDER BY xp DESC LIMIT 25"
-        ).all();
-        return json(results.map((r, i) => ({
-          rank: i + 1, name: r.wallet.slice(0, 4) + "…" + r.wallet.slice(-4),
-          xp: r.xp, level: r.level, trades: r.trades,
-          winRate: r.trades > 0 ? Math.round((r.wins / r.trades) * 100) : 0,
-          pnl: Math.round(r.pnl), streak: r.streak_days,
-        })));
-      }
+
 
       if (path === "/api/stats") {
         const tokens = await db.prepare("SELECT COUNT(*) c FROM tokens").first();
@@ -762,6 +759,104 @@ export default {
         }
 
         return err('not found', 404);
+      }
+
+
+      // ---------- WebSocket upgrade ----------
+      if (path === "/ws" && request.method === "GET") {
+        const id = env.WEBSOCKET_HUB.idFromName("global");
+        const hub = env.WEBSOCKET_HUB.get(id);
+        return hub.fetch(request);
+      }
+
+      // ---------- profile routes ----------
+      const profileMatch = path.match(/^\/api\/profile\/([a-zA-Z0-9-]+)(\/(portfolio|trades|achievements|followers|following))?$/);
+      if (profileMatch) {
+        const wallet = profileMatch[1];
+        const subPath = profileMatch[2];
+
+        if (!subPath && request.method === "GET") {
+          return await handleGetProfile(db, wallet);
+        }
+        if (!subPath && request.method === "PUT") {
+          const b = await request.json().catch(() => ({}));
+          return await handleUpdateProfile(db, wallet, b);
+        }
+        if (subPath === "/portfolio" && request.method === "GET") {
+          return await handleGetPortfolio(db, wallet);
+        }
+        if (subPath === "/trades" && request.method === "GET") {
+          return await handleGetTradeHistory(db, wallet, url);
+        }
+        if (subPath === "/achievements" && request.method === "GET") {
+          return await handleGetAchievements(db, wallet);
+        }
+        if (subPath === "/followers" && request.method === "GET") {
+          return await handleGetFollowers(db, wallet);
+        }
+        if (subPath === "/following" && request.method === "GET") {
+          return await handleGetFollowing(db, wallet);
+        }
+      }
+
+      // ---------- social routes ----------
+      if (path === "/api/leaderboard" && request.method === "GET") {
+        return await handleGetLeaderboard(db, url);
+      }
+
+      const followMatch = path.match(/^\/api\/follow\/([a-zA-Z0-9-]+)$/);
+      if (followMatch) {
+        const targetWallet = followMatch[1];
+        const b = await request.json().catch(() => ({}));
+        if (request.method === "POST") {
+          return await handleFollow(db, targetWallet, b);
+        }
+        if (request.method === "DELETE") {
+          return await handleUnfollow(db, targetWallet, b);
+        }
+      }
+
+      const feedMatch = path.match(/^\/api\/feed\/([a-zA-Z0-9-]+)$/);
+      if (feedMatch && request.method === "GET") {
+        return await handleGetFeed(db, feedMatch[1], url);
+      }
+
+      // ---------- quests routes ----------
+      if (path === "/api/checkin" && request.method === "POST") {
+        const b = await request.json().catch(() => ({}));
+        return await handleCheckin(db, b);
+      }
+
+      const questsMatch = path.match(/^\/api\/quests\/([a-zA-Z0-9-]+)(\/claim)?$/);
+      if (questsMatch) {
+        const wallet = questsMatch[1];
+        if (!questsMatch[2] && request.method === "GET") {
+          return await handleGetQuests(db, wallet);
+        }
+        if (questsMatch[2] === "/claim" && request.method === "POST") {
+          const b = await request.json().catch(() => ({}));
+          return await handleClaimQuest(db, wallet, b);
+        }
+      }
+
+      // ---------- referrals routes ----------
+      const referralsMatch = path.match(/^\/api\/referrals\/([a-zA-Z0-9-]+)$/);
+      if (referralsMatch && request.method === "GET") {
+        return await handleGetReferrals(db, referralsMatch[1]);
+      }
+
+      if (path === "/api/referrals/validate" && request.method === "POST") {
+        const b = await request.json().catch(() => ({}));
+        return await handleValidateReferral(db, b);
+      }
+
+      if (path === "/api/referrals/apply" && request.method === "POST") {
+        const b = await request.json().catch(() => ({}));
+        return await handleApplyReferral(db, b);
+      }
+
+      if (path === "/api/referrals/leaderboard" && request.method === "GET") {
+        return await handleGetReferralLeaderboard(db);
       }
 
       return err("not found", 404);
