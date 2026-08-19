@@ -745,7 +745,7 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
       </div>
 
       {/* BottomNav - v2 mobile navigation */}
-      <BottomNav activeTab="trade" onTabChange={() => {}} unreadCount={0} />
+      <BottomNav activeTab="trade" onTabChange={(tab) => { if (tab === 'trade') window.location.href = '/trade'; }} unreadCount={0} />
 
       {/* Mobile bottom tab bar */}
       <BottomTabBar tab={tab} onTabChange={setTab} onCreatePress={() => setShowCreate(true)} />

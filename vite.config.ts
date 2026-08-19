@@ -3,7 +3,6 @@ import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 import { inspectAttr } from 'kimi-plugin-inspect-react'
 import { VitePWA } from "vite-plugin-pwa"
-
 import { cloudflare } from "@cloudflare/vite-plugin";
 
 // https://vite.dev/config/
@@ -73,6 +72,13 @@ export default defineConfig({
   })],
   server: {
     port: 3000,
+    proxy: {
+      '/api': {
+        target: 'https://hermes-api.tahamtandariush.workers.dev',
+        changeOrigin: true,
+        secure: true,
+      }
+    }
   },
   resolve: {
     alias: {

@@ -15,9 +15,10 @@ binding = "AI"
 name = "WEBSOCKET_HUB"
 class_name = "WebSocketHub"
 
+# Free plan requires new_sqlite_classes format
 [[migrations]]
 tag = "v1"
-new_classes = ["WebSocketHub"]
+new_sqlite_classes = ["WebSocketHub"]
 
 [vars]
 PROGRAM_ID = "9K5eAWBkrUJbUiUC8aM6xeuXM2ACj9XNHfbC1X6Scjgz"
