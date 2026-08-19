@@ -25,6 +25,6 @@ CLUSTER = "devnet"
 GRADUATION_SOL = "85"
 REQUIRE_SIGNED_TRADES = "true"
 # Cloudflare Workers IPs are blocked by api.devnet.solana.com and rpcpool.
-# Use Helius (add ?api-key=YOUR_KEY) or another keyed RPC that allows CF egress.
+# Use Helius (append your key as a query parameter) or another keyed RPC that allows CF egress.
 # SOLANA_RPC is managed via wrangler secrets (or defaults to Helius in worker.js)
 

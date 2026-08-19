@@ -97,18 +97,40 @@ export function useTrade(token: Token, wallet: string | null): UseTradeReturn {
         // Sign & send
         const signature = await sendTx(provider, tx);
 
-        // Index trade (D1 + XP)
-        const result = await indexTrade({
-          mint: token.onchainMint,
-          signature,
-          wallet,
-          side,
-        });
+        // Index trade (D1 + XP) — isolated: on-chain trade already succeeded
+        let result: TradeResult | null = null;
+        try {
+          result = await indexTrade({
+            mint: token.onchainMint,
+            signature,
+            wallet,
+            side,
+          });
+        } catch (e) {
+          // Index failure must not hijack the trade success path.
+          // On-chain tx succeeded above; log the index error and continue.
+          console.error('[useTrade] indexTrade failed:', e instanceof Error ? e.message : e);
+        }
 
         // Refresh curve state after trade
         await refreshCurve();
 
-        return result;
+        // Return indexed result if available; on-chain trade succeeded regardless
+        if (result) return result;
+
+        // Fallback when indexing failed — report on-chain success only
+        return {
+          ok: true,
+          side,
+          solAmount: 0,
+          tokenAmount: 0,
+          price: 0,
+          pnl: 0,
+          migrationReady: false,
+          token,
+          xpGained: undefined,
+          questCompleted: null,
+        };
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Trade failed";
         setError(msg);

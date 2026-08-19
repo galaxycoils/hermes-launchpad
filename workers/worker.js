@@ -96,8 +96,18 @@ const AI_MODEL = "@cf/meta/llama-3.1-8b-fast-v2";
 const CURVE_CACHE_TTL_MS = 20_000;
 const CURVE_CACHE_MAX = 200;
 const curveStateCache = new Map();
-const HELIUS_DEVNET_RPC = "https://devnet.helius-rpc.com/?api-key=d2891b4a-5a20-48ea-9ce1-046c2b899bbe";
-const getRpcUrl = (env) => env.SOLANA_RPC || HELIUS_DEVNET_RPC;
+const getRpcUrl = (env) => {
+  if (env.SOLANA_RPC) {
+    return env.SOLANA_RPC;
+  }
+  // Fallback for local dev when wrangler secret is not configured.
+  // Production workers MUST have SOLANA_RPC set — public devnet RPC blocks
+  // Cloudflare Worker egress (HTTP 403), so this fallback is dev-only.
+  if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV !== 'production') {
+    return 'https://api.devnet.solana.com';
+  }
+  throw new Error('SOLANA_RPC wrangler secret is not configured');
+};
 
 
 const QUESTS = [

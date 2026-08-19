@@ -97,6 +97,11 @@ export default function TopNav({ wallet, onWalletChange, live, refCode, streak }
   return (
     <>
       <ReferralBanner code={refCode} />
+      {devnet && (
+        <div className="rounded-md border border-yellow-500/30 bg-yellow-500/10 px-3 py-1.5 text-center text-xs font-bold text-yellow-300">
+          Devnet preview — not mainnet. Use a Devnet wallet and faucet SOL.
+        </div>
+      )}
       <nav
         className={`sticky top-0 z-40 border-b transition-all duration-300 ${
           scrolled
