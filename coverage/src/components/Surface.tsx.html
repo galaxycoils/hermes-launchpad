@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">9.43% </span>
+                <span class="strong">30.18% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>5/53</span>
+                <span class='fraction'>16/53</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/0</span>
+                <span class='fraction'>1/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">20% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/5</span>
+                <span class='fraction'>1/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">9.43% </span>
+                <span class="strong">30.18% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>5/53</span>
+                <span class='fraction'>16/53</span>
             </div>
         
             
@@ -159,19 +159,19 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -244,20 +244,20 @@
  * Antigravity surface card — glassmorphism with layered depth.
  * Floating card feel via backdrop blur, soft border, subtle shadow.
  */
-export <span class="fstat-no" title="function not covered" >function Surface({ className, children }: SurfaceProps) {</span>
-<span class="cstat-no" title="statement not covered" >  return (</span>
-<span class="cstat-no" title="statement not covered" >    &lt;div</span>
-<span class="cstat-no" title="statement not covered" >      className={[</span>
-<span class="cstat-no" title="statement not covered" >        "rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]",</span>
-<span class="cstat-no" title="statement not covered" >        "transition-all duration-300 hover:border-white/20 hover:bg-white/[0.05] hover:shadow-[0_12px_40px_rgba(0,0,0,0.5)]",</span>
-<span class="cstat-no" title="statement not covered" >        "active:scale-[0.99]",</span>
-<span class="cstat-no" title="statement not covered" >        className ?? "",</span>
-<span class="cstat-no" title="statement not covered" >      ].join(" ")}</span>
+export function Surface({ className, children }: SurfaceProps) {
+  return (
+    &lt;div
+      className={[
+        "rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]",
+        "transition-all duration-300 hover:border-white/20 hover:bg-white/[0.05] hover:shadow-[0_12px_40px_rgba(0,0,0,0.5)]",
+        "active:scale-[0.99]",
+<span class="branch-0 cbranch-no" title="branch not covered" >        className ?? "",</span>
+      ].join(" ")}
     &gt;
-<span class="cstat-no" title="statement not covered" >      {children}</span>
-<span class="cstat-no" title="statement not covered" >    &lt;/div&gt;</span>
+      {children}
+    &lt;/div&gt;
   );
-<span class="cstat-no" title="statement not covered" >}</span>
+}
 &nbsp;
 /**
  * Elevated surface for nested content — less blur, more solid.
@@ -328,7 +328,7 @@ export <span class="fstat-no" title="function not covered" >function XpFly({ tex
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-18T05:52:40.569Z
+                at 2026-08-19T02:41:33.628Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -1,23 +1,20 @@
 {
-  "instance_id": "hermes-launchpad-viral-polish",
-  "session_id": "autopilot-hermes-launchpad-2026-08-17",
-  "plan_file": ".omh/plans/2026-08-17-hermes-launchpad-viral-polish-account-demo-purge-design.md",
-  "phase": "execution",
-  "current_task_index": 11,
-  "completed_tasks": [
-    "WU-00",
-    "WU-01",
-    "WU-02",
-    "WU-03",
-    "WU-04",
-    "WU-05",
-    "WU-06"
-  ],
-  "blocked_tasks": [],
-  "iteration": 3,
-  "last_updated": "2026-08-17T23:59:21.900827",
-  "current_task": "WU-06",
-  "status": "complete",
-  "v2_plan_complete": true,
-  "v2_plan_path": ".omh/plans/2026-08-18-hermes-launchpad-v2-better-than-pumpfun.md"
+    "instance_id": "hermes-launchpad-whats-next",
+    "session_id": "autopilot-hermes-launchpad-whats-next-2026-08-18",
+    "plan_file": ".omh/plans/ralplan-hermes-whats-next-3.md",
+    "phase": "completed",
+    "current_task_index": 8,
+    "completed_tasks": [
+        "Task 1",
+        "Task 2",
+        "Task 3",
+        "Task 3.1",
+        "Task 4",
+        "Task 5",
+        "Task 6",
+        "Task 7"
+    ],
+    "blocked_tasks": [],
+    "iteration": 1,
+    "completion_note": "All tasks verified on-chain and live. Buy XLBNHFCyMPUQ4zqJ8tiL5DTdnbBeaWQ97GaLjiwhQMuRcYC2Xhj4itRhE85W8hhZjdR5t3oPRQXW88ZUDRKq98s + sell 5u6Ffk2kCqshA7RhzFuxFPdSm3uVKELJ55KSZFbVF9GWPeSLdzqnYeYTZq1y7DXzn89dX29D4tHrDzg3eDZk3dLc confirmed on devnet, indexed live. Suite green (176 tests), deployed, docs updated."
 }

@@ -1,10 +1,13 @@
 {
-  "instance_id": "hermes-launchpad-viral-polish",
-  "session_id": "autopilot-hermes-launchpad-2026-08-17",
-  "plan_file": ".omh/plans/2026-08-17-hermes-launchpad-viral-polish-account-demo-purge-design.md",
-  "phase": "execution",
-  "current_task_index": 0,
-  "completed_tasks": [],
-  "blocked_tasks": [],
-  "iteration": 0
+  "instance_id": "hermes-launchpad-whats-next",
+  "tasks": [
+    { "id": "Task 1", "status": "completed", "file_scope": "tests/worker/token-index.test.ts, tests/worker/trade-index.test.ts", "notes": "Verified existing tests cover index endpoints - no new tests needed" },
+    { "id": "Task 2", "status": "completed", "file_scope": "src/components/TokenCard.tsx, src/components/TokenModal.tsx", "notes": "Verified existing provenance->badge mapping is correct - no changes needed" },
+    { "id": "Task 3", "status": "completed", "file_scope": "src/components/TopNav.tsx, tests/client/topnav-devnet-banner.test.tsx", "notes": "Added devnet preview banner to TopNav.tsx" },
+    { "id": "Task 3.1", "status": "completed", "file_scope": "workers/worker.js, public/_worker.js, workers/wrangler.toml", "notes": "Removed hardcoded Helius API key, now requires SOLANA_RPC env var" },
+    { "id": "Task 4", "status": "completed", "file_scope": "src/components/CreateTokenModal.tsx, src/hooks/useTrade.ts, src/lib/api.ts", "notes": "Verified existing indexToken call in CreateTokenModal.tsx (line 58) and indexTrade call in useTrade.ts (line 101). Fixed gap: indexTrade was inside main try/catch — isolated it with its own try/catch so on-chain trade success is not hijacked by index API failure. Added fallback TradeResult return when indexing fails." },
+    { "id": "Task 5", "status": "pending", "file_scope": "External - hermes-launchpad.pages.dev, Solana devnet" },
+    { "id": "Task 6", "status": "pending", "file_scope": "README.md, DEPLOY.md" },
+    { "id": "Task 7", "status": "pending", "file_scope": "Full suite - lint, build, all tests" }
+  ]
 }

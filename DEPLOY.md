@@ -14,7 +14,7 @@ Browser ──► Cloudflare Pages (hermes-launchpad.pages.dev)   [static fronte
 
 All trading runs on-chain via the Anchor program. The Worker is an indexer, not a ledger.
 
-**Status (2026-08-18):** Public devnet preview is live. Three on-chain tokens indexed (SMOKE, HNQ, CX). Migration is ready at the 85 SOL curve lock; Raydium CPMM pool creation remains pending an unprovisioned devnet `amm_config`. Devnet only. No mainnet claim. Worker indexing proven: `SOLANA_RPC` wrangler secret set to authenticated RPC; `POST /api/trades/index` returns `{"ok":true}` for live buy+sell signatures.
+**Status (2026-08-18):** Public devnet preview is live. Four on-chain tokens indexed (SMOKE, HNQ, CX, FJEWS). Migration is ready at the 85 SOL curve lock; Raydium CPMM pool creation remains pending an unprovisioned devnet `amm_config`. Devnet only. No mainnet claim. Worker indexing proven: `SOLANA_RPC` wrangler secret set to authenticated RPC; `POST /api/trades/index` returns `{"ok":true}` for live buy+sell signatures.
 
 ## Tester howto (devnet preview)
 
@@ -34,7 +34,7 @@ The create → buy → sell path completed successfully on Solana devnet for min
 - Buy HNQ: [`4vbiH8ChvaM2b71Dch4xuNWHviVsz4jXttdqWkDThWab1NRVDmR9pX4oVw1PbLoTy3s5K3LghHqqcJUV4LLsMvKa`](https://explorer.solana.com/tx/4vbiH8ChvaM2b71Dch4xuNWHviVsz4jXttdqWkDThWab1NRVDmR9pX4oVw1PbLoTy3s5K3LghHqqcJUV4LLsMvKa?cluster=devnet)
 - Sell HNQ: [`3PAv8dYYnrTUBayMbPkcnURvXn6HA6okjLv8UHeFENxyb96K4L2dEtchmx2ZFmdYfnttuYhLiqSDTTLkXJJzBqFY`](https://explorer.solana.com/tx/3PAv8dYYnrTUBayMbPkcnURvXn6HA6okjLv8UHeFENxyb96K4L2dEtchmx2ZFmdYfnttuYhLiqSDTTLkXJJzBqFY?cluster=devnet)
 
-Worker indexing is now proven live: `SOLANA_RPC` wrangler secret configured with an authenticated Cloudflare-compatible RPC; `POST /api/trades/index` returns `{"ok":true}` for both buy and sell signatures. SMOKE trade proof: buy [`XLBNHF…q98s`](https://explorer.solana.com/tx/XLBNHFCyMPUQ4zqJ8tiL5DTdnbBeaWQ97GaLjiwhQMuRcYC2Xhj4itRhE85W8hhZjdR5t3oPRQXW88ZUDRKq98s?cluster=devnet) → sell [`39Myku…Q5YfR`](https://explorer.solana.com/tx/39MykuF1uVs9ksZYoYd9jdWFo6HHqrVV9gS1d3LkZevcbVvM3vpBUb7KV5V378yZANsTExT4cUuBBA7NLCrQ5YfR?cluster=devnet). Additionally two more tokens created and indexed on-chain: SMOKE (`CEedekzwhRZECj7eyU66FFtMSd8ziyYVzywHHs1P6x7f`) and CX (`8fXmJGNZQkBYHTaDHof1zgiEiYR1uGmoTLqEj6qAS8Db`). SMOKE/CX create transaction signatures not captured in this session; mints verified non-null via API.
+Worker indexing is now proven live: `SOLANA_RPC` wrangler secret configured with an authenticated Cloudflare-compatible RPC; `POST /api/trades/index` returns `{"ok":true}` for both buy and sell signatures. SMOKE trade proof: buy [`XLBNHF…q98s`](https://explorer.solana.com/tx/XLBNHFCyMPUQ4zqJ8tiL5DTdnbBeaWQ97GaLjiwhQMuRcYC2Xhj4itRhE85W8hhZjdR5t3oPRQXW88ZUDRKq98s?cluster=devnet) → sell [`39Myku…Q5YfR`](https://explorer.solana.com/tx/39MykuF1uVs9ksZYoYd9jdWFo6HHqrVV9gS1d3LkZevcbVvM3vpBUb7KV5V378yZANsTExT4cUuBBA7NLCrQ5YfR?cluster=devnet). Additionally two more tokens created and indexed on-chain: SMOKE (`CEedekzwhRZECj7eyU66FFtMSd8ziyYVzywHHs1P6x7f`) and CX (`8fXmJGNZQkBYHTaDHof1zgiEiYR1uGmoTLqEj6qAS8Db`) and FJEWS (`BTkZnXxgrrquqLKTZj8kje1YnuEyJiqGV7Ec2NigCkCS`). SMOKE/CX/FJEWS create transaction signatures not captured in this session; mints verified non-null via API.
 
 ## IDs
 

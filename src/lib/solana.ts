@@ -49,7 +49,7 @@ export const findCurvePda = (mint: PublicKey) =>
 
 export const findAta = (mint: PublicKey, owner: PublicKey) =>
   PublicKey.findProgramAddressSync(
-    [owner.toBuffer(), mint.toBuffer(), TOKEN_PROGRAM_ID.toBuffer()],
+    [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
     ATA_PROGRAM_ID
   )[0];
 
