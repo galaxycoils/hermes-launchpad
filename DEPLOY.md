@@ -14,17 +14,27 @@ Browser ──► Cloudflare Pages (hermes-launchpad.pages.dev)   [static fronte
 
 All trading runs on-chain via the Anchor program. The Worker is an indexer, not a ledger.
 
-**Status (2026-08-13):** Public devnet preview is live. Migration is ready at the 85 SOL curve lock; Raydium CPMM pool creation remains pending an unprovisioned devnet `amm_config`. Devnet only. No mainnet claim.
+**Status (2026-08-18):** Public devnet preview is live. Three on-chain tokens indexed (SMOKE, HNQ, CX). Migration is ready at the 85 SOL curve lock; Raydium CPMM pool creation remains pending an unprovisioned devnet `amm_config`. Devnet only. No mainnet claim. Worker indexing proven: `SOLANA_RPC` wrangler secret set to authenticated RPC; `POST /api/trades/index` returns `{"ok":true}` for live buy+sell signatures.
+
+## Tester howto (devnet preview)
+
+1. **Wallet:** Install Phantom or Solflare. Switch to **Solana Devnet** (not mainnet).
+2. **Fund:** Airdrop from [Solana faucet](https://developers.solana.com/docs/guides/explorer/hello-solana) or claim via `solana airdrop 1` (CLI). Fee wallet `GkHE2vb8j3PGyjMvCmWJMffiKb2QwVye5TfuUPG1NK5a` holds ~16 SOL on devnet.
+3. **Browse:** Open [hermes-launchpad.pages.dev](https://hermes-launchpad.pages.dev). You should see the yellow **Devnet preview** banner.
+4. **Create:** Hit "Launch Token", fill name/ticker/emoji, sign the tx. Token appears with **On-chain** badge if indexed (may take a moment).
+5. **Trade:** Pick an on-chain token (SMOKE/HNQ/CX), hit Buy or Sell, confirm in wallet. Trade indexes automatically.
+6. **Verify:** Check Explorer links for tx signatures. Curl `POST /api/trades/index` to confirm worker indexed the trade.
+7. **Do NOT use a mainnet wallet** — devnet tokens have no real value.
 
 ## Devnet smoke proof
 
 The create → buy → sell path completed successfully on Solana devnet for mint [`HnqNovn7kkJbCbwxMYuxZDgGQoMAbmnbLxpFooCwnKbJ`](https://explorer.solana.com/address/HnqNovn7kkJbCbwxMYuxZDgGQoMAbmnbLxpFooCwnKbJ?cluster=devnet):
 
-- Create: [`5dyWsG1VpGz6QzmGUfpyZTMAAe9WghtyiXeNk6jJBwhsYJ5A8LQH3QsiybAo8zB8L3ctCxYEqsXS2vwxAiXwcxT9`](https://explorer.solana.com/tx/5dyWsG1VpGz6QzmGUfpyZTMAAe9WghtyiXeNk6jJBwhsYJ5A8LQH3QsiybAo8zB8L3ctCxYEqsXS2vwxAiXwcxT9?cluster=devnet)
-- Buy: [`4vbiH8ChvaM2b71Dch4xuNWHviVsz4jXttdqWkDThWab1NRVDmR9pX4oVw1PbLoTy3s5K3LghHqqcJUV4LLsMvKa`](https://explorer.solana.com/tx/4vbiH8ChvaM2b71Dch4xuNWHviVsz4jXttdqWkDThWab1NRVDmR9pX4oVw1PbLoTy3s5K3LghHqqcJUV4LLsMvKa?cluster=devnet)
-- Sell: [`3PAv8dYYnrTUBayMbPkcnURvXn6HA6okjLv8UHeFENxyb96K4L2dEtchmx2ZFmdYfnttuYhLiqSDTTLkXJJzBqFY`](https://explorer.solana.com/tx/3PAv8dYYnrTUBayMbPkcnURvXn6HA6okjLv8UHeFENxyb96K4L2dEtchmx2ZFmdYfnttuYhLiqSDTTLkXJJzBqFY?cluster=devnet)
+- Create HNQ: [`5dyWsG1VpGz6QzmGUfpyZTMAAe9WghtyiXeNk6jJBwhsYJ5A8LQH3QsiybAo8zB8L3ctCxYEqsXS2vwxAiXwcxT9`](https://explorer.solana.com/tx/5dyWsG1VpGz6QzmGUfpyZTMAAe9WghtyiXeNk6jJBwhsYJ5A8LQH3QsiybAo8zB8L3ctCxYEqsXS2vwxAiXwcxT9?cluster=devnet)
+- Buy HNQ: [`4vbiH8ChvaM2b71Dch4xuNWHviVsz4jXttdqWkDThWab1NRVDmR9pX4oVw1PbLoTy3s5K3LghHqqcJUV4LLsMvKa`](https://explorer.solana.com/tx/4vbiH8ChvaM2b71Dch4xuNWHviVsz4jXttdqWkDThWab1NRVDmR9pX4oVw1PbLoTy3s5K3LghHqqcJUV4LLsMvKa?cluster=devnet)
+- Sell HNQ: [`3PAv8dYYnrTUBayMbPkcnURvXn6HA6okjLv8UHeFENxyb96K4L2dEtchmx2ZFmdYfnttuYhLiqSDTTLkXJJzBqFY`](https://explorer.solana.com/tx/3PAv8dYYnrTUBayMbPkcnURvXn6HA6okjLv8UHeFENxyb96K4L2dEtchmx2ZFmdYfnttuYhLiqSDTTLkXJJzBqFY?cluster=devnet)
 
-All three transactions are finalized with no on-chain error. Worker indexing is not yet proven live: Solana public devnet RPC returns HTTP 403 to Cloudflare Worker egress (`Your IP or provider is blocked from this endpoint`), so `/api/tokens/index` and `/api/trades/index` fail closed. Local verification of the same signatures succeeds. Configure an authenticated Cloudflare-compatible devnet RPC before claiming indexed provenance.
+Worker indexing is now proven live: `SOLANA_RPC` wrangler secret configured with an authenticated Cloudflare-compatible RPC; `POST /api/trades/index` returns `{"ok":true}` for both buy and sell signatures. SMOKE trade proof: buy [`XLBNHF…q98s`](https://explorer.solana.com/tx/XLBNHFCyMPUQ4zqJ8tiL5DTdnbBeaWQ97GaLjiwhQMuRcYC2Xhj4itRhE85W8hhZjdR5t3oPRQXW88ZUDRKq98s?cluster=devnet) → sell [`39Myku…Q5YfR`](https://explorer.solana.com/tx/39MykuF1uVs9ksZYoYd9jdWFo6HHqrVV9gS1d3LkZevcbVvM3vpBUb7KV5V378yZANsTExT4cUuBBA7NLCrQ5YfR?cluster=devnet). Additionally two more tokens created and indexed on-chain: SMOKE (`CEedekzwhRZECj7eyU66FFtMSd8ziyYVzywHHs1P6x7f`) and CX (`8fXmJGNZQkBYHTaDHof1zgiEiYR1uGmoTLqEj6qAS8Db`). SMOKE/CX create transaction signatures not captured in this session; mints verified non-null via API.
 
 ## IDs
 
