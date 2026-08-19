@@ -571,7 +571,7 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
             {/* Level + XP - Enhanced with Gamification Components */}
             <TraderProfile wallet={wallet ?? ""} />
             <div className="grid gap-4 md:grid-cols-2">
-              <AchievementBadges profile={profile} />
+              <AchievementBadges profile={profile ?? { wallet: "", xp: 0, level: 0, streak_days: 0, ref_code: "", trades: 0, pnl: 0, achievements: [] }} />
               <StreakCounter streak={Number(profile?.streak_days ?? 0)} />
             </div>
 

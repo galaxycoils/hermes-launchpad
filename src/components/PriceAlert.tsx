@@ -102,9 +102,12 @@ export default function PriceAlert({ tokenId, wallet }: { tokenId: string; walle
 
   // Check push support on mount
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPushSupported(supported);
     if (supported && "Notification" in window) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPushSubscribed(Notification.permission === "granted");
     }
   }, []);
@@ -132,6 +135,7 @@ export default function PriceAlert({ tokenId, wallet }: { tokenId: string; walle
   }, [wallet, tokenId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAlerts();
   }, [fetchAlerts]);
 

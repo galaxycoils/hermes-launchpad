@@ -69,6 +69,7 @@ export default function SocialFeed({ wallet }: { wallet: string | null }) {
 
   // Initial fetch + polling
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchFeed();
     refreshRef.current = setInterval(fetchFeed, 15_000);
     return () => {

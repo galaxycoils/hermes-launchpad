@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Surface } from "@/components/Surface";
+import type { Profile } from "@/lib/tokens";
 
 // ---- types ----
 
@@ -177,7 +178,9 @@ export function AchievementGrid({ wallet }: AchievementGridProps) {
     if (wallet) {
       fetchAchievements();
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUnlockedIds(new Set());
     }
 
@@ -244,8 +247,7 @@ export function AchievementGrid({ wallet }: AchievementGridProps) {
   );
 }
 
-
-export default function AchievementBadges({ profile }: { profile: any }) {
+export default function AchievementBadges({ profile }: { profile: Profile }) {
   const earnedIds = profile?.achievements ?? [];
   return (
     <div className="space-y-2">

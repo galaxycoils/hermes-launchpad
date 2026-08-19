@@ -32,6 +32,7 @@ export function useWebSocket(): UseWebSocketReturn {
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heartbeatTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const deadRef = useRef(false);
+  const connectRef = useRef<(() => void) | null>(null);
 
   const [connected, setConnected] = useState(false);
   const [messages, setMessages] = useState<WsMessage[]>([]);
@@ -87,13 +88,18 @@ export function useWebSocket(): UseWebSocketReturn {
       if (deadRef.current) return;
       const delay = getBackoff(reconnectAttempts.current);
       reconnectAttempts.current += 1;
-      reconnectTimer.current = setTimeout(connect, delay);
+      reconnectTimer.current = setTimeout(() => connectRef.current?.(), delay);
     };
 
     ws.onerror = () => {
       ws.close();
     };
   }, [clearTimers, startHeartbeat]);
+
+  // Store connect in ref for use in onclose
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   useEffect(() => {
     deadRef.current = false;

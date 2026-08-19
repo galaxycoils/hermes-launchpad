@@ -60,6 +60,7 @@ export interface Profile {
   trades: number;
   pnl: number;
   daily_checked?: boolean;
+  achievements: string[];
 }
 
 export interface Trade {

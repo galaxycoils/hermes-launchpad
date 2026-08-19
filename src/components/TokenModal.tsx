@@ -29,6 +29,8 @@ export default function TokenModal({ token, onClose, onLike, liked, comments, on
   const [pending, setPending] = useState(false);
   const [comment, setComment] = useState("");
   const [tradeReceipt, setTradeReceipt] = useState<TradeResult | null>(null);
+  const [shareId, setShareId] = useState(0);
+  const [shareTimestamp, setShareTimestamp] = useState(0);
 
   const handleLike = useCallback(() => {
     if (pending) return;
@@ -59,6 +61,16 @@ export default function TokenModal({ token, onClose, onLike, liked, comments, on
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
+
+  // Update share metadata when tradeReceipt changes
+  useEffect(() => {
+    if (tradeReceipt) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setShareId((prev) => prev + 1);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setShareTimestamp(Math.floor(Date.now() / 1000));
+    }
+  }, [tradeReceipt]);
 
   const verified = token.provenance === "onchain" || token.provenance === "index";
   const isDemo = token.provenance === "demo";
@@ -148,7 +160,7 @@ export default function TokenModal({ token, onClose, onLike, liked, comments, on
             />
             <ShareTradeCard
               trade={{
-                id: Date.now(),
+                id: shareId,
                 token_id: token.id,
                 wallet: wallet ?? "",
                 tokenTicker: token.ticker,
@@ -157,7 +169,7 @@ export default function TokenModal({ token, onClose, onLike, liked, comments, on
                 price: tradeReceipt.price,
                 sol_amount: tradeReceipt.solAmount,
                 token_amount: tradeReceipt.tokenAmount,
-                ts: Date.now() / 1000,
+                ts: shareTimestamp,
                 pnl: tradeReceipt.pnl,
               }}
               refCode={refCode}

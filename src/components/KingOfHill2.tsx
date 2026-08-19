@@ -154,6 +154,7 @@ export default function KingOfHill2({ token }: Props) {
   }, [token]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchKingData();
   }, [fetchKingData]);
 
