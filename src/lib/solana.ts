@@ -166,7 +166,7 @@ export async function sendTx(
   provider: WalletProvider,
   tx: Transaction,
   opts?: { extraSigner?: Keypair }
-): Promise<string> {
+): Promise<{ signature: string; slot: number }> {
   tx.instructions = tx.instructions.filter((ix) => !(
     ix.programId.equals(ComputeBudgetProgram.programId) && ix.data.length > 0 && ix.data[0] === 1
   ));
@@ -180,20 +180,20 @@ export async function sendTx(
     // heuristic: already has signatures beyond empty
     tx.signatures.some((s) => s.signature != null);
 
+  let sig: string;
   if (needsRaw && provider.signTransaction) {
     const signed = await provider.signTransaction(tx);
-    const sig = await connection.sendRawTransaction(signed.serialize(), {
+    sig = await connection.sendRawTransaction(signed.serialize(), {
       skipPreflight: false,
       preflightCommitment: 'confirmed',
     });
-    await connection.confirmTransaction(sig, 'confirmed');
-    return sig;
+  } else {
+    const res = await provider.signAndSendTransaction(tx);
+    sig = typeof res === 'string' ? res : (res as any)?.signature ?? String(res); // eslint-disable-line @typescript-eslint/no-explicit-any
   }
-
-  const res = await provider.signAndSendTransaction(tx);
-  const sig = typeof res === 'string' ? res : res.signature;
-  await connection.confirmTransaction(sig, 'confirmed');
-  return sig;
+  const confirmResult = await connection.confirmTransaction(sig, 'confirmed');
+  const slot = (confirmResult as any)?.context?.slot ?? (confirmResult as any)?.slot ?? 0; // eslint-disable-line @typescript-eslint/no-explicit-any
+  return { signature: sig, slot };
 }
 
 // ---- Curve math (mirrors on-chain program) ----

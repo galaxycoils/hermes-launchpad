@@ -94,17 +94,27 @@ export function useTrade(token: Token, wallet: string | null): UseTradeReturn {
 
         tx.add(buildTradeIx(side, trader, mint, amountRaw, minOut, FEE_WALLET, creatorWallet));
 
-        // Sign & send
-        const signature = await sendTx(provider, tx);
+        // Sign & send — returns { signature, slot }
+        const sigResult = await sendTx(provider, tx);
 
         // Index trade (D1 + XP) — isolated: on-chain trade already succeeded
         let result: TradeResult | null = null;
         try {
+          const amountRawVal = side === 'buy' ? amount : Number(amountRaw) / 1_000_000;
+          const priceVal = side === 'buy'
+            ? amount / (computeBuyQuote(amount, curve.virtualSol, curve.virtualTokens).tokOut / 1_000_000)
+            : Number(computeSellQuote(amount, curve.virtualSol, curve.virtualTokens).solOut) / amount;
           result = await indexTrade({
             mint: token.onchainMint,
-            signature,
+            signature: sigResult.signature,
             wallet,
             side,
+            slot: sigResult.slot,
+            timestamp: Math.floor(Date.now() / 1000),
+            buyer: side === 'buy' ? wallet : undefined,
+            seller: side === 'sell' ? wallet : undefined,
+            amount: amountRawVal,
+            price: priceVal,
           });
         } catch (e) {
           // Index failure must not hijack the trade success path.

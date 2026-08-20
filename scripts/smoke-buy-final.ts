@@ -14,8 +14,8 @@ const CONFIG = {
   MINT: 'CEedekzwhRZECj7eyU66FFtMSd8ziyYVzywHHs1P6x7f',
   // Fee wallet = keypair owner = trader (has 16 SOL)
   TRADER: 'GkHE2vb8j3PGyjMvCmWJMffiKb2QwVye5TfuUPG1NK5a',
-  FEE_WALLET: '9Sv1kApQK428EUueU7dR9mTPqKqNR7dxkBmwtZuHDTkr',
-  CREATOR_WALLET: '9Sv1kApQK428EUueU7dR9mTPqKqNR7dxkBmwtZuHDTkr',
+  FEE_WALLET: 'GkHE2vb8j3PGyjMvCmWJMffiKb2QwVye5TfuUPG1NK5a', // matches config.fee_wallet
+  CREATOR_WALLET: 'GkHE2vb8j3PGyjMvCmWJMffiKb2QwVye5TfuUPG1NK5a', // matches curve.creator
   KEYPAIR: '/Users/cmd/.config/solana/id.json',
   SMOKE_AMOUNT_SOL: 0.02,
   // ATA for trader wallet at SMOKE mint (canonical with f9Ss623)
@@ -119,7 +119,7 @@ const buyIx = new TransactionInstruction({
     { pubkey: configPda, isSigner: false, isWritable: false },
     { pubkey: curvePda, isSigner: false, isWritable: true },
     { pubkey: MINT, isSigner: false, isWritable: false },
-    { pubkey: curveAtaFixed, isSigner: false, isWritable: true },
+    { pubkey: curveAta, isSigner: false, isWritable: true },
     { pubkey: TRADER_ATA, isSigner: false, isWritable: true },
     { pubkey: TRADER, isSigner: true, isWritable: true },
     { pubkey: FEE_WALLET, isSigner: false, isWritable: true },

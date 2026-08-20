@@ -36,6 +36,8 @@ The create → buy → sell path completed successfully on Solana devnet for min
 
 Worker indexing is now proven live: `SOLANA_RPC` wrangler secret configured with an authenticated Cloudflare-compatible RPC; `POST /api/trades/index` returns `{"ok":true}` for both buy and sell signatures. SMOKE trade proof: buy [`XLBNHF…q98s`](https://explorer.solana.com/tx/XLBNHFCyMPUQ4zqJ8tiL5DTdnbBeaWQ97GaLjiwhQMuRcYC2Xhj4itRhE85W8hhZjdR5t3oPRQXW88ZUDRKq98s?cluster=devnet) → sell [`39Myku…Q5YfR`](https://explorer.solana.com/tx/39MykuF1uVs9ksZYoYd9jdWFo6HHqrVV9gS1d3LkZevcbVvM3vpBUb7KV5V378yZANsTExT4cUuBBA7NLCrQ5YfR?cluster=devnet). Additionally two more tokens created and indexed on-chain: SMOKE (`CEedekzwhRZECj7eyU66FFtMSd8ziyYVzywHHs1P6x7f`) and CX (`8fXmJGNZQkBYHTaDHof1zgiEiYR1uGmoTLqEj6qAS8Db`) and FJEWS (`BTkZnXxgrrquqLKTZj8kje1YnuEyJiqGV7Ec2NigCkCS`). SMOKE/CX/FJEWS create transaction signatures not captured in this session; mints verified non-null via API.
 
+**Latest SMOKE trade (2026-08-20):** buy [`3K5zCqp78mCQiCskVeHq4wAvCMzsTaYKNztoMg5N9SZVKhCTqMsX22QuAUqvdKHf2NWpdwq6bNuAGwZryXABGiEu`](https://explorer.solana.com/tx/3K5zCqp78mCQiCskVeHq4wAvCMzsTaYKNztoMg5N9SZVKhCTqMsX22QuAUqvdKHf2NWpdwq6bNuAGwZryXABGiEu?cluster=devnet) → sell [`5qEimVN6K3ekvAvPuLE8KYq6duXeSfee1bER3Q8vr6p45FQQmGYdnzPeKYq6H7gkJpPtjGXhxQopLpAi9K2DrtLC`](https://explorer.solana.com/tx/5qEimVN6K3ekvAvPuLE8KYq6duXeSfee1bER3Q8vr6p45FQQmGYdnzPeKYq6H7gkJpPtjGXhxQopLpAi9K2DrtLC?cluster=devnet). Both indexed via `POST /api/trades/index` returning `{"ok":true}`.
+
 ## IDs
 
 | Thing | Value |

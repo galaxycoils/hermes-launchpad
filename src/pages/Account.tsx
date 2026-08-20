@@ -4,6 +4,12 @@ import { Button } from '@/components/Button';
 import Badge from '@/components/Badge';
 import Avatar from '@/components/Avatar';
 
+function isDevnet(): boolean {
+  if (typeof window === 'undefined') return false;
+  const host = window.location.hostname;
+  return host.includes('workers') || host.includes('dev') || host.includes('localhost');
+}
+
 type TabId = 'wallets' | 'security' | 'notifications' | 'apikeys' | 'referrals' | 'danger';
 
 interface Tab {
@@ -23,9 +29,16 @@ const tabs: Tab[] = [
 
 export default function Account() {
   const [activeTab, setActiveTab] = useState<TabId>('wallets');
+  const devnet = isDevnet();
 
   return (
     <div className="min-h-screen bg-black text-white p-4">
+      {/* Devnet preview banner */}
+      {devnet && (
+        <div className="rounded-md border border-yellow-500/30 bg-yellow-500/10 px-3 py-1.5 text-center text-xs font-bold text-yellow-300 max-w-4xl mx-auto mb-4">
+          Devnet preview — not mainnet. Use a Devnet wallet and faucet SOL.
+        </div>
+      )}
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">Account Settings</h1>
 

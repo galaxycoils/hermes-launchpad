@@ -6,6 +6,12 @@ import { filterVerifiedTokens } from '@/lib/token-truth';
 import type { Token } from '@/lib/tokens';
 import type { VerifiedTokenFilter } from '@/lib/token-truth';
 
+function isDevnet(): boolean {
+  if (typeof window === 'undefined') return false;
+  const host = window.location.hostname;
+  return host.includes('workers') || host.includes('dev') || host.includes('localhost');
+}
+
 export default function Trade() {
   const [filter, setFilter] = useState<VerifiedTokenFilter>('all');
   const [search, setSearch] = useState('');
@@ -13,6 +19,8 @@ export default function Trade() {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const devnet = isDevnet();
 
   // Load tokens on mount
   useEffect(() => {
@@ -41,6 +49,12 @@ export default function Trade() {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      {/* Devnet preview banner */}
+      {devnet && (
+        <div className="rounded-md border border-yellow-500/30 bg-yellow-500/10 px-3 py-1.5 text-center text-xs font-bold text-yellow-300 mx-4 mt-2">
+          Devnet preview — not mainnet. Use a Devnet wallet and faucet SOL.
+        </div>
+      )}
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-white/10 bg-black/90 backdrop-blur-xl px-4 py-3 sm:px-6">
         <div className="flex items-center justify-between">

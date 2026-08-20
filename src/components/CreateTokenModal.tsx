@@ -42,6 +42,7 @@ export default function CreateTokenModal({ onClose, onCreated }: Props) {
       const provider = getProvider();
       if (!provider) throw new Error('Install Phantom or Solflare');
       await provider.connect();
+      console.log('[CreateTokenModal] Provider connected');
 
       const mint = Keypair.generate();
       const uri = '';
@@ -53,8 +54,12 @@ export default function CreateTokenModal({ onClose, onCreated }: Props) {
         uri,
       );
       const tx = new Transaction().add(ix);
-      const sig = await sendTx(provider, tx, { extraSigner: mint });
+      console.log('[CreateTokenModal] Sending transaction...');
+      const sigResult = await sendTx(provider, tx, { extraSigner: mint });
+      const sig = sigResult.signature;
+      const slot = sigResult.slot;
       const creator = provider.publicKey.toBase58();
+      console.log('[CreateTokenModal] Transaction sent, calling indexToken...', { sig, slot, creator, mint: mint.publicKey.toBase58() });
       const indexed = await indexToken({
         name: name.trim(),
         ticker: ticker.trim().toUpperCase().replace(/^\$/, ''),
@@ -62,7 +67,12 @@ export default function CreateTokenModal({ onClose, onCreated }: Props) {
         creator,
         mint: mint.publicKey.toBase58(),
         signature: sig,
-      }).catch(() => null);
+        slot,
+        timestamp: Math.floor(Date.now() / 1000),
+      }).catch((e) => {
+        console.error('[CreateTokenModal] indexToken failed:', e);
+        return null;
+      });
 
       const token: Token = {
         id: indexed?.id ?? ticker.trim().toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8) + '-' + sig.slice(0, 4),
@@ -78,11 +88,13 @@ export default function CreateTokenModal({ onClose, onCreated }: Props) {
         complete: indexed?.complete ?? false,
       };
 
+      console.log('[CreateTokenModal] Token created:', token);
       confettiBurst('create');
       toast.success('$' + token.ticker + ' is live', { description: 'On-chain launch confirmed' });
       setTimeout(() => xpFlyIn(), 150);
       onCreated(token);
     } catch (cause) {
+      console.error('[CreateTokenModal] Launch error:', cause);
       setError(cause instanceof Error ? cause.message : 'Launch failed. Try again.');
       setBusy(false);
     }
