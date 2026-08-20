@@ -59,6 +59,8 @@ jobs:
 
   test-worker:
     runs-on: ubuntu-22.04
+    env:
+      SOLANA_RPC: ${{ secrets.SOLANA_RPC }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
