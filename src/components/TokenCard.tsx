@@ -10,12 +10,13 @@ export default function TokenCard({ token, onSelect }: { token: Token; onSelect:
   const progress = migrationProgress(token);
   const [loreExpanded, setLoreExpanded] = useState(false);
 
-  // Single priority badge logic: Demo > Live > Migration-ready > On-chain
+  // Provenance is the public truth signal. Curve state is displayed separately below.
   const getPriorityBadge = (): { variant: BadgeVariant; label: string } | null => {
-    if (status === "demo") return { variant: "demo", label: "Demo" };
-    if (status === "active") return { variant: "active", label: "Live" };
+    if (token.provenance === "index" || token.provenance === "onchain" || token.onchainMint) {
+      return { variant: "onchain", label: "On-chain" };
+    }
+    if (status === "demo" || token.provenance === "demo") return { variant: "demo", label: "Demo" };
     if (status === "migration-ready") return { variant: "migration-ready", label: "Migration-ready" };
-    if (token.provenance === "onchain") return { variant: "onchain", label: "On-chain" };
     return null;
   };
 

@@ -19,9 +19,19 @@ describe('WU-05 truthful token presentation', () => {
     expect(renderCard(token())).toContain('Demo');
   });
 
-  it('labels confirmed on-chain curves as active', () => {
+  it.each([
+    { provenance: 'index' as const },
+    { provenance: 'onchain' as const },
+    { onchainMint: 'mint' },
+  ])('labels verified provenance as on-chain (%o)', (overrides) => {
+    const html = renderCard(token(overrides));
+    expect(html).toContain('On-chain');
+    expect(html).not.toContain('Demo');
+  });
+
+  it('labels confirmed on-chain curves as on-chain', () => {
     const html = renderCard(token({ onchainMint: 'mint', complete: false }));
-    expect(html).toContain('Live');
+    expect(html).toContain('On-chain');
   });
 
   it('labels locked curves migration-ready, never migrated', () => {
