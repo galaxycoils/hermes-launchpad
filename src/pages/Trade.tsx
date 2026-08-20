@@ -9,7 +9,7 @@ import type { VerifiedTokenFilter } from '@/lib/token-truth';
 function isDevnet(): boolean {
   if (typeof window === 'undefined') return false;
   const host = window.location.hostname;
-  return host.includes('workers') || host.includes('dev') || host.includes('localhost');
+  return host.includes('workers') || host.includes('dev') || host.includes('localhost') || host.includes('pages.dev');
 }
 
 export default function Trade() {

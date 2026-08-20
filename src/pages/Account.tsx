@@ -7,7 +7,7 @@ import Avatar from '@/components/Avatar';
 function isDevnet(): boolean {
   if (typeof window === 'undefined') return false;
   const host = window.location.hostname;
-  return host.includes('workers') || host.includes('dev') || host.includes('localhost');
+  return host.includes('workers') || host.includes('dev') || host.includes('localhost') || host.includes('pages.dev');
 }
 
 type TabId = 'wallets' | 'security' | 'notifications' | 'apikeys' | 'referrals' | 'danger';
