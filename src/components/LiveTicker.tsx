@@ -8,11 +8,11 @@ interface LiveTickerProps {
 
 // Default initial trade stream
 const INITIAL_TRADES: Partial<Trade>[] = [
-  { token_id: '1', side: 'buy', sol_amount: 0.5, ts: Date.now() },
-  { token_id: '2', side: 'sell', sol_amount: 0.2, ts: Date.now() },
-  { token_id: '3', side: 'buy', sol_amount: 1.2, ts: Date.now() },
-  { token_id: '4', side: 'buy', sol_amount: 0.8, ts: Date.now() },
-  { token_id: '5', side: 'sell', sol_amount: 0.4, ts: Date.now() },
+  { token_id: '1', token_ticker: 'HERMES', side: 'buy', sol_amount: 0.5, ts: Date.now() },
+  { token_id: '2', token_ticker: 'ORACLE', side: 'sell', sol_amount: 0.2, ts: Date.now() },
+  { token_id: '3', token_ticker: 'SOL', side: 'buy', sol_amount: 1.2, ts: Date.now() },
+  { token_id: '4', token_ticker: 'PULSE', side: 'buy', sol_amount: 0.8, ts: Date.now() },
+  { token_id: '5', token_ticker: 'DEGEN', side: 'sell', sol_amount: 0.4, ts: Date.now() },
 ]
 
 export default function LiveTicker({ trades, className = '' }: LiveTickerProps) {
@@ -25,7 +25,11 @@ export default function LiveTicker({ trades, className = '' }: LiveTickerProps) 
     displayTrades.map((t, idx) => {
       const isBuy = t.side === 'buy'
       const sol = typeof t.sol_amount === 'number' ? t.sol_amount.toFixed(2) : '0.50'
-      const tokenLabel = t.token_id ? `Token #${t.token_id.slice(0, 4)}` : 'SMOKE'
+      const tokenLabel = t.token_ticker
+        ? `$${t.token_ticker}`
+        : t.token_id
+        ? `Token #${t.token_id.slice(0, 4)}`
+        : '$TOKEN'
 
       return (
         <div
