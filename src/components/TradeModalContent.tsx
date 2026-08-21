@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import PriceChart from '@/components/PriceChart'
 import OracleSignal from '@/components/OracleSignal'
@@ -61,6 +61,11 @@ export default function TradeModalContent({
             </div>
             <div className="flex items-center gap-1.5 text-xs font-mono text-white/40">
               <span>{token.realSol?.toFixed(1) ?? '0.0'} SOL</span>
+              <span>·</span>
+              <span className={isPositive ? 'text-pulse font-bold' : 'text-bleed font-bold'}>
+                {isPositive ? '▲ +' : '▼ '}
+                {Math.abs(token.change24h ?? 0).toFixed(1)}%
+              </span>
               <span>·</span>
               <span className="text-pulse">{progress.toFixed(0)}% to Raydium</span>
             </div>

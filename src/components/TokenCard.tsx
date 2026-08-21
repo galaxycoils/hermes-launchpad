@@ -1,4 +1,3 @@
-import React from 'react'
 import type { Token } from '@/lib/tokens'
 import { tokenCurveStatus, migrationProgress } from '@/lib/token-truth'
 import OracleRing from '@/components/OracleRing'

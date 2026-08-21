@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { FocusTrap } from 'focus-trap-react'
 import { Button } from '@/components/Button'
 import { triggerConfetti } from '@/lib/confetti-presets'

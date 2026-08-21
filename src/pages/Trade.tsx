@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import TokenCard from '@/components/TokenCard'
 import TokenModal from '@/components/TokenModal'
 import FilterBar from '@/components/FilterBar'
 import { fetchTokens } from '@/lib/api'
 import { filterVerifiedTokens } from '@/lib/token-truth'
-import type { Token, CommentItem } from '@/lib/tokens'
+import type { Token } from '@/lib/tokens'
 import type { VerifiedTokenFilter } from '@/lib/token-truth'
 
 export default function Trade() {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router'
 import { toast, Toaster } from 'sonner'
 import Avatar from '@/components/Avatar'

@@ -112,7 +112,7 @@ function drawShareCard(trade: ShareTradeData): HTMLCanvasElement {
   ctx.textAlign = "left";
 
   const details = [
-    { label: "Price", value: `${trade.price.toFixed(6)} SOL` },
+    { label: "Price", value: `${(trade.price ?? 0).toFixed(6)} SOL` },
     { label: "SOL Amount", value: `${trade.sol_amount.toFixed(4)}` },
     { label: "Token Amount", value: `${trade.token_amount.toFixed(0)}` },
   ];
@@ -366,7 +366,7 @@ export default function ShareTradeCard({ trade, refCode }: ShareTradeCardProps) 
 
           {/* Trade details */}
           <div className="space-y-2 rounded-xl border border-white/5 bg-black/30 p-3">
-            <DetailRow label="Price" value={`${trade.price.toFixed(6)} SOL`} />
+            <DetailRow label="Price" value={`${(trade.price ?? 0).toFixed(6)} SOL`} />
             <DetailRow label="SOL Amount" value={trade.sol_amount.toFixed(4)} />
             <DetailRow label="Token Amount" value={trade.token_amount.toFixed(0)} />
           </div>

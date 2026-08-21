@@ -1,10 +1,9 @@
 'use client'
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import {
   fetchTokens,
-  fetchLeaderboard,
   fetchProfile,
   checkin,
   postComment,
@@ -54,7 +53,6 @@ export default function Home() {
   const [anonId] = useState(getAnonId)
   const identity = wallet ?? anonId
 
-  // Auto-connect when provider detected
   useEffect(() => {
     if (walletDetected) {
       connectWallet(setWallet)
@@ -89,7 +87,6 @@ export default function Home() {
         setTokensLoading(false)
         checkGraduations(data)
 
-        // Check for ?token= or ?create= in URL
         const params = new URLSearchParams(window.location.search)
         const tid = params.get('token')
         if (tid) {
@@ -110,7 +107,7 @@ export default function Home() {
     })
 
     fetchTrades()
-      .then(({ data }) => {
+      .then((data) => {
         if (data && data.length > 0) setTrades(data)
       })
       .catch(() => {})
@@ -129,7 +126,7 @@ export default function Home() {
         setAllTokens(data)
         checkGraduations(data)
       })
-      fetchTrades().then(({ data }) => {
+      fetchTrades().then((data) => {
         if (data && data.length > 0) setTrades(data)
       })
     }, 15000)

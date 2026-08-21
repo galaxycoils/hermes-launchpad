@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { FocusTrap } from 'focus-trap-react'
 import TradeModalContent from '@/components/TradeModalContent'
 import type { Token, CommentItem } from '@/lib/tokens'

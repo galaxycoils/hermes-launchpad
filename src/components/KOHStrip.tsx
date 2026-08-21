@@ -1,4 +1,3 @@
-import React from 'react'
 import type { Token } from '@/lib/tokens'
 import { migrationProgress } from '@/lib/token-truth'
 import Sparkline from '@/components/Sparkline'

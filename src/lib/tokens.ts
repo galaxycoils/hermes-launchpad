@@ -67,13 +67,16 @@ export interface Profile {
 }
 
 export interface Trade {
-  id: number;
+  id: number | string;
   token_id: string;
-  wallet: string;
+  token_name?: string;
+  token_ticker?: string;
+  wallet?: string;
+  trader_wallet?: string;
   side: 'buy' | 'sell';
   sol_amount: number;
   token_amount: number;
-  price: number;
+  price?: number;
   ts: number;
 }
 

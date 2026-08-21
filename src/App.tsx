@@ -1,10 +1,9 @@
 import { Route, Routes } from 'react-router'
+import React from 'react'
 import ErrorBoundary from './components/ErrorBoundary'
 import Home from './pages/Home'
-import Trade from './pages/Trade'
 import Profile from './pages/Profile'
 import Account from './pages/Account'
-import React from 'react'
 
 export default function App() {
   return (

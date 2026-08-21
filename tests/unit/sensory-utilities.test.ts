@@ -1,4 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+vi.mock('canvas-confetti', () => ({
+  default: vi.fn(),
+}))
+
 import { soundManager } from '@/lib/sound'
 import { haptic } from '@/lib/haptic'
 import { triggerConfetti } from '@/lib/confetti-presets'

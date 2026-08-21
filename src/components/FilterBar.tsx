@@ -1,4 +1,3 @@
-import React from 'react'
 import type { VerifiedTokenFilter } from '@/lib/token-truth'
 
 export type FilterOption = VerifiedTokenFilter

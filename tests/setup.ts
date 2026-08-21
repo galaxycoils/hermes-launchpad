@@ -2,25 +2,20 @@ import { beforeAll, afterEach, vi } from 'vitest'
 
 // Top-level Canvas 2D context mock for jsdom / canvas-confetti
 if (typeof HTMLCanvasElement !== 'undefined') {
-  HTMLCanvasElement.prototype.getContext = vi.fn().mockImplementation((contextId: string) => {
-    if (contextId === '2d') {
-      return {
-        clearRect: vi.fn(),
-        fillRect: vi.fn(),
-        beginPath: vi.fn(),
-        arc: vi.fn(),
-        fill: vi.fn(),
-        save: vi.fn(),
-        restore: vi.fn(),
-        translate: vi.fn(),
-        rotate: vi.fn(),
-        scale: vi.fn(),
-        drawImage: vi.fn(),
-        canvas: {},
-      }
-    }
-    return null
-  }) as unknown as typeof HTMLCanvasElement.prototype.getContext
+  const mockCtx = {
+    clearRect: vi.fn(),
+    fillRect: vi.fn(),
+    beginPath: vi.fn(),
+    arc: vi.fn(),
+    fill: vi.fn(),
+    save: vi.fn(),
+    restore: vi.fn(),
+    translate: vi.fn(),
+    rotate: vi.fn(),
+    scale: vi.fn(),
+    drawImage: vi.fn(),
+  }
+  HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue(mockCtx) as unknown as typeof HTMLCanvasElement.prototype.getContext
 }
 
 // Web Audio API mock

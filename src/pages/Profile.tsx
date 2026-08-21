@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import TopNav from '@/components/TopNav'
 import BottomNav from '@/components/BottomNav'
@@ -11,7 +11,6 @@ import WalletSelectorModal from '@/components/WalletSelectorModal'
 import { connectWallet, isMobile, useWalletProvider } from '@/lib/wallet'
 import { getAnonId, captureRef, shareLink } from '@/lib/identity'
 import { fetchLeaderboard, fetchProfile, fetchQuests, fetchReferrals } from '@/lib/api'
-import { formatUnixAge } from '@/lib/token-truth'
 import type { Quest, Trader, Profile as ProfileType, ReferralStats } from '@/lib/tokens'
 
 export default function Profile() {
@@ -23,7 +22,6 @@ export default function Profile() {
   const [ranks, setRanks] = useState<Trader[]>([])
   const [refStats, setRefStats] = useState<ReferralStats | null>(null)
   const [showWalletSelector, setShowWalletSelector] = useState(false)
-  const [refLoading, setRefLoading] = useState(false)
 
   const [anonId] = useState(getAnonId)
   const identity = wallet ?? anonId
@@ -39,10 +37,7 @@ export default function Profile() {
     fetchProfile(identity, ref).then((p) => p && setProfile(p))
     fetchQuests(identity).then(({ data }) => setQuests(data))
     fetchLeaderboard().then(({ data }) => setRanks(data))
-    setRefLoading(true)
-    fetchReferrals(identity)
-      .then((s) => setRefStats(s))
-      .finally(() => setRefLoading(false))
+    fetchReferrals(identity).then((s) => setRefStats(s))
   }, [identity])
 
   useEffect(() => {
