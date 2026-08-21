@@ -24,8 +24,7 @@ import LiveTradeFeed from "@/components/LiveTradeFeed";
 import KingOfHill2 from "@/components/KingOfHill2";
 import SocialFeed from "@/components/SocialFeed";
 import BottomNav from "@/components/BottomNav";
-import PriceChart from "@/components/PriceChart";
-import InstantTradePanel from "@/components/InstantTradePanel";
+import TradeExecutionPanel from "@/components/TradeExecutionPanel";
 import TraderProfile from "@/components/TraderProfile";
 import AchievementBadges from "@/components/AchievementBadges";
 import StreakCounter from "@/components/StreakCounter";
@@ -473,10 +472,9 @@ export default function Home({ initialTab = "tokens" }: { initialTab?: "tokens" 
                   tokenName={allTokens[0]?.name ?? ''}
                   tokenTicker={allTokens[0]?.ticker ?? ''}
                 />
-                <InstantTradePanel
+                <TradeExecutionPanel
                   token={allTokens[0] ?? null}
                   wallet={wallet ?? ""}
-                  onClose={() => {}}
                   className="max-w-4xl mx-auto mb-4"
                 />
                 <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
