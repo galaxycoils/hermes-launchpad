@@ -371,67 +371,7 @@ Each card skeleton staggers shimmer by 100ms for wave effect across grid.
 
 ## 6. Files Changed
 
-### New Files
-
-| File | Purpose |
-|------|---------|
-| `src/styles/oracle-pulse.css` | `@property` animation, iris-gradient class, reduced-motion |
-| `src/lib/sound.ts` | SoundManager singleton (Web Audio API) |
-| `src/lib/haptic.ts` | Haptic feedback utility |
-| `src/lib/confetti-presets.ts` | Confetti configuration presets |
-| `src/components/OracleRing.tsx` | SVG risk ring with iris gradient |
-| `src/components/OracleSignal.tsx` | Full Oracle panel (score + analysis) |
-| `src/components/Sparkline.tsx` | Extracted from KingOfHill2, reusable |
-| `src/components/IrisBorder.tsx` | Reusable iris-gradient border wrapper |
-| `src/components/XPFlyUp.tsx` | XP gain animation component |
-| `src/components/LiveTicker.tsx` | Horizontal auto-scrolling trade ticker |
-| `src/components/TradeModalContent.tsx` | Refactored trade modal internals |
-| `src/components/FilterBar.tsx` | Filter pills + search toggle |
-| `src/hooks/useSoundEffect.ts` | Hook wrapping SoundManager |
-| `src/hooks/useHaptic.ts` | Hook wrapping haptic utility |
-| `public/sounds/*.mp3` | 6 sound files (< 60KB total) |
-
-### Modified Files
-
-| File | Changes |
-|------|---------|
-| `tailwind.config.js` | New colors (void, obsidian, pulse, bleed, iris, sol), fontFamily (Space Grotesk, JetBrains Mono, Instrument Serif), keyframes |
-| `src/index.css` | Import oracle-pulse.css, font-face declarations, base styles |
-| `index.html` | Google Fonts preconnect + link tags for new typefaces |
-| `src/App.tsx` | Add /profile route, remove /profile redirect |
-| `src/pages/Home.tsx` | Complete rewrite — feed-only layout, remove hero/leaderboard/chart/trade panel/social feed, add KOH strip + ticker + 2-col card grid |
-| `src/pages/Trade.tsx` | Refactored to use new TradeModalContent |
-| `src/components/TokenCard.tsx` | Complete rewrite — new compact layout with oracle ring + sparkline + progress |
-| `src/components/TopNav.tsx` | Simplified to 48px bar with rank badge |
-| `src/components/BottomNav.tsx` | Rewritten as 3-item nav (Feed/Create/Profile) |
-| `src/components/TokenModal.tsx` | Refactored to use TradeModalContent, add GSAP entrance |
-| `src/components/Hero.tsx` | Deleted (replaced by KOH strip) |
-| `src/components/KingOfHill.tsx` | Deleted (merged into KOH strip) |
-| `src/components/KingOfHill2.tsx` | Deleted (replaced by compact KOH strip) |
-| `src/components/LiveTradeFeed.tsx` | Deleted (replaced by LiveTicker) |
-| `src/components/SocialFeed.tsx` | Moved to Profile page only |
-| `src/components/BottomTabBar.tsx` | Deleted (merged into new BottomNav) |
-| `src/components/InstantTradePanel.tsx` | Moved inside TradeModalContent |
-| `src/components/PriceChart.tsx` | Moved inside TradeModalContent |
-| `src/components/Skeleton.tsx` | Updated with iris shimmer |
-| `src/components/ConfettiBurst.tsx` | Updated with preset system |
-| `src/components/GraduationModal.tsx` | Updated with graduation confetti preset + sound |
-| `src/components/CreateTokenModal.tsx` | Visual refresh with new design system |
-| `src/components/TraderProfile.tsx` | Visual refresh |
-| `src/components/AchievementBadges.tsx` | Visual refresh |
-| `src/components/StreakCounter.tsx` | Visual refresh + sound trigger |
-| `src/components/QuestCard.tsx` | Visual refresh + sound trigger |
-
-### Deleted Files
-
-| File | Reason |
-|------|--------|
-| `src/components/Hero.tsx` | Replaced by KOH strip |
-| `src/components/KingOfHill.tsx` | Merged into compact KOH strip |
-| `src/components/KingOfHill2.tsx` | Merged into compact KOH strip |
-| `src/components/LiveTradeFeed.tsx` | Replaced by LiveTicker |
-| `src/components/BottomTabBar.tsx` | Merged into new BottomNav |
-| `src/components/Ticker.tsx` | Replaced by LiveTicker |
+> **See Section 17** for the complete, updated file manifest (revised after Design Review Gate Round 1).
 
 ---
 
@@ -505,6 +445,464 @@ Each card skeleton staggers shimmer by 100ms for wave effect across grid.
 ### Phase 6: Polish & Performance
 - Performance audit (LCP, bundle size)
 - Accessibility audit (a11y)
-- Sound preference toggle in settings
+- Sound preference toggle in TopNav (1-tap mute icon)
 - Cross-browser testing (Safari, Chrome, Firefox)
 - Mobile device testing (iOS Safari, Android Chrome)
+- CSS `@property` fallback verification
+- 320px viewport (iPhone SE) ergonomics pass
+
+---
+
+## 10. User Personas & Use Cases
+
+### 10.1 Personas
+
+| Persona | Description | Primary Needs |
+|---------|-------------|---------------|
+| **Degen Sniper** | High-frequency mobile trader scanning for breakout momentum. Speed > everything. | Instant visual risk scoring, zero-latency prices, 1-tap quick buy, minimal friction |
+| **Lore Explorer** | Drawn to viral narratives, AI lore, community gamification. Engagement-motivated. | Prominent Bard Lore, celebration feedback (XP, confetti, sound), clear leaderboard status |
+| **Token Creator** | Launches tokens, drives traffic from Twitter/Telegram to their bonding curve. | Deep-linkable trade route, clear graduation progress, King of the Hill visibility |
+| **Casual Mobile Trader** | Occasional trader, browses on phone, trades small amounts. Low crypto literacy. | Simple UI, clear risk signals, easy wallet connect, no overwhelming data density |
+
+### 10.2 Structured Use Cases
+
+**UC-01: Rapid Feed Discovery & Risk Filtering**
+> AS A Degen Sniper, I WANT TO scan tokens in a 2-column mobile feed with colored Oracle risk rings SO THAT I can spot low-risk momentum tokens in under 3 seconds WHEN scrolling the live market feed.
+
+**UC-02: Frictionless Modal Trade Execution**
+> AS A Mobile Trader, I WANT TO tap a token card, see price impact, select a quick SOL amount, and execute a buy within a single drawer SO THAT I can enter a position with < 5 taps WHEN momentum is spiking.
+
+**UC-03: Gamified Reward Feedback Loop**
+> AS A Lore Explorer, I WANT TO receive multi-sensory feedback (XP fly-up, audio cue, confetti) upon trade confirmation SO THAT I feel rewarded and motivated to climb the leaderboard WHEN completing any trade.
+
+**UC-04: Deep-Link Token Sharing**
+> AS A Token Creator, I WANT TO share a direct link (`/trade?token=XYZ`) that opens the trade modal with Bard lore and live chart SO THAT my community lands directly in the purchase funnel WHEN clicking links from social channels.
+
+### 10.3 Edge Cases & Error Handling
+
+| Scenario | User Impact | Required UX |
+|----------|-------------|-------------|
+| Solana transaction revert / slippage exceeded | Trade fails on-chain after user confirms | Inline error banner in TradeModalContent with retry CTA and slippage adjuster. Error haptic. No confetti/XP. |
+| Wallet disconnects during trade | BUY tapped without active wallet session | Wallet connection modal overlays immediately. Trade amount state preserved. |
+| Oracle / Bard service timeout or 500 | AI data unavailable for token | Oracle ring: neutral iris shimmer (indeterminate). Panel: "Oracle calculating…" shimmer placeholder. Never breaks layout. |
+| Newly minted token — no AI data yet | Oracle has not scored this token | Oracle ring: gray neutral ring. Score: "—". Text: "Awaiting Oracle analysis." Lore: "The Bard has not yet spoken." |
+| Mobile audio autoplay blocked | Sound trigger fails silently | SoundManager ignores; no error thrown. Audio unlocks on next user gesture. |
+| iOS Safari — no `navigator.vibrate` | Haptic call on unsupported platform | Silent no-op via feature detection. Never throws. |
+| 0 tokens in feed (empty state) | No tokens match filter or API down | Centered illustration + "No tokens yet. Launch the first one." + Create CTA button. |
+| External wallet prompt interrupts modal | Phantom/Solflare approval popup | Trade modal stays open underneath. On return, state resumes. Amount not cleared. |
+
+---
+
+## 11. Data Contract Updates
+
+### 11.1 Token Interface Extension (`src/lib/tokens.ts`)
+
+```typescript
+// New fields added to Token interface
+interface Token {
+  // ... existing fields ...
+  riskScore?: number;        // 0-100, from Oracle. undefined = not yet scored
+  sparkline?: number[];      // Last ~24 price points (USD or SOL). Empty = no data
+  change24h?: number;        // Percentage change, can be negative. undefined = no data
+}
+```
+
+### 11.2 Bulk Feed Endpoint Update (`GET /api/tokens`)
+
+The Worker must return `riskScore`, `sparkline`, and `change24h` in the bulk token response. These are computed/cached server-side:
+
+- `riskScore`: Cached from last Oracle evaluation. `null` if not yet evaluated.
+- `sparkline`: Last 24 indexed trade prices. Computed from `trades` table. Empty array if < 2 trades.
+- `change24h`: Computed from earliest and latest trade prices within 24h window. `null` if < 2 trades in window.
+
+**No per-card fetch requests.** All data comes in the bulk payload.
+
+### 11.3 Provenance & Truth Invariant (WU-05 Compliance)
+
+The redesigned TokenCard **must** surface provenance state visually and testably:
+
+| State | Current Badge | New Design | Test Assertion |
+|-------|---------------|------------|----------------|
+| Demo | `<Badge variant="demo">` | Overlay text "DEMO" on card, white/30 opacity, mono 10px. Replaces oracle ring with gray dashed ring. | `getByText('DEMO')` or `getByTestId('provenance-demo')` |
+| On-chain | `<Badge variant="onchain">` | Green dot indicator next to creator address + "on-chain" text (existing pattern, kept). | `getByText('on-chain')` or `getByTestId('provenance-onchain')` |
+| Migration-ready | `<Badge variant="migration-ready">` | ✨ sparkle overlay on emoji + "Migration ready" text below progress bar | `getByText('Migration ready')` or `getByTestId('provenance-migration')` |
+
+All three states remain testable via `data-testid` attributes.
+
+---
+
+## 12. Platform Compatibility
+
+### 12.1 Web Audio Gesture Unlock
+
+```typescript
+// SoundManager initialization strategy
+class SoundManager {
+  private ctx: AudioContext | null = null;
+  private unlocked = false;
+  
+  // Called lazily — NOT on module load
+  private ensureContext(): AudioContext | null {
+    if (!this.ctx) {
+      this.ctx = new AudioContext();
+    }
+    return this.ctx;
+  }
+  
+  // Must be called from a direct user gesture handler (click/pointerdown)
+  unlock(): void {
+    if (this.unlocked) return;
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+    // Play silent buffer to fully unlock on iOS
+    const buf = ctx.createBuffer(1, 1, 22050);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.start(0);
+    this.unlocked = true;
+  }
+  
+  // Tab visibility lifecycle
+  handleVisibility(): void {
+    if (document.hidden) {
+      this.ctx?.suspend();
+    } else if (this.unlocked) {
+      this.ctx?.resume();
+    }
+  }
+}
+
+// Unlock triggered by first user interaction:
+// document.addEventListener('pointerdown', () => soundManager.unlock(), { once: true });
+```
+
+**Default sound preference: OFF.** User opts in via a toggle in the Trade Modal or TopNav sound icon (`🔊`/`🔇`). Stored in `localStorage('hermes-sound')`.
+
+### 12.2 Haptic Feedback — iOS Fallback
+
+```typescript
+function haptic(style: 'light' | 'medium' | 'heavy'): void {
+  if (!('vibrate' in navigator)) return;  // Silent no-op on iOS Safari
+  try {
+    const patterns = { light: [10], medium: [20], heavy: [30, 10, 30] };
+    navigator.vibrate(patterns[style]);
+  } catch {
+    // Silent fallback — never throws
+  }
+}
+```
+
+### 12.3 CSS `@property` Fallback
+
+```css
+/* oracle-pulse.css */
+
+/* Fallback for browsers without @property support */
+.iris-gradient {
+  background: linear-gradient(135deg, #7c6aff, #00e5ff, #7c6aff);
+}
+
+/* Enhanced version for supporting browsers */
+@supports (background: paint(worklet)) {
+  @property --iris-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: true;
+  }
+  
+  :root {
+    animation: iris-rotate 8s linear infinite;
+  }
+  
+  .iris-gradient {
+    background: conic-gradient(from var(--iris-angle), #7c6aff, #00e5ff, #7c6aff);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { animation: none; }
+  .iris-gradient {
+    background: linear-gradient(135deg, #7c6aff, #00e5ff, #7c6aff);
+  }
+}
+```
+
+### 12.4 Font Loading Strategy
+
+Self-host via `@fontsource` packages instead of Google Fonts CDN:
+
+```bash
+npm install @fontsource-variable/space-grotesk @fontsource-variable/inter \
+  @fontsource/jetbrains-mono @fontsource/instrument-serif
+```
+
+In `src/index.css`:
+```css
+@import '@fontsource-variable/space-grotesk';
+@import '@fontsource-variable/inter';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/700.css';
+@import '@fontsource/instrument-serif/400-italic.css';
+```
+
+All fonts use `font-display: swap`. No external CDN dependency. No render-blocking network requests.
+
+### 12.5 Tailwind Palette Backward Compatibility
+
+During migration, `tailwind.config.js` maintains legacy aliases:
+
+```javascript
+colors: {
+  // New palette
+  void: '#06060e',
+  obsidian: '#0d0d1a',
+  pulse: '#00ff66',
+  bleed: '#ff3344',
+  sol: '#ffb800',
+  // Legacy aliases (kept until all components migrated)
+  pump: '#00ff66',    // alias → pulse
+  dump: '#ff3344',    // alias → bleed
+  hermes: '#a855f7',  // kept as-is (iris is a gradient, not a flat color)
+  gold: '#ffb800',    // alias → sol
+  surface: '#0d0d1a', // alias → obsidian
+  // ...
+}
+```
+
+---
+
+## 13. Testing Strategy
+
+### 13.1 TDD Mock Infrastructure
+
+Add to `tests/setup.ts`:
+
+```typescript
+// Web Audio API mock
+class MockAudioContext {
+  state = 'running';
+  resume = vi.fn().mockResolvedValue(undefined);
+  suspend = vi.fn().mockResolvedValue(undefined);
+  createBuffer = vi.fn(() => ({ duration: 0, length: 1, sampleRate: 22050 }));
+  createBufferSource = vi.fn(() => ({
+    buffer: null,
+    connect: vi.fn(),
+    start: vi.fn(),
+    stop: vi.fn(),
+  }));
+  destination = {};
+  decodeAudioData = vi.fn().mockResolvedValue({});
+}
+globalThis.AudioContext = MockAudioContext as any;
+
+// navigator.vibrate mock
+Object.defineProperty(navigator, 'vibrate', {
+  value: vi.fn(() => true),
+  writable: true,
+});
+
+// IntersectionObserver mock (for scroll animations)
+globalThis.IntersectionObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+}));
+
+// matchMedia mock (for GSAP matchMedia + reduced motion)
+Object.defineProperty(window, 'matchMedia', {
+  value: vi.fn().mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  })),
+});
+```
+
+### 13.2 Test Suite Migration Plan
+
+| Phase | Deleted/Rewritten Component | Affected Tests | Migration Action |
+|-------|----------------------------|----------------|------------------|
+| Phase 1 | `Hero.tsx` deleted, `BottomTabBar.tsx` deleted, `BottomNav.tsx` rewritten | `tests/client/v2-components.test.tsx` | Delete Hero/BottomTabBar tests. Rewrite BottomNav tests for 3-item nav. |
+| Phase 2 | `TokenCard.tsx` rewritten | `tests/unit/wu05-token-presentation.test.ts` | Rewrite card tests: assert oracle ring, sparkline, progress. Add `data-testid` provenance assertions. |
+| Phase 2 | `KingOfHill.tsx`, `KingOfHill2.tsx` deleted | `tests/client/v2-components.test.tsx` | Replace with KOH strip tests. |
+| Phase 2 | `LiveTradeFeed.tsx` deleted | `tests/client/v2-components.test.tsx` | Replace with LiveTicker tests. |
+| Phase 3 | `TokenModal.tsx` refactored | `tests/client/v2-components.test.tsx` | Update modal tests for TradeModalContent structure. |
+| Phase 5 | Profile extracted from Home | `tests/client/profile-tab.test.tsx`, `tests/client/retention-loops.test.tsx` | Move profile-specific assertions to Profile.tsx tests. Update Home tests to assert feed-only layout. |
+
+**Rule:** Tests for deleted components are removed in the same phase as the component deletion. Tests for new components are written RED first, then implementation goes GREEN. Coverage thresholds from `.coverage-thresholds.json` must pass at the end of every phase.
+
+---
+
+## 14. Security Hardening
+
+> **Note:** Blockers B10–B12 are pre-existing backend vulnerabilities not introduced by this redesign. However, they affect features the redesign surfaces prominently. They are scoped as **prerequisite work** or **parallel track** — not gated by the frontend redesign.
+
+### 14.1 AI Prompt Injection Mitigation (Prerequisite)
+
+**Worker-side fix** (not frontend):
+- Sanitize token `name` and `ticker` within structured delimiters before AI prompt injection
+- Enforce JSON schema on Oracle AI responses — reject free-form risk overrides
+- Compute algorithmic risk metrics server-side (holder concentration, curve velocity, creator balance %) as a baseline; LLM analysis supplements but cannot override algorithmic floor
+- Cache AI outputs per token — regenerate only when on-chain metrics shift significantly
+
+### 14.2 Stateless Auth Challenge (Prerequisite)
+
+**Worker-side fix:**
+- Replace in-memory `Map()` challengeStore with HMAC-signed stateless tokens:
+  ```
+  challenge = HMAC-SHA256(secret, wallet + timestamp + nonce)
+  ```
+- Or persist nonces in D1 with 5-minute TTL
+- Either approach eliminates cross-isolate desynchronization
+
+### 14.3 Authenticated Mutations (Prerequisite)
+
+**Worker-side fix:**
+- Enforce `verifyAuth(request)` with Ed25519 wallet signature on:
+  - `PUT /api/profile/:wallet`
+  - `POST /api/checkin`
+  - `POST /api/quests/:wallet/claim`
+  - `POST /api/follow/:wallet`
+- Frontend already generates signatures via `signAuthChallenge()` — backend must verify them
+
+### 14.4 Avatar URL Sanitization (Prerequisite)
+
+**Worker-side fix:**
+- Validate `avatar_url` against strict `https://` protocol whitelist
+- Reject `javascript:`, `data:`, `blob:` schemes
+- Frontend renders avatar URLs only in `<img src>` tags with CSP `img-src` restrictions
+
+### 14.5 Frontend Security (This Redesign)
+
+- **SoundManager:** Load audio only from local `/public/sounds/` or synthesize via oscillators. Never accept dynamic/user-specified audio URLs.
+- **Deep-link params:** Validate `/trade?token=...` and `?ref=...` against `^[a-zA-Z0-9_-]{1,64}$` regex before routing/state.
+- **Trade inputs:** Clamp SOL amounts to `[0.001, MAX_BALANCE]`. Reject NaN, Infinity, negative values. Clamp slippage to `[0.1%, 50%]`.
+
+---
+
+## 15. Architecture Decisions (Answers to Open Questions)
+
+### Q1: Oracle/Bard fallback for unscored tokens
+Oracle ring renders as **gray neutral ring** (no color mapping). Score shows "—". Text: "Awaiting Oracle analysis." Bard section shows: "The Bard has not yet spoken." with a shimmer placeholder. No broken layout.
+
+### Q2: Trade modal — chart pinned or tabbed?
+**Price chart is pinned** above the trade panel. It is always visible when the modal is open (200px height). The content tabs below (`Lore | Chat | Info`) provide supplementary content that scrolls independently beneath the fixed trade area.
+
+### Q3: LiveTicker data source
+**Props from parent.** `Home.tsx` fetches trades via the existing polling mechanism (or WebSocket if available) and passes the latest N trades as props to `<LiveTicker trades={recentTrades} />`. No independent data fetching inside LiveTicker.
+
+### Q4: KOH Strip data source
+**Client-derived from `allTokens`.** Same logic as current: `filterVerifiedTokens(contenders, 'curve-progress')[0]`. No dedicated endpoint. The existing `/api/king-of-the-hill` endpoint (which returns 404) is not relied upon.
+
+### Q5: `/trade` route architecture
+**Auto-opened modal on feed.** `/trade?token=:id` renders `<Home />` with `TokenModal` automatically opened for the specified token ID. Same pattern as current `?token=` query param handling. No standalone trade page.
+
+### Q6: PriceChart + InstantTradePanel fate
+**Kept as sub-components** imported by `TradeModalContent`. Not inlined. `InstantTradePanel` is renamed/refactored into `TradeExecutionPanel` and becomes the single trade component. `TradePanel.tsx` (the older duplicate) is **deleted**. This eliminates the duplicate bonding curve logic.
+
+### Q7: LiveTicker animation stability
+**Dual-buffer track.** Two identical track elements. When new trades arrive, they are added to the off-screen buffer. On the next animation cycle boundary, buffers swap. No layout jumps.
+
+---
+
+## 16. Quantitative Success Metrics
+
+### 16.1 Baseline Metrics (measure before redesign deploy)
+
+| Metric | How to Measure | Baseline |
+|--------|----------------|----------|
+| Session duration | Cloudflare Analytics | Current average (TBD pre-deploy) |
+| Trade completion rate | Trades / Token modal opens | Current ratio (TBD pre-deploy) |
+| Bounce rate | Single-page sessions | Current % (TBD pre-deploy) |
+| Feed scroll depth | IntersectionObserver on last card | Current avg cards viewed (TBD) |
+| Return rate (7-day) | Unique wallets returning within 7 days | Current % (TBD) |
+
+### 16.2 Post-Launch KPIs (14-day evaluation window)
+
+| KPI | Target | Failure Threshold (rollback) |
+|-----|--------|------------------------------|
+| Trade completion rate | ≥ current baseline | Drop > 5% from baseline |
+| Session duration | +20% vs baseline | Drop > 10% from baseline |
+| Feed scroll depth | +30% (more tokens scanned) | Drop > 15% from baseline |
+| LCP (4G throttled) | < 2.0s | > 3.0s |
+| FCP | < 1.2s | > 2.0s |
+| JS bundle size (gzip) | < 200KB total | > 300KB |
+| Crash/error rate | < 0.1% of sessions | > 1% of sessions |
+
+### 16.3 Evaluation Timeline
+
+- **Day 0:** Deploy to Cloudflare Pages (devnet only)
+- **Day 1–3:** Smoke test on iOS Safari, Android Chrome, Desktop Chrome/Firefox/Safari
+- **Day 3–7:** Monitor KPIs vs baseline. Fix critical regressions.
+- **Day 7–14:** Full evaluation window. Compare all KPIs against baseline.
+- **Day 14:** Go/No-Go decision. If any failure threshold is breached, rollback to previous build.
+
+---
+
+## 17. Files Changed (Updated)
+
+### New Files
+
+| File | Purpose |
+|------|---------|
+| `src/styles/oracle-pulse.css` | `@property` animation, iris-gradient class, reduced-motion, `@supports` fallback |
+| `src/lib/sound.ts` | SoundManager singleton (Web Audio API, gesture unlock, visibility lifecycle) |
+| `src/lib/haptic.ts` | Haptic feedback utility with iOS feature detection |
+| `src/lib/confetti-presets.ts` | Confetti configuration presets |
+| `src/components/OracleRing.tsx` | SVG risk ring with iris gradient |
+| `src/components/OracleSignal.tsx` | Full Oracle panel (score + analysis + fallback states) |
+| `src/components/Sparkline.tsx` | Extracted from KingOfHill2, reusable |
+| `src/components/IrisBorder.tsx` | Reusable iris-gradient border wrapper |
+| `src/components/XPFlyUp.tsx` | XP gain animation component |
+| `src/components/LiveTicker.tsx` | Horizontal auto-scrolling trade ticker (dual-buffer) |
+| `src/components/TradeModalContent.tsx` | Refactored trade modal internals |
+| `src/components/TradeExecutionPanel.tsx` | Consolidated trade panel (replaces both TradePanel + InstantTradePanel) |
+| `src/components/FilterBar.tsx` | Filter pills + search toggle |
+| `src/components/KOHStrip.tsx` | Compact King of the Hill strip |
+| `src/pages/Profile.tsx` | Standalone profile page (extracted from Home.tsx tabs) |
+| `src/hooks/useSoundEffect.ts` | Hook wrapping SoundManager |
+| `src/hooks/useHaptic.ts` | Hook wrapping haptic utility |
+| `tests/setup.ts` (updated) | Web Audio, vibrate, IntersectionObserver, matchMedia mocks |
+
+### Modified Files
+
+| File | Changes |
+|------|---------|
+| `tailwind.config.js` | New colors (void, obsidian, pulse, bleed, sol) + legacy aliases (pump, dump, hermes, gold, surface), fontFamily, keyframes |
+| `src/index.css` | Import oracle-pulse.css, @fontsource imports, base styles |
+| `src/lib/tokens.ts` | Add `riskScore?: number`, `sparkline?: number[]`, `change24h?: number` to Token interface |
+| `src/App.tsx` | Add /profile route (Profile.tsx), update /trade to modal-on-feed pattern |
+| `src/pages/Home.tsx` | Complete rewrite — feed-only layout with KOH strip + ticker + 2-col card grid |
+| `src/pages/Trade.tsx` | Refactored to render Home with auto-opened modal |
+| `src/components/TokenCard.tsx` | Complete rewrite — oracle ring + sparkline + progress + `data-testid` provenance |
+| `src/components/TopNav.tsx` | Simplified 48px bar with rank badge + sound toggle icon |
+| `src/components/BottomNav.tsx` | Rewritten as 3-item nav (Feed/Create/Profile) |
+| `src/components/TokenModal.tsx` | Refactored to use TradeModalContent, GSAP entrance |
+| `src/components/Skeleton.tsx` | Iris shimmer |
+| `src/components/ConfettiBurst.tsx` | Preset system |
+| `src/components/GraduationModal.tsx` | Graduation confetti + sound |
+| `src/components/CreateTokenModal.tsx` | Visual refresh |
+| `src/components/TraderProfile.tsx` | Visual refresh |
+| `src/components/AchievementBadges.tsx` | Visual refresh |
+| `src/components/StreakCounter.tsx` | Visual refresh + sound trigger |
+| `src/components/QuestCard.tsx` | Visual refresh + sound trigger |
+| `src/components/SocialFeed.tsx` | Moved to Profile page only |
+
+### Deleted Files
+
+| File | Reason |
+|------|--------|
+| `src/components/Hero.tsx` | Replaced by KOHStrip |
+| `src/components/KingOfHill.tsx` | Merged into KOHStrip |
+| `src/components/KingOfHill2.tsx` | Merged into KOHStrip |
+| `src/components/LiveTradeFeed.tsx` | Replaced by LiveTicker |
+| `src/components/BottomTabBar.tsx` | Merged into new BottomNav |
+| `src/components/Ticker.tsx` | Replaced by LiveTicker |
+| `src/components/TradePanel.tsx` | Replaced by TradeExecutionPanel (eliminates duplicate logic) |
+| `src/components/InstantTradePanel.tsx` | Consolidated into TradeExecutionPanel |
+
