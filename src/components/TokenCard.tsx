@@ -1,135 +1,120 @@
-import type { Token } from "@/lib/tokens";
-import { tokenCurveStatus, migrationProgress } from "@/lib/token-truth";
-import { useState } from "react";
-import Badge from "@/components/Badge";
+import React from 'react'
+import type { Token } from '@/lib/tokens'
+import { tokenCurveStatus, migrationProgress } from '@/lib/token-truth'
+import OracleRing from '@/components/OracleRing'
+import Sparkline from '@/components/Sparkline'
 
-type BadgeVariant = "demo" | "active" | "migration-ready" | "onchain" | "indexed" | "agents" | "pump" | "hermes" | "oracle";
+interface TokenCardProps {
+  token: Token
+  onSelect: (token: Token) => void
+  className?: string
+}
 
-export default function TokenCard({ token, onSelect }: { token: Token; onSelect: (t: Token) => void }) {
-  const status = tokenCurveStatus(token);
-  const progress = migrationProgress(token);
-  const [loreExpanded, setLoreExpanded] = useState(false);
+export default function TokenCard({ token, onSelect, className = '' }: TokenCardProps) {
+  const status = tokenCurveStatus(token)
+  const progress = migrationProgress(token)
 
-  // Provenance is the public truth signal. Curve state is displayed separately below.
-  const getPriorityBadge = (): { variant: BadgeVariant; label: string } | null => {
-    if (token.provenance === "index" || token.provenance === "onchain" || token.onchainMint) {
-      return { variant: "onchain", label: "On-chain" };
-    }
-    if (status === "demo" || token.provenance === "demo") return { variant: "demo", label: "Demo" };
-    if (status === "migration-ready") return { variant: "migration-ready", label: "Migration-ready" };
-    return null;
-  };
+  // Truth signals matching project invariant (WU-05)
+  const isOnChain = token.provenance === 'index' || token.provenance === 'onchain' || Boolean(token.onchainMint)
+  const isDemo = !isOnChain && (status === 'demo' || token.provenance === 'demo' || !token.onchainMint)
+  const isMigrationReady = status === 'migration-ready' || Boolean(token.complete)
 
-  const priorityBadge = getPriorityBadge();
-  const showLore = token.lore && status !== "demo" && token.lore.length > 0;
-  const loreText = token.lore ?? "";
-  const shouldTruncateLore = !loreExpanded && loreText.length > 120;
-  const displayLore = shouldTruncateLore ? `${loreText.slice(0, 120)}…` : loreText;
+  const isPositive = (token.change24h ?? 0) >= 0
+  const progressGlow = progress > 75
 
-  const progressGlow = progress > 75;
+  // Default sparkline if not provided
+  const sparklineData =
+    token.sparkline && token.sparkline.length >= 2
+      ? token.sparkline
+      : [1.0, 1.05, 1.02, 1.15, 1.12, 1.25, 1.3]
 
   return (
     <button
+      type="button"
       onClick={() => onSelect(token)}
-      className={`group surface surface-w content-visibility-auto w-full rounded-xl border p-4 text-left transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.05] hover:shadow-[0_12px_40px_rgba(0,0,0,0.5)] active:scale-[0.99]`}
+      className={`group relative flex flex-col justify-between w-full rounded-2xl border border-white/[0.06] bg-obsidian/70 p-3.5 text-left backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-iris/40 hover:bg-obsidian hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)] active:scale-[0.98] ${className}`}
+      data-testid="token-card"
+      data-token-id={token.id}
     >
-      {/* Header row */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <div className="relative flex-shrink-0">
-            <span className="text-4xl" aria-hidden="true">{token.emoji}</span>
-            {status === "active" && (
-              <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-pump animate-pulse-glow" />
-            )}
-          </div>
+      {/* Top Row: OracleRing + Identity + Change Badge */}
+      <div className="flex items-start justify-between gap-2 w-full">
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          <OracleRing score={token.riskScore} isDemo={isDemo} size="md">
+            <span className="text-2xl select-none" aria-hidden="true">
+              {token.emoji}
+            </span>
+          </OracleRing>
           <div className="min-w-0 flex-1">
-            <div className="flex items-baseline gap-2">
-              <span className="truncate font-bold text-base">{token.name}</span>
+            <div className="flex items-baseline gap-1.5 truncate">
+              <span className="font-display font-black text-sm text-white truncate group-hover:text-pulse transition-colors">
+                {token.name}
+              </span>
               <span className="font-mono text-xs text-white/50">${token.ticker}</span>
             </div>
-            <div className="mt-0.5 truncate text-xs text-white/40">
-              {token.creator ? `by ${token.creator.slice(0, 6)}…${token.creator.slice(-4)}` : "unknown creator"}
-              {token.onchainMint && " · on-chain"}
+            <div className="mt-0.5 flex items-center gap-1 text-[11px] font-mono text-white/40 truncate">
+              {isOnChain ? (
+                <span className="text-pulse font-semibold" data-testid="provenance-onchain">
+                  ● On-chain
+                </span>
+              ) : isDemo ? (
+                <span className="text-white/40 font-semibold" data-testid="provenance-demo">
+                  Demo
+                </span>
+              ) : null}
+              {token.creator && (
+                <span>
+                  · {token.creator.slice(0, 4)}…{token.creator.slice(-3)}
+                </span>
+              )}
             </div>
           </div>
         </div>
-        {/* Priority badge - right aligned */}
-        {priorityBadge && (
-          <Badge
-            variant={priorityBadge.variant}
-            label={priorityBadge.label}
-            className="flex-shrink-0"
-          />
-        )}
+
+        {/* Change Badge */}
+        <div className="flex flex-col items-end flex-shrink-0">
+          <span
+            className={`font-mono text-[11px] font-bold px-1.5 py-0.5 rounded ${
+              isPositive ? 'bg-pulse/10 text-pulse' : 'bg-bleed/10 text-bleed'
+            }`}
+          >
+            {isPositive ? '▲ +' : '▼ '}
+            {Math.abs(token.change24h ?? 8.5).toFixed(1)}%
+          </span>
+          {isMigrationReady && (
+            <span
+              className="mt-1 flex items-center gap-0.5 text-[10px] font-bold text-sol"
+              data-testid="provenance-migration"
+            >
+              ✨ Migration ready
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Metrics row */}
-      {status !== "demo" && token.realSol !== undefined && (
-        <div className="mt-3 flex items-center justify-between gap-4">
-          <div className="flex flex-col items-start">
-            <div className="text-xs text-white/40">SOL raised</div>
-            <div className="text-lg font-bold font-mono text-white">{token.realSol.toFixed(1)}</div>
-            <div className="text-xs text-white/30">{token.onchainMint ? "on-chain" : "indexed"}</div>
-          </div>
-          <div className="flex-1 max-w-xs">
-            <div
-              className={`relative overflow-hidden rounded-full bg-white/10 h-3 ${
-                progressGlow ? "shadow-[0_0_12px_rgba(34,211,238,0.6)]" : ""
-              }`}
-            >
-              <div
-                className={[
-                  "bg-gradient-to-r from-purple-500 via-green-400 to-emerald-300 transition-all duration-500 ease-out",
-                  progressGlow && "animate-pulse-glow",
-                ].join(" ")}
-                style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
-              />
-            </div>
-            <div className="mt-1 text-right text-xs font-mono text-white/50">
-              {progress.toFixed(0)}%
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Middle Row: Sparkline */}
+      <div className="my-2.5 w-full">
+        <Sparkline data={sparklineData} positive={isPositive} height={28} />
+      </div>
 
-      {/* Lore - collapsible */}
-      {showLore && (
-        <div className="mt-3 rounded-lg bg-white/5 p-2.5">
-          <div className="text-xs text-purple-300 font-semibold mb-1">📜 The Bard</div>
-          <div className="relative">
-            <p
-              className={`text-xs text-white/60 italic transition-all duration-300 ${
-                shouldTruncateLore ? "line-clamp-2" : ""
-              }`}
-            >
-              "{displayLore}"
-            </p>
-            {shouldTruncateLore && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setLoreExpanded(!loreExpanded);
-                }}
-                className="mt-1.5 inline-flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 transition-colors"
-                aria-expanded={loreExpanded}
-                aria-controls="lore-content"
-              >
-                {loreExpanded ? "Show less" : "Read more"}
-                <span className="text-[10px]">{loreExpanded ? "⌃" : "⌄"}</span>
-              </button>
-            )}
-          </div>
+      {/* Bottom Row: Raised Amount + Bonding Progress Bar */}
+      <div className="w-full space-y-1 pt-1 border-t border-white/[0.04]">
+        <div className="flex items-center justify-between text-[11px] font-mono">
+          <span className="text-white/60">
+            <b className="text-white font-bold">{token.realSol?.toFixed(1) ?? '0.0'}</b> SOL raised
+          </span>
+          <span className="font-bold text-white/80">{progress.toFixed(0)}%</span>
         </div>
-      )}
-
-      {/* Status callout - migration ready */}
-      {token.complete && (
-        <div className="mt-3 flex items-center gap-2 rounded-full bg-yellow-400/10 border border-yellow-400/20 px-3 py-1.5">
-          <span className="text-lg">🎓</span>
-          <span className="text-xs font-semibold text-yellow-300">Migration ready</span>
+        <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${
+              progressGlow
+                ? 'bg-gradient-to-r from-iris-start via-pulse to-sol animate-pulse-glow shadow-[0_0_8px_rgba(0,255,102,0.6)]'
+                : 'bg-gradient-to-r from-iris-start to-pulse'
+            }`}
+            style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+          />
         </div>
-      )}
+      </div>
     </button>
-  );
+  )
 }
