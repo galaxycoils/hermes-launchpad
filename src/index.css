@@ -1,4 +1,10 @@
+@import '@fontsource-variable/space-grotesk';
+@import '@fontsource-variable/inter';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/700.css';
+@import '@fontsource/instrument-serif/400-italic.css';
 @import './styles/design-tokens.css';
+@import './styles/oracle-pulse.css';
 
 @tailwind base;
 @tailwind components;
@@ -6,21 +12,21 @@
 
 @layer base {
   * { @apply border-border; }
-  html { background: #000; color-scheme: dark; scroll-behavior: smooth; }
-  body { @apply bg-black text-white antialiased; min-width: 320px; }
+  html { background: #06060e; color-scheme: dark; scroll-behavior: smooth; }
+  body { @apply bg-void text-white font-body antialiased; min-width: 320px; }
+  h1, h2, h3, h4, h5, h6 { @apply font-display; }
   button, a, input { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-  button, a { @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00ff66] focus-visible:ring-offset-2 focus-visible:ring-offset-black; }
-  ::selection { background: #00ff66; color: #000; }
+  button, a { @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00ff66] focus-visible:ring-offset-2 focus-visible:ring-offset-void; }
+  ::selection { background: #00ff66; color: #06060e; }
 }
-
 
 .touch-target { min-height: 44px; min-width: 44px; }
 @layer utilities {
   .tabular-nums { font-variant-numeric: tabular-nums; }
-  .truncate-address { font-family: ui-monospace, SFMono-Regular, monospace; }
+  .truncate-address { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace; }
 }
 
-.skip-link { @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-[#00ff66] focus:px-4 focus:py-2 focus:text-black focus:shadow-lg; }
+.skip-link { @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-pulse focus:px-4 focus:py-2 focus:text-void focus:shadow-lg focus:font-display focus:font-bold; }
 
 @keyframes heart-pop { 0%, 100% { transform: scale(1); } 40% { transform: scale(1.35); } 70% { transform: scale(.9); } }
 .animate-heart-pop { display: inline-block; animation: heart-pop .45s ease; }

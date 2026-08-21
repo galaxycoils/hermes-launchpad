@@ -1,0 +1,54 @@
+/* Oracle Pulse — Global Ambient Heartbeat */
+
+/* Fallback for browsers without CSS @property support */
+.iris-gradient {
+  background: linear-gradient(135deg, #7c6aff 0%, #00e5ff 50%, #7c6aff 100%);
+}
+
+.iris-border {
+  border-image: linear-gradient(135deg, #7c6aff, #00e5ff, #7c6aff) 1;
+}
+
+.text-iris {
+  background: linear-gradient(135deg, #7c6aff 0%, #00e5ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Enhanced version for modern browsers with @property support */
+@supports (background: paint(something)) or (animation: none) {
+  @property --iris-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: true;
+  }
+
+  :root {
+    animation: iris-rotate 8s linear infinite;
+  }
+
+  @keyframes iris-rotate {
+    to {
+      --iris-angle: 360deg;
+    }
+  }
+
+  .iris-gradient {
+    background: conic-gradient(
+      from var(--iris-angle, 0deg),
+      #7c6aff 0%,
+      #00e5ff 50%,
+      #7c6aff 100%
+    );
+  }
+}
+
+/* Accessibility: Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    animation: none;
+  }
+  .iris-gradient {
+    background: linear-gradient(135deg, #7c6aff 0%, #00e5ff 50%, #7c6aff 100%);
+  }
+}
