@@ -1,5 +1,28 @@
 import { beforeAll, afterEach, vi } from 'vitest'
 
+// Top-level Canvas 2D context mock for jsdom / canvas-confetti
+if (typeof HTMLCanvasElement !== 'undefined') {
+  HTMLCanvasElement.prototype.getContext = vi.fn().mockImplementation((contextId: string) => {
+    if (contextId === '2d') {
+      return {
+        clearRect: vi.fn(),
+        fillRect: vi.fn(),
+        beginPath: vi.fn(),
+        arc: vi.fn(),
+        fill: vi.fn(),
+        save: vi.fn(),
+        restore: vi.fn(),
+        translate: vi.fn(),
+        rotate: vi.fn(),
+        scale: vi.fn(),
+        drawImage: vi.fn(),
+        canvas: {},
+      }
+    }
+    return null
+  }) as unknown as typeof HTMLCanvasElement.prototype.getContext
+}
+
 // Web Audio API mock
 class MockAudioNode {
   connect = vi.fn()
@@ -50,17 +73,12 @@ beforeAll(() => {
     globalThis.webkitAudioContext = MockAudioContext
   }
 
-  if (typeof navigator !== 'undefined') {
-    if (!('vibrate' in navigator)) {
-      Object.defineProperty(navigator, 'vibrate', {
-        value: vi.fn(() => true),
-        writable: true,
-        configurable: true,
-      })
-    }
-  }
-
   if (typeof window !== 'undefined') {
+    // @ts-expect-error test mock
+    window.AudioContext = MockAudioContext
+    // @ts-expect-error test mock
+    window.webkitAudioContext = MockAudioContext
+
     if (!window.matchMedia) {
       // @ts-expect-error test stub
       window.matchMedia = (query: string) => ({
@@ -82,6 +100,16 @@ beforeAll(() => {
         unobserve: vi.fn(),
         disconnect: vi.fn(),
       }))
+    }
+  }
+
+  if (typeof Navigator !== 'undefined' && Navigator.prototype) {
+    if (!('vibrate' in Navigator.prototype)) {
+      Object.defineProperty(Navigator.prototype, 'vibrate', {
+        value: vi.fn(() => true),
+        writable: true,
+        configurable: true,
+      })
     }
   }
 })

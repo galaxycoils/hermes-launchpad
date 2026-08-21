@@ -12,6 +12,9 @@ export interface Token {
   realSol?: number;     // SOL raised on the curve
   priceSol?: number;    // SOL per token
   riskFlag?: string;    // The Oracle's one-line verdict (persisted)
+  riskScore?: number;   // 0-100 Oracle risk score (persisted or computed)
+  sparkline?: number[]; // Last ~24 price points (USD or SOL)
+  change24h?: number;   // 24h percentage change (positive or negative)
   likedByMe?: boolean;  // set when fetched with ?wallet=
   liked?: boolean;      // local like toggle state
   comments?: CommentItem[];
