@@ -1,0 +1,182 @@
+import { Connection, PublicKey, Keypair, Transaction, sendAndConfirmTransaction, LAMPORTS_PER_SOL, ComputeBudgetProgram, SystemProgram, TransactionInstruction } from '@solana/web3.js';
+import { Buffer } from 'buffer';
+
+const RPC = "https://devnet.rpcpool.com";
+const PROGRAM_ID = new PublicKey('9K5eAWBkrUJbUiUC8aM6xeuXM2ACj9XNHfbC1X6Scjgz');
+const FEE_WALLET = new PublicKey('GkHE2vb8j3PGyjMvCmWJMffiKb2QwVye5TfuUPG1NK5a');
+const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+const ATA_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+const RENT_SYSVAR = new PublicKey('SysvarRent111111111111111111111111111111111');
+const WORKER_API = 'https://hermes-api.tahamtandariush.workers.dev';
+
+const fs = await import('fs/promises');
+const secretKey = Uint8Array.from(JSON.parse(await fs.readFile('/Users/cmd/.config/solana/id.json', 'utf-8')));
+const payer = Keypair.fromSecretKey(secretKey);
+console.log('Payer:', payer.publicKey.toBase58());
+
+const conn = new Connection(RPC, 'confirmed');
+
+const findConfigPda = () => PublicKey.findProgramAddressSync([Buffer.from('config')], PROGRAM_ID)[0];
+const findCurvePda = (mint) => PublicKey.findProgramAddressSync([Buffer.from('curve'), mint.toBuffer()], PROGRAM_ID)[0];
+const findAta = (mint, owner) => PublicKey.findProgramAddressSync([owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()], ATA_PROGRAM_ID)[0];
+
+const DISC = {
+  createToken: Uint8Array.from([0x54, 0x34, 0xcc, 0xe4, 0x18, 0x8c, 0xea, 0x4b]),
+  buy: Uint8Array.from([0x66, 0x06, 0x3d, 0x12, 0x01, 0xda, 0xeb, 0xea]),
+  sell: Uint8Array.from([0x33, 0xe6, 0x85, 0xa4, 0x01, 0x7f, 0x83, 0xad]),
+};
+
+const u64 = (n) => { const b = new Uint8Array(8); new DataView(b.buffer).setBigUint64(0, n, true); return b; };
+const anchorString = (s) => { const e = new TextEncoder().encode(s); const b = new Uint8Array(4 + e.length); new DataView(b.buffer).setUint32(0, e.length, true); b.set(e, 4); return b; };
+const concat = (...parts) => { const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0)); let o = 0; for (const p of parts) { out.set(p, o); o += p.length; } return out; };
+
+function buildCreateTokenIx(payer, mint, name, symbol, uri) {
+  const curve = findCurvePda(mint);
+  const curveAta = findAta(mint, curve);
+  const data = concat(DISC.createToken, anchorString(name), anchorString(symbol), anchorString(uri));
+  return new TransactionInstruction({ programId: PROGRAM_ID, keys: [
+    { pubkey: findConfigPda(), isSigner: false, isWritable: false },
+    { pubkey: curve, isSigner: false, isWritable: true },
+    { pubkey: mint, isSigner: true, isWritable: true },
+    { pubkey: curveAta, isSigner: false, isWritable: true },
+    { pubkey: payer, isSigner: true, isWritable: true },
+    { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+    { pubkey: ATA_PROGRAM_ID, isSigner: false, isWritable: false },
+    { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    { pubkey: RENT_SYSVAR, isSigner: false, isWritable: false },
+  ], data: Buffer.from(data) });
+}
+
+function buildTradeIx(kind, trader, mint, amount, minOut, feeWallet, creatorWallet) {
+  const curve = findCurvePda(mint);
+  const curveAta = findAta(mint, curve);
+  const traderAta = findAta(mint, trader);
+  const data = concat(kind === 'buy' ? DISC.buy : DISC.sell, u64(amount), u64(minOut));
+  return new TransactionInstruction({ programId: PROGRAM_ID, keys: [
+    { pubkey: findConfigPda(), isSigner: false, isWritable: false },
+    { pubkey: curve, isSigner: false, isWritable: true },
+    { pubkey: mint, isSigner: false, isWritable: false },
+    { pubkey: curveAta, isSigner: false, isWritable: true },
+    { pubkey: traderAta, isSigner: false, isWritable: true },
+    { pubkey: trader, isSigner: true, isWritable: true },
+    { pubkey: feeWallet, isSigner: false, isWritable: true },
+    { pubkey: creatorWallet, isSigner: false, isWritable: true },
+    { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+    { pubkey: ATA_PROGRAM_ID, isSigner: false, isWritable: false },
+    { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+  ], data: Buffer.from(data) });
+}
+
+// Create token
+const mint = Keypair.generate();
+console.log('Mint:', mint.publicKey.toBase58());
+
+const createIx = buildCreateTokenIx(payer.publicKey, mint.publicKey, 'Integration Test', 'INT', 'https://example.com');
+
+const createTx = new Transaction().add(createIx);
+createTx.recentBlockhash = (await conn.getLatestBlockhash()).blockhash;
+createTx.feePayer = payer.publicKey;
+
+const createSig = await sendAndConfirmTransaction(conn, createTx, [payer, mint]);
+console.log('Create signature:', createSig);
+
+// Index token
+const indexRes = await fetch(`${WORKER_API}/api/tokens/index`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    name: 'Integration Test',
+    ticker: 'INT',
+    emoji: '🧪',
+    mint: mint.publicKey.toBase58(),
+    signature: createSig,
+    creator: payer.publicKey.toBase58(),
+  }),
+});
+console.log('Index response:', await indexRes.json());
+
+// Get curve state for buy quote
+const curve = findCurvePda(mint.publicKey);
+const curveInfo = await conn.getAccountInfo(curve);
+const view = new DataView(curveInfo.data.buffer, curveInfo.data.byteOffset, curveInfo.data.byteLength);
+let offset = 8;
+offset += 32; offset += 32;
+const virtualTokenReserves = Number(view.getBigUint64(offset, true)); offset += 8;
+const virtualSolReserves = Number(view.getBigUint64(offset, true)); offset += 8;
+
+const solIn = 0.01 * LAMPORTS_PER_SOL;
+const FEE_BPS = 25n; const BPS_DENOM = 10000n;
+const solInLamports = BigInt(Math.round(solIn));
+const fee = (solInLamports * FEE_BPS * 2n) / BPS_DENOM;
+const solAfterFees = solInLamports - fee;
+const k = BigInt(virtualSolReserves) * BigInt(virtualTokenReserves);
+const newVs = BigInt(virtualSolReserves) + solAfterFees;
+const newVt = k / newVs;
+const tokOut = BigInt(virtualTokenReserves) - newVt;
+const minOut = (tokOut * 99n) / 100n;
+
+// Buy
+const buyIx = buildTradeIx('buy', payer.publicKey, mint.publicKey, solInLamports, minOut, FEE_WALLET, payer.publicKey);
+
+const buyTx = new Transaction().add(buyIx);
+buyTx.recentBlockhash = (await conn.getLatestBlockhash()).blockhash;
+buyTx.feePayer = payer.publicKey;
+buyTx.instructions.unshift(ComputeBudgetProgram.requestHeapFrame({ bytes: 256 * 1024 }));
+
+const buySig = await sendAndConfirmTransaction(conn, buyTx, [payer]);
+console.log('Buy signature:', buySig);
+
+// Index buy trade
+const buyIndexRes = await fetch(`${WORKER_API}/api/trades/index`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    mint: mint.publicKey.toBase58(),
+    signature: buySig,
+    wallet: payer.publicKey.toBase58(),
+    side: 'buy',
+  }),
+});
+console.log('Buy index response:', await buyIndexRes.json());
+
+// Sell - compute sell quote
+const curveInfo2 = await conn.getAccountInfo(curve);
+const view2 = new DataView(curveInfo2.data.buffer, curveInfo2.data.byteOffset, curveInfo2.data.byteLength);
+let offset2 = 8;
+offset2 += 32; offset2 += 32;
+const vt2 = Number(view2.getBigUint64(offset2, true)); offset2 += 8;
+const vs2 = Number(view2.getBigUint64(offset2, true)); offset2 += 8;
+
+const tokIn = 1000000 * 1000000; // 1M tokens in raw units (1M * 1e6)
+const tokInRaw = BigInt(tokIn);
+const k2 = BigInt(vs2) * BigInt(vt2);
+const newVt2 = BigInt(vt2) + tokInRaw;
+const newVs2 = k2 / newVt2;
+const solGross = BigInt(vs2) - newVs2;
+const fee2 = (solGross * FEE_BPS * 2n) / BPS_DENOM;
+const solOut = solGross - fee2;
+
+const sellIx = buildTradeIx('sell', payer.publicKey, mint.publicKey, tokInRaw, solOut, FEE_WALLET, payer.publicKey);
+
+const sellTx = new Transaction().add(sellIx);
+sellTx.recentBlockhash = (await conn.getLatestBlockhash()).blockhash;
+sellTx.feePayer = payer.publicKey;
+sellTx.instructions.unshift(ComputeBudgetProgram.requestHeapFrame({ bytes: 256 * 1024 }));
+
+const sellSig = await sendAndConfirmTransaction(conn, sellTx, [payer]);
+console.log('Sell signature:', sellSig);
+
+// Index sell trade
+const sellIndexRes = await fetch(`${WORKER_API}/api/trades/index`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    mint: mint.publicKey.toBase58(),
+    signature: sellSig,
+    wallet: payer.publicKey.toBase58(),
+    side: 'sell',
+  }),
+});
+console.log('Sell index response:', await sellIndexRes.json());
+
+console.log('✅ Full integration test complete!');

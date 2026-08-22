@@ -25,3 +25,8 @@ graphify-out/
 !.dev.vars.example
 .env*
 !.env.example
+
+# Test/tooling output & archived one-offs
+dist-ssr
+coverage/
+scripts/archive/
