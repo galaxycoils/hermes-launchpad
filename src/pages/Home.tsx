@@ -77,8 +77,6 @@ export default function Home() {
   }, [])
 
   const loadData = useCallback(() => {
-    setTokensLoading(true)
-    setTokensError(null)
     const ref = captureRef()
 
     fetchTokens()
@@ -119,6 +117,15 @@ export default function Home() {
     })
   }, [identity, checkGraduations])
 
+  // Refresh entry point for explicit user retries: resets loading/error state,
+  // then reuses loadData. Kept out of loadData itself so the mount effect
+  // performs no synchronous setState (react-hooks/set-state-in-effect).
+  const refresh = useCallback(() => {
+    setTokensLoading(true)
+    setTokensError(null)
+    loadData()
+  }, [loadData])
+
   useEffect(() => {
     loadData()
     const iv = setInterval(() => {
@@ -156,22 +163,23 @@ export default function Home() {
 
   const handleComment = useCallback(
     async (text: string) => {
-      if (!selected?.id) return
+      if (!selected) return
       const auth = wallet ? await signAuthChallenge(wallet) : null
       try {
         await postComment(selected.id, wallet ?? '', text, auth ?? undefined)
       } catch {
         /* silent */
       }
+      const commentTargetId = selected.id
       setAllTokens((prev) =>
         prev.map((t) =>
-          t.id === selected.id
+          t.id === commentTargetId
             ? { ...t, comments: [...(t.comments ?? []), { wallet: identity, text, ts: Date.now() }] }
             : t
         )
       )
     },
-    [selected?.id, wallet, identity]
+    [selected, wallet, identity]
   )
 
   const tokens = useMemo(() => {
@@ -223,7 +231,7 @@ export default function Home() {
             <p className="text-sm font-bold text-bleed">{tokensError}</p>
             <button
               type="button"
-              onClick={loadData}
+              onClick={refresh}
               className="mt-4 rounded-xl bg-white/10 px-4 py-2 text-xs font-bold text-white hover:bg-white/20 transition-colors"
             >
               Try Again
