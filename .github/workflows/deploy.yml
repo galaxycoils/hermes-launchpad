@@ -44,7 +44,6 @@ jobs:
   deploy-worker:
     runs-on: ubuntu-22.04
     environment: production
-    continue-on-error: true
     defaults:
       run:
         working-directory: workers
@@ -58,9 +57,7 @@ jobs:
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           workingDirectory: workers
           command: deploy
-      - name: Worker deploy note
-        if: failure()
-        run: |
-          echo "⚠️ Worker deploy failed (likely Durable Object migration needed on free plan)"
-          echo "Frontend deployment succeeded - site is live"
-          exit 0
+      # Failures here fail the job for real (no exit-0 masking). If a red run
+      # ever cites "Durable Object migration needed on free plan", fix
+      # workers/wrangler.toml migrations (new_sqlite_classes format) — do not
+      # reintroduce continue-on-error.

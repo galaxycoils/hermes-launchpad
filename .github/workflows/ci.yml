@@ -25,7 +25,6 @@ jobs:
 
   worker-check:
     runs-on: ubuntu-22.04
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -36,15 +35,7 @@ jobs:
         working-directory: workers
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-        run: |
-          if [ -z "$CF_API_TOKEN" ]; then
-            echo "WORKER_CHECK_SKIPPED - no CF_API_TOKEN secret; intentionally skipped, not a false pass."
-            exit 0
-          fi
-          npx wrangler@4 deploy --dry-run || {
-            echo "WORKER_CHECK_WARNING - wrangler dry-run unavailable (auth/config); local worker syntax and full CI tests remain authoritative."
-            exit 0
-          }
+        run: npx wrangler@4 deploy --dry-run
 
   test-unit:
     runs-on: ubuntu-22.04
@@ -105,7 +96,6 @@ jobs:
 
   test-program:
     runs-on: ubuntu-22.04
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -120,28 +110,22 @@ jobs:
       - name: Build program (IDL required by tests)
         working-directory: programs/hermes-curve
         run: |
+          # Best-effort pre-install; the bare `anchor build` below enforces the
+          # real outcome (missing toolchain fails the job). Justified per plan WU-B6.
           cargo install cargo-build-sbf --locked 2>/dev/null || true
-          anchor build --ignore-keys 2>&1 || {
-            echo "TEST_PROGRAM_SKIPPED - anchor build failed (missing SBF toolchain or keypair); unit cargo tests cover compilation locally."
-            exit 0
-          }
-      - name: Run program tests if DEVNET_WALLET set
+          anchor build --ignore-keys
+      - name: Run program tests
         env:
           ANCHOR_PROVIDER_URL: https://api.devnet.solana.com
           ANCHOR_WALLET: /tmp/devnet-wallet.json
           DEVNET_WALLET: ${{ secrets.DEVNET_WALLET }}
         run: |
-          if [ -z "$DEVNET_WALLET" ]; then
-            echo "TEST_PROGRAM_SKIPPED - no DEVNET_WALLET secret; intentionally skipped, not a false pass."
-            exit 0
-          fi
           echo "$DEVNET_WALLET" > /tmp/devnet-wallet.json
           chmod 600 /tmp/devnet-wallet.json
           npm run test:program
 
   test-e2e:
     runs-on: ubuntu-22.04
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -150,22 +134,13 @@ jobs:
           cache: npm
       - run: npm ci || npm install
       - run: npx playwright install --with-deps
-      - name: Run E2E if DEVNET_WALLET set and specs exist
+      - name: Run E2E suite
         env:
           DEVNET_WALLET: ${{ secrets.DEVNET_WALLET }}
           DEVNET_RPC: https://api.devnet.solana.com
-        run: |
-          if [ -z "$DEVNET_WALLET" ]; then
-            echo "TEST_E2E_SKIPPED - no DEVNET_WALLET secret; intentionally skipped, not a false pass."
-            exit 0
-          fi
-          if [ ! -d tests/e2e ] || [ -z "$(ls tests/e2e/*.spec.ts 2>/dev/null)" ]; then
-            echo "TEST_E2E_SKIPPED - no e2e specs in tests/e2e; not a false pass."
-            exit 0
-          fi
-          npm run test:e2e
+        run: npm run test:e2e
 
   blocked-checks:
     runs-on: ubuntu-22.04
     steps:
-      - run: echo "CI gate active - lint/build/unit/worker/client/integration/security run on every PR. Program and E2E require DEVNET_WALLET secret."
+      - run: echo "CI gate active - lint/build/unit/worker/client/integration/security/program/e2e all enforce on every push. No masked or skipped jobs."
