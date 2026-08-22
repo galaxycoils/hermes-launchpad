@@ -5,8 +5,8 @@
 **Last build:** PASS (`tsc -b && vite build`, exit 0)
 **Last lint:** PASS — **0 errors** (15 pre-existing warnings, non-blocking) after fixing the two react-hooks compiler errors that had CI red
 **Last test:** PASS — vitest **186/186** across unit/worker/client/integration projects · Playwright **18/18** (5 spec files) · coverage **34.84% lines / 58.47% branches / 27.68% functions / 34.84% statements** ≥ thresholds 27/46/26/27
-**Status:** CLOSURE SEQUENCE EXECUTED — CI/provider evidence PENDING POST-PUSH VERIFICATION
-**CI verification:** pending — run IDs and per-job conclusions to be appended after push (see WU-F)
+**Status:** CLOSURE COMPLETE — ALL GATES GREEN WITH PROVIDER EVIDENCE
+**CI verification:** VERIFIED 2026-08-22 — CI [`32549640952`](https://github.com/galaxycoils/hermes-launchpad/actions/runs/32549640952) 10/10 jobs success · Deploy [`32549640953`](https://github.com/galaxycoils/hermes-launchpad/actions/runs/32549640953) 2/2 jobs success, every job conclusion individually inspected (`gh run view --json jobs`)
 
 ---
 
@@ -20,7 +20,19 @@ Plan: `docs/plans/2026-08-21-final-closure.md` (v3.1, gate-reviewed 3 iterations
 - [x] **WU-C** — Coverage measured above all four thresholds (table above).
 - [x] **WU-D** — Full Playwright suite 18/18 after repairing stale selectors against the Oracle Terminal UI contract (provenance `data-testid`s, Token Details tab, `?create=1` deep-link).
 - [x] **WU-E** — This docs truth pass. No green/deployed claims until provider evidence lands.
-- [ ] **WU-F** — Push → watch BOTH workflows → verify every job conclusion == success individually → live probes (health/Pages/negative-path) → clean-tree proof → append evidence below.
+- [x] **WU-F** — Pushed `efcb200…601d9fd`. First push (`fe4b914`): Deploy 2/2 green immediately; CI 9/10 — `worker-check` honestly failed for the first time ever (wrangler resolved root `wrangler.jsonc` instead of the API worker's config). Fixed by pinning `--config wrangler.toml` + `CLOUDFLARE_API_TOKEN` env name (`601d9fd`). Final runs: **CI 10/10 · Deploy 2/2, per-job success verified**.
+
+## PROVIDER EVIDENCE (verified 2026-08-22)
+
+| Check | Evidence | Result |
+|---|---|---|
+| CI workflow @ [`601d9fd`](https://github.com/galaxycoils/hermes-launchpad/actions/runs/32549640952) | run `32549640952` | ✅ 10/10 jobs success (frontend, worker-check, unit, worker, client, integration, security, program, e2e, blocked-checks) |
+| Deploy workflow @ `601d9fd` | run [`32549640953`](https://github.com/galaxycoils/hermes-launchpad/actions/runs/32549640953) | ✅ 2/2 jobs success (deploy-pages, deploy-worker) |
+| origin/main == local HEAD | `git rev-parse` both = `601d9fd6958bc471c649159751e0e1658c675439` | ✅ |
+| Worker health | `GET /api/health` → `{"ok":true,"v":2,"ts":1787370105}` | ✅ |
+| Pages | `https://hermes-launchpad.pages.dev` → HTTP 200 | ✅ |
+| Negative-path probe | `GET /api/tokens/definitely-not-a-token-zz` → `{"error":"not found"}` HTTP 404 (structured JSON, not 500) | ✅ |
+| Clean tree | `git status --short` empty after final push | ✅ |
 
 ## STILL TRUE / STILL PENDING (carried facts, not done)
 
