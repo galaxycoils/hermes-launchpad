@@ -34,8 +34,8 @@ jobs:
       - name: Dry-run worker deploy (syntax check)
         working-directory: workers
         env:
-          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-        run: npx wrangler@4 deploy --dry-run
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: npx wrangler@4 deploy --dry-run --config wrangler.toml
 
   test-unit:
     runs-on: ubuntu-22.04
