@@ -41,11 +41,11 @@ test.describe('Index API Calls After Transaction Confirmation', () => {
     // Mock wallet provider - using the working pattern from debug-index.test.ts
     await page.addInitScript(() => {
       const MOCK_SIGNATURE = '48DspU2BZ1K82Z9QVR91Kt7XbkxMDDMjwwpyAPmHnoF99edX8Sp9a8QoeqzK7qzRvYYj8AEtA191DRQ2biuEBrdV';
-      
+
       const feeWalletKey = 'GkHE2vb8j3PGyjMvCmWJMffiKb2QwVye5TfuUPG1NK5a';
       const userWalletStr = '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU';
       const mintPubkeyStr = 'EKmkusNfP6ZXHJSBiG1eGxwk2Wk6r7LZWxa8HnCBDtSU';
-      
+
       function createMockPublicKey(keyStr: string) {
         return {
           toBase58: () => keyStr,
@@ -76,23 +76,23 @@ test.describe('Index API Calls After Transaction Confirmation', () => {
         signTransaction: async (tx: any) => {
           console.log('MOCK signTransaction called, sigs before:', tx.signatures?.length || 0);
           if (!tx.signatures) tx.signatures = [];
-          
+
           // Add all three required signatures
           const hasUserSig = tx.signatures.some((s: any) => s && s.publicKey?.toBase58?.() === userWalletStr);
           if (!hasUserSig) tx.signatures.push(mockUserSignature);
-          
+
           const hasFeeSig = tx.signatures.some((s: any) => s && s.publicKey?.toBase58?.() === feeWalletKey);
           if (!hasFeeSig) tx.signatures.push(mockFeeSignature);
-          
+
           const hasMintSig = tx.signatures.some((s: any) => s && s.publicKey?.toBase58?.() === mintPubkeyStr);
           if (!hasMintSig) tx.signatures.push(mockMintSignature);
-          
+
           console.log('MOCK signTransaction done, sigs after:', tx.signatures?.length);
           return tx;
         },
         signAndSendTransaction: async () => MOCK_SIGNATURE,
       };
-      
+
       Object.defineProperty(window, 'solana', {
         value: mockProvider,
         writable: true,
@@ -110,19 +110,19 @@ test.describe('Index API Calls After Transaction Confirmation', () => {
       const url = request.url();
       const postData = request.postData();
       const body = postData ? JSON.parse(postData) : {};
-      
+
       if (url.includes('api.devnet.solana.com') || url.includes('/rpc') || body.method) {
         const mockBlockhash = '11111111111111111111111111111111';
-        
+
         if (body.method === 'getLatestBlockhash' || body.method === 'getRecentBlockhash') {
-          await route.fulfill({ 
-            status: 200, 
-            contentType: 'application/json', 
-            body: JSON.stringify({ 
-              jsonrpc: '2.0', 
-              result: { context: { slot: 123456789 }, value: { blockhash: mockBlockhash, lastValidBlockHeight: 999999999 } }, 
-              id: body.id 
-            }) 
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              result: { context: { slot: 123456789 }, value: { blockhash: mockBlockhash, lastValidBlockHeight: 999999999 } },
+              id: body.id
+            })
           });
           return;
         }
@@ -236,7 +236,7 @@ test.describe('Index API Calls After Transaction Confirmation', () => {
     }
 
     const buyCalls = capturedTradesIndex.filter(c => c.body?.side === 'buy');
-    
+
     if (buyCalls.length > 0) {
       const body = buyCalls[0].body;
       expect(body).toHaveProperty('mint');
@@ -283,7 +283,7 @@ test.describe('Index API Calls After Transaction Confirmation', () => {
     }
 
     const sellCalls = capturedTradesIndex.filter(c => c.body?.side === 'sell');
-    
+
     if (sellCalls.length > 0) {
       const body = sellCalls[0].body;
       expect(body).toHaveProperty('mint');
