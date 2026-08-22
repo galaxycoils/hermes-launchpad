@@ -30,3 +30,5 @@ graphify-out/
 dist-ssr
 coverage/
 scripts/archive/
+test-results/
+playwright-report/
