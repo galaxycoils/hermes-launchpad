@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:4174';
+const BASE_URL = process.env.BASE_URL || 'http://localhost:4173';
 
 test.describe('Index API Calls After Transaction Confirmation', () => {
   let capturedTokensIndex: Array<{ url: string; method: string; body: any }>;
@@ -162,8 +162,9 @@ test.describe('Index API Calls After Transaction Confirmation', () => {
   test('captures CreateTokenModal POST /api/tokens/index with correct payload shape', async ({ page }) => {
     test.setTimeout(60000);
 
-    await page.click('button:has-text("Launch Token")');
-    await expect(page.locator('text=Step 1 / 3')).toBeVisible({ timeout: 5000 });
+    // ?create=1 deep-link opens the create flow (BottomNav button is mobile-viewport only)
+    await page.goto(`${BASE_URL}/?create=1`);
+    await expect(page.locator('text=Step 1 / 3')).toBeVisible({ timeout: 10000 });
 
     await page.fill('input[placeholder="Galactic Gecko..."]', 'Test Token');
     await page.fill('input[placeholder="GECKO"]', 'TEST');
