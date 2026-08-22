@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">2.85% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>5/175</span>
+                <span class='fraction'>0/175</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/0</span>
+                <span class='fraction'>0/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>0/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">2.85% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>5/175</span>
+                <span class='fraction'>0/175</span>
             </div>
         
             
@@ -306,9 +306,9 @@
 <a name='L241'></a><a href='#L241'>241</a>
 <a name='L242'></a><a href='#L242'>242</a>
 <a name='L243'></a><a href='#L243'>243</a>
-<a name='L244'></a><a href='#L244'>244</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<a name='L244'></a><a href='#L244'>244</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -331,10 +331,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -549,9 +549,9 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useWebSocket } from "@/hooks/useWebSocket";
-import Avatar from "@/components/Avatar";
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import { useCallback, useEffect, useMemo, useRef, useState } from "react";<span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" ></span></span></span>
+<span class="cstat-no" title="statement not covered" >import { useWebSocket } from "@/hooks/useWebSocket";</span>
+<span class="cstat-no" title="statement not covered" >import Avatar from "@/components/Avatar";</span>
 &nbsp;
 interface ChatData {
   wallet: string;
@@ -574,19 +574,19 @@ interface TokenChatProps {
   wallet: string | null;
 }
 &nbsp;
-const shortWallet = <span class="fstat-no" title="function not covered" >(w: string) =&gt;</span>
+<span class="cstat-no" title="statement not covered" >const shortWallet = (w: string) =&gt;</span>
 <span class="cstat-no" title="statement not covered" >  w.length &gt; 10 ? `${w.slice(0, 4)}…${w.slice(-4)}` : w;</span>
 &nbsp;
-const formatTime = <span class="fstat-no" title="function not covered" >(ts: number): string =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >const formatTime = (ts: number): string =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  const d = new Date(ts);</span>
 <span class="cstat-no" title="statement not covered" >  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });</span>
 <span class="cstat-no" title="statement not covered" >};</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >function isChatMessage(msg: { type: string; data: unknown }): msg is ChatMessage {</span></span>
+<span class="cstat-no" title="statement not covered" >function isChatMessage(msg: { type: string; data: unknown }): msg is ChatMessage {</span>
 <span class="cstat-no" title="statement not covered" >  return msg.type === "chat";</span>
 <span class="cstat-no" title="statement not covered" >}</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >export default function TokenChat({ tokenId, wallet }: TokenChatProps) {</span></span>
+<span class="cstat-no" title="statement not covered" >export default function TokenChat({ tokenId, wallet }: TokenChatProps) {</span>
 <span class="cstat-no" title="statement not covered" >  const { connected, messages, send, subscribe, unsubscribe } = useWebSocket();</span>
 <span class="cstat-no" title="statement not covered" >  const [input, setInput] = useState("");</span>
 <span class="cstat-no" title="statement not covered" >  const [replyingTo, setReplyingTo] = useState&lt;string | null&gt;(null);</span>
@@ -799,7 +799,7 @@ const formatTime = <span class="fstat-no" title="function not covered" >(ts: num
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-19T02:41:33.628Z
+                at 2026-08-21T00:31:27.182Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

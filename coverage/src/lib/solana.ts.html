@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">27.52% </span>
+                <span class="strong">29.22% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>60/218</span>
+                <span class='fraction'>64/219</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">38.46% </span>
+                <span class="strong">33.33% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>5/13</span>
+                <span class='fraction'>5/15</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">27.52% </span>
+                <span class="strong">29.22% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>60/218</span>
+                <span class='fraction'>64/219</span>
             </div>
         
             
@@ -516,15 +516,15 @@
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
@@ -654,7 +654,7 @@ export const findCurvePda = <span class="fstat-no" title="function not covered" 
 &nbsp;
 export const findAta = <span class="fstat-no" title="function not covered" >(mint: PublicKey, owner: PublicKey) =&gt;</span>
 <span class="cstat-no" title="statement not covered" >  PublicKey.findProgramAddressSync(</span>
-<span class="cstat-no" title="statement not covered" >    [owner.toBuffer(), mint.toBuffer(), TOKEN_PROGRAM_ID.toBuffer()],</span>
+<span class="cstat-no" title="statement not covered" >    [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],</span>
 <span class="cstat-no" title="statement not covered" >    ATA_PROGRAM_ID</span>
 <span class="cstat-no" title="statement not covered" >  )[0];</span>
 &nbsp;
@@ -771,7 +771,7 @@ export async function sendTx(
   provider: WalletProvider,
   tx: Transaction,
   opts?: { extraSigner?: Keypair }
-): Promise&lt;string&gt; {
+): Promise&lt;{ signature: string; slot: number }&gt; {
   tx.instructions = tx.instructions.filter((ix) =&gt; !(
     ix.programId.equals(ComputeBudgetProgram.programId) &amp;&amp; ix.data.length &gt; 0 &amp;&amp; ix.data[0] === 1
   ));
@@ -785,20 +785,20 @@ export async function sendTx(
     // heuristic: already has signatures beyond empty
     tx.signatures.some((s) =&gt; s.signature != null);
 &nbsp;
+  let sig: string;
   if (<span class="branch-0 cbranch-no" title="branch not covered" >needsRaw &amp;&amp; provider.signTransaction) <span class="branch-0 cbranch-no" title="branch not covered" >{</span></span>
 <span class="cstat-no" title="statement not covered" >    const signed = await provider.signTransaction(tx);</span>
-<span class="cstat-no" title="statement not covered" >    const sig = await connection.sendRawTransaction(signed.serialize(), {</span>
+<span class="cstat-no" title="statement not covered" >    sig = await connection.sendRawTransaction(signed.serialize(), {</span>
 <span class="cstat-no" title="statement not covered" >      skipPreflight: false,</span>
 <span class="cstat-no" title="statement not covered" >      preflightCommitment: 'confirmed',</span>
 <span class="cstat-no" title="statement not covered" >    });</span>
-<span class="cstat-no" title="statement not covered" >    await connection.confirmTransaction(sig, 'confirmed');</span>
-<span class="cstat-no" title="statement not covered" >    return sig;</span>
-<span class="cstat-no" title="statement not covered" >  }</span>
-&nbsp;
-  const res = await provider.signAndSendTransaction(tx);
-  const sig = typeof res === 'string' ? <span class="branch-0 cbranch-no" title="branch not covered" >res : res.signature;</span>
-  await connection.confirmTransaction(sig, 'confirmed');
-  return sig;
+  } else {
+    const res = await provider.signAndSendTransaction(tx);
+    sig = typeof res === 'string' ? <span class="branch-0 cbranch-no" title="branch not covered" >res : (res as any)?.signature ?? String(res); // eslint-disable-line @typescript-eslint/no-explicit-any</span>
+  }
+  const confirmResult = await connection.confirmTransaction(sig, 'confirmed');
+  const slot = (confirmResult as any)?.context?.<span class="branch-0 cbranch-no" title="branch not covered" >slot ?? (confirmResult as any)?.<span class="branch-0 cbranch-no" title="branch not covered" >slot ?? 0</span>; // eslint-disable-line @typescript-eslint/no-explicit-any</span>
+  return { signature: sig, slot };
 }
 &nbsp;
 // ---- Curve math (mirrors on-chain program) ----
@@ -880,7 +880,7 @@ export <span class="fstat-no" title="function not covered" >function computeSell
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-19T02:41:33.628Z
+                at 2026-08-21T00:31:27.182Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
